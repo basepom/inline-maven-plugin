@@ -1,0 +1,9 @@
+inline-maven-plugin
+
+(C) 2022 Henning Schmiedehausen
+
+Licensed under the Apache License Version 2.0
+
+This plugin is derived from Jar Jar Links, released at
+https://github.com/shevek/jarjar. This code is (C) 2007 - 2008 Google,
+Inc. and was released under the Apache License Version 2.0
