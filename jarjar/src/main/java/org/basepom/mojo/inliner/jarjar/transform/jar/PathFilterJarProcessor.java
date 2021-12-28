@@ -13,6 +13,7 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
+import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
@@ -24,11 +25,11 @@ public class PathFilterJarProcessor extends AbstractFilterJarProcessor {
     private final Set<? extends String> excludes;
 
     public PathFilterJarProcessor(@Nonnull Set<? extends String> excludes) {
-        this.excludes = excludes;
+        this.excludes = new HashSet<>(excludes);
     }
 
     @Override
-    protected boolean isFiltered(String name) {
+    protected boolean isFiltered(@Nonnull String name) {
         return excludes.contains(name);
     }
 }

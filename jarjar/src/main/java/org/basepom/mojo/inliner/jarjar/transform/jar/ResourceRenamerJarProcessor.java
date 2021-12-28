@@ -16,6 +16,7 @@ package org.basepom.mojo.inliner.jarjar.transform.jar;
 import java.io.IOException;
 import javax.annotation.Nonnull;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.basepom.mojo.inliner.jarjar.transform.Transformable;
 import org.basepom.mojo.inliner.jarjar.transform.asm.PackageRemapper;
 import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
@@ -27,6 +28,7 @@ public class ResourceRenamerJarProcessor implements JarProcessor {
 
     private final PackageRemapper pr;
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public ResourceRenamerJarProcessor(@Nonnull PackageRemapper pr) {
         this.pr = pr;
     }

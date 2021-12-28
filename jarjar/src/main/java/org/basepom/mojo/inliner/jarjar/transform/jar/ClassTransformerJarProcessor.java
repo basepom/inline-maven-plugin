@@ -13,7 +13,7 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nonnull;
@@ -37,7 +37,7 @@ public class ClassTransformerJarProcessor implements JarProcessor {
     private final List<ClassTransformer> classProcessors;
 
     public ClassTransformerJarProcessor(@Nonnull List<ClassTransformer> classProcessors) {
-        this.classProcessors = classProcessors;
+        this.classProcessors = new ArrayList<>(classProcessors);
     }
 
     public ClassTransformerJarProcessor(@Nonnull ClassTransformer... classProcessors) {
@@ -45,12 +45,14 @@ public class ClassTransformerJarProcessor implements JarProcessor {
     }
 
     @Override
-    public Result scan(Transformable struct) throws IOException {
+    @Nonnull
+    public Result scan(@Nonnull Transformable struct) {
         return Result.KEEP;
     }
 
     @Override
-    public Result process(Transformable struct) throws IOException {
+    @Nonnull
+    public Result process(Transformable struct) {
         if (ClassNameUtils.isClass(struct.name)) {
             try {
                 ClassReader reader = new ClassReader(struct.data);

@@ -16,25 +16,29 @@ package org.basepom.mojo.inliner.jarjar.transform.jar;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 
 import org.basepom.mojo.inliner.jarjar.transform.Transformable;
 
-public class JarProcessorChain extends ArrayList<JarProcessor> implements JarProcessor {
+public class JarProcessorChain implements JarProcessor {
+
+    private final List<JarProcessor> processors;
 
     public JarProcessorChain(@Nonnull Iterable<? extends JarProcessor> processors) {
-        for (JarProcessor processor : processors) {
-            add(processor);
-        }
+        this.processors = StreamSupport.stream(processors.spliterator(), false).collect(Collectors.toUnmodifiableList());
     }
 
     public JarProcessorChain(@Nonnull JarProcessor... processors) {
-        this(Arrays.asList(processors));
+        this.processors = Arrays.stream(processors).collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     public Result scan(Transformable struct) throws IOException {
-        for (JarProcessor processor : this) {
+        for (JarProcessor processor : processors) {
             if (processor.scan(struct) == Result.DISCARD) {
                 return Result.DISCARD;
             }
@@ -44,7 +48,7 @@ public class JarProcessorChain extends ArrayList<JarProcessor> implements JarPro
 
     @Override
     public Result process(Transformable struct) throws IOException {
-        for (JarProcessor processor : this) {
+        for (JarProcessor processor : processors) {
             if (processor.process(struct) == Result.DISCARD) {
                 return Result.DISCARD;
             }

@@ -68,8 +68,8 @@ class ClassHeaderReader {
             }
 
             buffer(6);
-            readUnsignedShort(4); // minorVersion
-            readUnsignedShort(6); // majorVersion
+//            int minorVersion = readUnsignedShort(4); // minorVersion
+//            int majorVersion = readUnsignedShort(6); // majorVersion
             // TODO: check version
             int constant_pool_count = readUnsignedShort(8);
             items = (int[]) resizeArray(items, constant_pool_count);

@@ -17,6 +17,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassRename;
@@ -32,12 +34,12 @@ public class PackageRemapper extends Remapper {
     private static final String RESOURCE_SUFFIX = "RESOURCE";
 
     private final List<ClassRename> patterns;
-    private final Map<String, String> typeCache = new HashMap<String, String>();
-    private final Map<String, String> pathCache = new HashMap<String, String>();
-    private final Map<Object, String> valueCache = new HashMap<Object, String>();
+    private final Map<String, String> typeCache = new HashMap<>();
+    private final Map<String, String> pathCache = new HashMap<>();
+    private final Map<Object, String> valueCache = new HashMap<>();
 
     public PackageRemapper(@Nonnull Iterable<? extends ClassRename> patterns) {
-        this.patterns = PatternUtils.toList(patterns);
+        this.patterns = StreamSupport.stream(patterns.spliterator(), false).collect(Collectors.toUnmodifiableList());
     }
 
     public PackageRemapper(@Nonnull ClassRename... patterns) {

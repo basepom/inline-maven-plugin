@@ -23,10 +23,9 @@ import org.basepom.mojo.inliner.jarjar.transform.config.RulesFileParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultJarProcessor extends JarProcessorChain implements RulesFileParser.Output {
+public class DefaultJarProcessor implements RulesFileParser.Output {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultJarProcessor.class);
-    // private final Map<String, String> renames = new HashMap<String, String>();
 
     private final ManifestFilterJarProcessor manifestFilterJarProcessor = new ManifestFilterJarProcessor();
     private final ClassFilterJarProcessor classFilterJarProcessor = new ClassFilterJarProcessor();
@@ -35,13 +34,13 @@ public class DefaultJarProcessor extends JarProcessorChain implements RulesFileP
     private final RemappingClassTransformer remappingClassTransformer = new RemappingClassTransformer(packageRemapper);
     private final ResourceRenamerJarProcessor resourceRenamerJarProcessor = new ResourceRenamerJarProcessor(packageRemapper);
 
-    public DefaultJarProcessor() {
-        add(new DirectoryFilterJarProcessor());
-        add(manifestFilterJarProcessor);
-        add(classFilterJarProcessor);
-        add(classClosureFilterJarProcessor);
-        add(new ClassTransformerJarProcessor(remappingClassTransformer));
-        add(resourceRenamerJarProcessor);
+    public JarProcessorChain getJarProcessor() {
+        return new JarProcessorChain(new DirectoryFilterJarProcessor(),
+                this.manifestFilterJarProcessor,
+                this.classFilterJarProcessor,
+                this.classClosureFilterJarProcessor,
+                new ClassTransformerJarProcessor(this.remappingClassTransformer),
+                this.resourceRenamerJarProcessor);
     }
 
     @Override

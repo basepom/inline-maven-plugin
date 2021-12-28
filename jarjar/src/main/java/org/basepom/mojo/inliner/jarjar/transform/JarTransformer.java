@@ -45,8 +45,8 @@ public class JarTransformer {
     private final JarProcessor processor;
     private final DuplicatePolicy duplicatePolicy = DuplicatePolicy.DISCARD;
     private final byte[] buf = new byte[0x2000];
-    private final Set<String> dirs = new HashSet<String>();
-    private final Set<String> files = new HashSet<String>();
+    private final Set<String> dirs = new HashSet<>();
+    private final Set<String> files = new HashSet<>();
 
     public JarTransformer(@Nonnull File outputFile, @Nonnull JarProcessor processor) {
         this.outputFile = outputFile;
@@ -60,13 +60,10 @@ public class JarTransformer {
         struct.name = inputResource.getName();
         struct.time = inputResource.getLastModifiedTime();
 
-        InputStream in = inputResource.openStream();
-        try {
+        try (InputStream in = inputResource.openStream()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             IoUtil.copy(in, out, buf);
             struct.data = out.toByteArray();
-        } finally {
-            in.close();
         }
 
         return struct;
@@ -99,8 +96,6 @@ public class JarTransformer {
 
         OUT:
         {
-            Set<String> dirs = new HashSet<String>();
-
             JarOutputStream outputJarStream = new JarOutputStream(new FileOutputStream(outputFile));
             for (ClassPathArchive inputArchive : inputPath) {
                 LOG.info("Transforming archive {}", inputArchive);

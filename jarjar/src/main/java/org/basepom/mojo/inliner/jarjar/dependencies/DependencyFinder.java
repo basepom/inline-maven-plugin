@@ -27,26 +27,17 @@ import org.objectweb.asm.ClassReader;
 
 public class DependencyFinder {
 
-    private File curDir = new File(System.getProperty("user.dir"));
-
-    public void setCurrentDirectory(File curDir) {
-        this.curDir = curDir;
-    }
-
     public void run(DependencyHandler handler, ClassPath from, ClassPath to) throws IOException {
         try {
             ClassHeaderReader header = new ClassHeaderReader();
-            Map<String, String> classToArchiveMap = new HashMap<String, String>();
+            Map<String, String> classToArchiveMap = new HashMap<>();
             for (ClassPathArchive toArchive : to) {
                 for (ClassPathResource toResource : toArchive) {
-                    InputStream in = toResource.openStream();
-                    try {
+                    try (InputStream in = toResource.openStream()) {
                         header.read(in);
                         classToArchiveMap.put(header.getClassName(), toArchive.getArchiveName());
                     } catch (Exception e) {
                         System.err.println("Error reading " + toResource.getName() + ": " + e.getMessage());
-                    } finally {
-                        in.close();
                     }
                 }
             }
@@ -54,14 +45,11 @@ public class DependencyFinder {
             handler.handleStart();
             for (ClassPathArchive fromArchive : from) {
                 for (ClassPathResource fromResource : fromArchive) {
-                    InputStream in = fromResource.openStream();
-                    try {
+                    try (InputStream in = fromResource.openStream()) {
                         new ClassReader(in).accept(new DependencyFinderClassVisitor(classToArchiveMap, fromArchive.getArchiveName(), handler),
                                 ClassReader.SKIP_DEBUG);
                     } catch (Exception e) {
                         System.err.println("Error reading " + fromResource.getName() + ": " + e.getMessage());
-                    } finally {
-                        in.close();
                     }
                 }
             }

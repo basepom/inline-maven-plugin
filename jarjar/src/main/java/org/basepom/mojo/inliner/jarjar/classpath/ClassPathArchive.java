@@ -146,12 +146,15 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
         @Nonnull
         private static void findClassFiles(@Nonnull Collection<? super File> out, @Nonnull File dir) {
-            for (File file : dir.listFiles()) {
-                if (file.isDirectory()) {
-                    findClassFiles(out, file);
-                } else if (file.isFile()) {
-                    if (ClassNameUtils.isClass(file.getName())) {
-                        out.add(file);
+            final File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        findClassFiles(out, file);
+                    } else if (file.isFile()) {
+                        if (ClassNameUtils.isClass(file.getName())) {
+                            out.add(file);
+                        }
                     }
                 }
             }

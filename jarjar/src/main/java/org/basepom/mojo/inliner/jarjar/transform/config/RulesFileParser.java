@@ -19,6 +19,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -44,7 +45,7 @@ public class RulesFileParser {
 
     @Nonnull
     public static void parse(@Nonnull Output output, @Nonnull File file) throws IOException {
-        parse(output, new FileReader(file));
+        parse(output, new FileReader(file, StandardCharsets.UTF_8));
     }
 
     @Nonnull
