@@ -46,7 +46,7 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
 
     private static class DependencyCollector extends Remapper {
 
-        private final Set<String> dependencies = new HashSet<String>();
+        private final Set<String> dependencies = new HashSet<>();
 
         @Override
         public String map(String key) {
@@ -74,8 +74,8 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
     }
 
     private final List<ClassKeepTransitive> patterns;
-    private final List<String> roots = new ArrayList<String>();
-    private final Map<String, Set<String>> dependencies = new HashMap<String, Set<String>>();
+    private final List<String> roots = new ArrayList<>();
+    private final Map<String, Set<String>> dependencies = new HashMap<>();
     private Set<String> closure;
 
     public ClassClosureJarProcessor(@Nonnull Iterable<? extends ClassKeepTransitive> patterns) {
@@ -95,7 +95,7 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
     }
 
     @Override
-    public Result scan(Transformable struct) throws IOException {
+    public Result scan(Transformable struct) {
         if (!isEnabled()) {
             return Result.KEEP;
         }
@@ -132,7 +132,7 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
     @Override
     protected boolean isFiltered(String name) {
         if (closure == null) {
-            closure = new HashSet<String>();
+            closure = new HashSet<>();
             addTransitiveClosure(closure, roots);
         }
         return !closure.contains(name);

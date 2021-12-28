@@ -20,12 +20,8 @@ import org.basepom.mojo.inliner.jarjar.transform.config.ClassKeep;
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassKeepTransitive;
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassRename;
 import org.basepom.mojo.inliner.jarjar.transform.config.RulesFileParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DefaultJarProcessor implements RulesFileParser.Output {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultJarProcessor.class);
 
     private final ManifestFilterJarProcessor manifestFilterJarProcessor = new ManifestFilterJarProcessor();
     private final ClassFilterJarProcessor classFilterJarProcessor = new ClassFilterJarProcessor();

@@ -13,16 +13,15 @@
  */
 package org.basepom.mojo.inliner.jarjar.dependencies;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathArchive;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathResource;
-import org.basepom.mojo.inliner.jarjar.util.RuntimeIOException;
 import org.objectweb.asm.ClassReader;
 
 public class DependencyFinder {
@@ -54,8 +53,8 @@ public class DependencyFinder {
                 }
             }
             handler.handleEnd();
-        } catch (RuntimeIOException e) {
-            throw (IOException) e.getCause();
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
         }
     }
 }

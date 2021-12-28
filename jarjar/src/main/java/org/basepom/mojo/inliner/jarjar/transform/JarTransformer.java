@@ -83,47 +83,40 @@ public class JarTransformer {
 
     public void transform(@Nonnull ClassPath inputPath) throws IOException {
 
-        SCAN:
-        {
-            for (ClassPathArchive inputArchive : inputPath) {
-                LOG.debug("Scanning archive {}", inputArchive);
-                for (ClassPathResource inputResource : inputArchive) {
-                    Transformable struct = newTransformable(inputResource);
-                    processor.scan(struct);
-                }
+        for (ClassPathArchive inputArchive : inputPath) {
+            LOG.debug("Scanning archive {}", inputArchive);
+            for (ClassPathResource inputResource : inputArchive) {
+                Transformable struct = newTransformable(inputResource);
+                processor.scan(struct);
             }
         }
 
-        OUT:
-        {
-            JarOutputStream outputJarStream = new JarOutputStream(new FileOutputStream(outputFile));
-            for (ClassPathArchive inputArchive : inputPath) {
-                LOG.info("Transforming archive {}", inputArchive);
-                for (ClassPathResource inputResource : inputArchive) {
-                    Transformable struct = newTransformable(inputResource);
-                    if (processor.process(struct) == JarProcessor.Result.DISCARD) {
+        JarOutputStream outputJarStream = new JarOutputStream(new FileOutputStream(outputFile));
+        for (ClassPathArchive inputArchive : inputPath) {
+            LOG.info("Transforming archive {}", inputArchive);
+            for (ClassPathResource inputResource : inputArchive) {
+                Transformable struct = newTransformable(inputResource);
+                if (processor.process(struct) == JarProcessor.Result.DISCARD) {
+                    continue;
+                }
+
+                addDirs(outputJarStream, struct.name);
+
+                if (DuplicatePolicy.DISCARD.equals(duplicatePolicy)) {
+                    if (!files.add(struct.name)) {
+                        LOG.debug("Discarding duplicate {}", struct.name);
                         continue;
                     }
-
-                    addDirs(outputJarStream, struct.name);
-
-                    if (DuplicatePolicy.DISCARD.equals(duplicatePolicy)) {
-                        if (!files.add(struct.name)) {
-                            LOG.debug("Discarding duplicate {}", struct.name);
-                            continue;
-                        }
-                    }
-
-                    LOG.debug("Writing {}", struct.name);
-                    JarEntry outputEntry = new JarEntry(struct.name);
-                    outputEntry.setTime(struct.time);
-                    outputEntry.setCompressedSize(-1);
-                    outputJarStream.putNextEntry(outputEntry);
-                    outputJarStream.write(struct.data);
                 }
-            }
-            outputJarStream.close();
-        }
 
+                LOG.debug("Writing {}", struct.name);
+                JarEntry outputEntry = new JarEntry(struct.name);
+                outputEntry.setTime(struct.time);
+                outputEntry.setCompressedSize(-1);
+                outputJarStream.putNextEntry(outputEntry);
+                outputJarStream.write(struct.data);
+            }
+        }
+        outputJarStream.close();
     }
 }

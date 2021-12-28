@@ -24,15 +24,10 @@ import javax.annotation.Nonnull;
  */
 public class ClassRename extends AbstractClassPattern {
 
-    // private final String replaceText;
     private final List<Object> replace;
 
     public ClassRename(@Nonnull String patternText, @Nonnull String replaceText) {
         super(patternText);
-        if (replaceText == null) {
-            throw new IllegalArgumentException("Result may not be null.");
-        }
-        // this.replaceText = replaceText;
         this.replace = PatternUtils.newReplace(getPattern(), replaceText);
     }
 

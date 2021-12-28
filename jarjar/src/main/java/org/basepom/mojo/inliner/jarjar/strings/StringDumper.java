@@ -15,13 +15,13 @@ package org.basepom.mojo.inliner.jarjar.strings;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import javax.annotation.Nonnull;
 
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathArchive;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathResource;
 import org.basepom.mojo.inliner.jarjar.util.IoUtil;
-import org.basepom.mojo.inliner.jarjar.util.RuntimeIOException;
 import org.objectweb.asm.ClassReader;
 
 public class StringDumper {
@@ -30,13 +30,10 @@ public class StringDumper {
         StringReader stringReader = new DumpStringReader(out);
         for (ClassPathArchive classPathArchive : classPath) {
             for (ClassPathResource classPathResource : classPathArchive) {
-                InputStream in = classPathResource.openStream();
-                try {
+                try (InputStream in = classPathResource.openStream()) {
                     new ClassReader(in).accept(stringReader, 0);
                 } catch (Exception e) {
                     System.err.println("Error reading " + classPathResource + ": " + e.getMessage());
-                } finally {
-                    in.close();
                 }
                 IoUtil.flush(out);
             }
@@ -67,7 +64,7 @@ public class StringDumper {
                     out.append(escapeStringLiteral(value));
                     out.append("\n");
                 } catch (IOException e) {
-                    throw new RuntimeIOException(e);
+                    throw new UncheckedIOException(e);
                 }
             }
         }

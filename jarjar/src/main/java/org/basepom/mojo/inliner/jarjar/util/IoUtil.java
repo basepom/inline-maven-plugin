@@ -40,16 +40,9 @@ public class IoUtil {
     }
 
     public static void copy(@Nonnull File from, @Nonnull File to, @Nonnull byte[] buf) throws IOException {
-        InputStream in = new FileInputStream(from);
-        try {
-            OutputStream out = new FileOutputStream(to);
-            try {
-                copy(in, out, buf);
-            } finally {
-                out.close();
-            }
-        } finally {
-            in.close();
+        try (InputStream in = new FileInputStream(from);
+                OutputStream out = new FileOutputStream(to)) {
+            copy(in, out, buf);
         }
     }
 

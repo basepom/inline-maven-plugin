@@ -26,6 +26,6 @@ public class TextDependencyHandler extends AbstractDependencyHandler {
 
     @Override
     protected void handle(String from, String to) throws IOException {
-        out.append(from + " -> " + to + "\n");
+        out.append(from).append(" -> ").append(to).append("\n");
     }
 }

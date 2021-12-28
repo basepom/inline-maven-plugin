@@ -22,7 +22,6 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassRename;
-import org.basepom.mojo.inliner.jarjar.transform.config.PatternUtils;
 import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
@@ -39,7 +38,7 @@ public class PackageRemapper extends Remapper {
     private final Map<Object, String> valueCache = new HashMap<>();
 
     public PackageRemapper(@Nonnull Iterable<? extends ClassRename> patterns) {
-        this.patterns = StreamSupport.stream(patterns.spliterator(), false).collect(Collectors.toUnmodifiableList());
+        this.patterns = StreamSupport.stream(patterns.spliterator(), false).collect(Collectors.toList());
     }
 
     public PackageRemapper(@Nonnull ClassRename... patterns) {
@@ -86,7 +85,7 @@ public class PackageRemapper extends Remapper {
             if (absolute) {
                 s = "/" + s;
             }
-            if (s.indexOf(RESOURCE_SUFFIX) < 0) {
+            if (!s.contains(RESOURCE_SUFFIX)) {
                 return path;
             }
             s = s.substring(0, s.length() - RESOURCE_SUFFIX.length()) + end;

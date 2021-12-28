@@ -43,12 +43,10 @@ public class RulesFileParser {
     private RulesFileParser() {
     }
 
-    @Nonnull
     public static void parse(@Nonnull Output output, @Nonnull File file) throws IOException {
         parse(output, new FileReader(file, StandardCharsets.UTF_8));
     }
 
-    @Nonnull
     public static void parse(@Nonnull Output output, @Nonnull String value) throws IOException {
         parse(output, new StringReader(value));
     }
@@ -56,7 +54,7 @@ public class RulesFileParser {
     @Nonnull
     private static List<String> split(@Nonnull String line) {
         StringTokenizer tok = new StringTokenizer(line);
-        List<String> out = new ArrayList<String>();
+        List<String> out = new ArrayList<>();
         while (tok.hasMoreTokens()) {
             String token = tok.nextToken();
             if (token.startsWith("#")) {
@@ -67,9 +65,8 @@ public class RulesFileParser {
         return out;
     }
 
-    @Nonnull
     private static void parse(@Nonnull Output output, @Nonnull @WillClose Reader r) throws IOException {
-        try {
+        try (r) {
             BufferedReader br = new BufferedReader(r);
             int lineNumber = 1;
             String line;
@@ -82,22 +79,25 @@ public class RulesFileParser {
                     throw error(lineNumber, words, "not enough words on line.");
                 }
                 String type = words.get(0);
-                if (type.equals("rule")) {
-                    if (words.size() < 3) {
-                        throw error(lineNumber, words, "'rule' requires 2 arguments.");
-                    }
-                    output.addClassRename(new ClassRename(words.get(1), words.get(2)));
-                } else if (type.equals("zap")) {
-                    output.addClassDelete(new ClassDelete(words.get(1)));
-                } else if (type.equals("keep")) {
-                    output.addClassKeepTransitive(new ClassKeepTransitive(words.get(1)));
-                } else {
-                    throw error(lineNumber, words, "Unrecognized keyword " + type);
+
+                switch (type) {
+                    case "rule":
+                        if (words.size() < 3) {
+                            throw error(lineNumber, words, "'rule' requires 2 arguments.");
+                        }
+                        output.addClassRename(new ClassRename(words.get(1), words.get(2)));
+                        break;
+                    case "zap":
+                        output.addClassDelete(new ClassDelete(words.get(1)));
+                        break;
+                    case "keep":
+                        output.addClassKeepTransitive(new ClassKeepTransitive(words.get(1)));
+                        break;
+                    default:
+                        throw error(lineNumber, words, "Unrecognized keyword " + type);
                 }
                 lineNumber++;
             }
-        } finally {
-            r.close();
         }
     }
 

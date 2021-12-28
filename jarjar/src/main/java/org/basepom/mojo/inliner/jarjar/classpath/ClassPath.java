@@ -75,6 +75,5 @@ public class ClassPath implements Iterable<ClassPathArchive> {
         public void remove() {
             throw new UnsupportedOperationException();
         }
-
     }
 }

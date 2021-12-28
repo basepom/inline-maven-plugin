@@ -51,7 +51,7 @@ class ClassHeaderReader {
     }
 
     public void read(InputStream in) throws IOException {
-        try {
+        try (in) {
             this.in = in;
             bsize = 0;
             access = 0;
@@ -119,8 +119,6 @@ class ClassHeaderReader {
                 interfaces[i] = readClass(index);
                 index += 2;
             }
-        } finally {
-            in.close();
         }
     }
 

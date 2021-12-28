@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -30,7 +31,6 @@ import java.util.zip.ZipFile;
 import javax.annotation.Nonnull;
 
 import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
-import org.basepom.mojo.inliner.jarjar.util.RuntimeIOException;
 
 /**
  * @author shevek
@@ -59,7 +59,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
             try {
                 return new ZipIterator(root);
             } catch (IOException e) {
-                throw new RuntimeIOException(e);
+                throw new UncheckedIOException(e);
             }
         }
 

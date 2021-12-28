@@ -29,9 +29,6 @@ public abstract class AbstractPattern {
     private final Pattern pattern;
 
     public AbstractPattern(@Nonnull String patternText) {
-        if (patternText == null) {
-            throw new IllegalArgumentException("Pattern text may not be null.");
-        }
         this.patternText = patternText;
         this.pattern = PatternUtils.newPattern(patternText);
     }

@@ -21,7 +21,7 @@ import javax.annotation.Nonnull;
 public abstract class AbstractDependencyHandler implements DependencyHandler {
 
     protected final Level level;
-    private final Set<Pair<String>> seen = new HashSet<Pair<String>>();
+    private final Set<Pair<String>> seen = new HashSet<>();
 
     protected AbstractDependencyHandler(Level level) {
         this.level = level;
@@ -31,9 +31,9 @@ public abstract class AbstractDependencyHandler implements DependencyHandler {
     public void handle(Dependency from, Dependency to) throws IOException {
         Pair<String> pair;
         if (level == Level.JAR) {
-            pair = new Pair<String>(from.getClassPath(), to.getClassPath());
+            pair = new Pair<>(from.getClassPath(), to.getClassPath());
         } else {
-            pair = new Pair<String>(from.getClassName(), to.getClassName());
+            pair = new Pair<>(from.getClassName(), to.getClassName());
         }
         if (seen.add(pair)) {
             handle(pair.getLeft(), pair.getRight());
@@ -43,10 +43,10 @@ public abstract class AbstractDependencyHandler implements DependencyHandler {
     protected abstract void handle(@Nonnull String from, @Nonnull String to) throws IOException;
 
     @Override
-    public void handleStart() throws IOException {
+    public void handleStart() {
     }
 
     @Override
-    public void handleEnd() throws IOException {
+    public void handleEnd() {
     }
 }

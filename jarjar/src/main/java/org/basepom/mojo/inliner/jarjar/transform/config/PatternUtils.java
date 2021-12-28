@@ -64,7 +64,7 @@ public class PatternUtils {
         if (!isPossibleQualifiedName(pattern, "/*")) {
             throw new IllegalArgumentException("Not a valid package pattern: " + pattern);
         }
-        if (pattern.indexOf("***") >= 0) {
+        if (pattern.contains("***")) {
             throw new IllegalArgumentException("The sequence '***' is invalid in a package pattern");
         }
 
@@ -84,7 +84,7 @@ public class PatternUtils {
 
     @Nonnull
     public static List<Object> newReplace(@Nonnull Pattern pattern, @Nonnull String result) {
-        List<Object> parts = new ArrayList<Object>(16);
+        List<Object> parts = new ArrayList<>(16);
         // TODO: check for illegal characters
         int max = 0;
         State state = State.NORMAL;
@@ -119,7 +119,7 @@ public class PatternUtils {
                             if (n > max) {
                                 max = n;
                             }
-                            parts.add(Integer.valueOf(n));
+                            parts.add(n);
                             mark = i--;
                             state = State.NORMAL;
                             break;
@@ -183,7 +183,7 @@ public class PatternUtils {
      */
     @Nonnull
     public static <T extends AbstractPattern> List<T> toList(@Nonnull Iterable<? extends T> in) {
-        List<T> out = new ArrayList<T>();
+        List<T> out = new ArrayList<>();
         for (T i : in) {
             out.add(i);
         }
@@ -203,11 +203,10 @@ public class PatternUtils {
         }
         if (line.endsWith("*")) {
             line = line.substring(0, strLen - 1);
-            strLen--;
         }
         boolean escaping = false;
         int inCurlies = 0;
-        CHAR:
+
         for (char currentChar : line.toCharArray()) {
             switch (currentChar) {
                 case '*':
@@ -241,7 +240,7 @@ public class PatternUtils {
                         sb.append("\\\\");
                     } else {
                         escaping = true;
-                        continue CHAR;
+                        continue;
                     }
                     break;
                 case '{':

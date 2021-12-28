@@ -35,8 +35,8 @@ import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 public class ClassFilterJarProcessor extends AbstractFilterJarProcessor {
 
     // private static final Logger LOG = LoggerFactory.getLogger(ClassFilterJarProcessor.class);
-    private final List<ClassKeep> keepPatterns = new ArrayList<ClassKeep>();
-    private final List<ClassDelete> deletePatterns = new ArrayList<ClassDelete>();
+    private final List<ClassKeep> keepPatterns = new ArrayList<>();
+    private final List<ClassDelete> deletePatterns = new ArrayList<>();
 
     public void addClassKeep(@Nonnull ClassKeep pattern) {
         keepPatterns.add(pattern);

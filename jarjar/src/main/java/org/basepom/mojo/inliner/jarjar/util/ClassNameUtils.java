@@ -33,9 +33,6 @@ public class ClassNameUtils {
      */
     // also used by KeepProcessor
     public static boolean isArrayForName(String value) {
-        // Type type = Type.getType(value);
-        // type.getSort() == ARRAY;
-        // type.getElementType();
         return ARRAY_FOR_NAME_PATTERN.matcher(value).matches();
     }
 
