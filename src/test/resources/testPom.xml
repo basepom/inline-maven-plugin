@@ -95,8 +95,17 @@
     <!--     </dependencies> -->
     <!-- </dependencyManagement> -->
 
-    <dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${dep.guava.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
+    <dependencies>
         <!-- Maven provided dependencies -->
         <dependency>
             <groupId>org.apache.maven</groupId>
@@ -173,7 +182,6 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>${dep.guava.version}</version>
         </dependency>
 
         <dependency>

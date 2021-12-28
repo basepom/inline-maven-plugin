@@ -81,6 +81,7 @@
         <dep.auto-value.version>1.8.2</dep.auto-value.version>
         <dep.plugin.gmavenplus.plugin>1.13.1</dep.plugin.gmavenplus.plugin>
         <dep.groovy.version>3.0.9</dep.groovy.version>
+        <dep.asm.version>9.2</dep.asm.version>
     </properties>
 
     <!-- <dependencyManagement> -->
@@ -183,6 +184,25 @@
             <groupId>org.jdom</groupId>
             <artifactId>jdom2</artifactId>
             <version>2.0.6.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>jaxen</groupId>
+            <artifactId>jaxen</artifactId>
+            <version>1.2.0</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>${dep.asm.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-commons</artifactId>
+            <version>${dep.asm.version}</version>
         </dependency>
 
         <dependency>
@@ -305,9 +325,6 @@
                 <configuration>
                     <!-- Allows access to the groovy utility class in the test source tree. -->
                     <addTestClassPath>true</addTestClassPath>
-                    <filterProperties>
-                        <project.it.enforce>${project.it.enforce}</project.it.enforce>
-                    </filterProperties>
                 </configuration>
 
                 <!-- dependency for verify.groovy scripts -->

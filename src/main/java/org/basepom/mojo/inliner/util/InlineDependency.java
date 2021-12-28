@@ -20,19 +20,24 @@ import java.util.List;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Splitter;
+import org.apache.maven.model.Dependency;
 
 @AutoValue
-public abstract class Inline {
+public abstract class InlineDependency {
 
-    public static Inline valueOf(String value) {
+    public static InlineDependency valueOf(String value) {
         checkNotNull(value, "value is null");
         List<String> values = Splitter.on(':').trimResults().splitToList(value);
         checkState(values.size() == 2, "%s is not a valid <groupId>:<artifactId> pair", value);
 
-        return new AutoValue_Inline(values.get(0), values.get(1));
+        return new AutoValue_InlineDependency(values.get(0), values.get(1));
     }
 
     abstract String groupId();
 
     abstract String artifactId();
+
+    public final boolean matchDependency(Dependency dependency) {
+        return artifactId().equals(dependency.getArtifactId()) && groupId().equals(dependency.getGroupId());
+    }
 }

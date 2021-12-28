@@ -15,7 +15,10 @@ package org.basepom.mojo.inliner.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
@@ -37,5 +40,14 @@ public class TestPomUtil {
             assertEquals(pomContents.replace("\n", ""),
                     result.replace("\n", ""));
         }
+    }
+
+    @Test
+    public void testRemove() throws Exception {
+        String pomContents = CharStreams.toString(new InputStreamReader(TestPomUtil.class.getResourceAsStream("/testPom.xml")));
+
+        PomUtil pomUtil = new PomUtil(pomContents);
+
+        pomUtil.removeDependency(InlineDependency.valueOf("com.google.guava:guava"));
     }
 }
