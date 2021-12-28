@@ -13,13 +13,15 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author shevek
  */
 public class DirectoryFilterJarProcessor extends AbstractFilterJarProcessor {
 
     @Override
-    protected boolean isFiltered(String name) {
+    protected boolean isFiltered(@Nonnull String name) {
         return name.endsWith("/");
     }
 

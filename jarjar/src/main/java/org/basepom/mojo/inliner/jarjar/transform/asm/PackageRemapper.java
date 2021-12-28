@@ -13,6 +13,8 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.asm;
 
+import static java.lang.String.format;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -124,9 +126,7 @@ public class PackageRemapper extends Remapper {
             }
             // TODO: add back class name to verbose message
             if (!s.equals(value)) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Changed \"" + value + "\" -> \"" + s + "\"");
-                }
+                LOG.debug(format("Changed '%s' -> '%s'", value, s));
             }
             return s;
         } else {

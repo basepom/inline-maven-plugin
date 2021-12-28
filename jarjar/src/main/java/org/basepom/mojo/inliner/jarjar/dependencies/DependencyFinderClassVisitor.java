@@ -22,7 +22,7 @@ import org.objectweb.asm.commons.Remapper;
 
 class DependencyFinderClassVisitor extends ClassRemapper {
 
-    DependencyFinderClassVisitor(Map<String, String> classToArchiveMap, String archiveName, DependencyHandler handler) throws IOException {
+    DependencyFinderClassVisitor(Map<String, String> classToArchiveMap, String archiveName, DependencyHandler handler) {
         super(null, new DependencyFinderRemapper(classToArchiveMap, archiveName, handler));
     }
 

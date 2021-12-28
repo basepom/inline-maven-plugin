@@ -30,8 +30,9 @@ public class RemappingClassTransformer implements ClassTransformer {
         this.remapper = remapper;
     }
 
+    @Nonnull
     @Override
-    public ClassVisitor transform(ClassVisitor v) {
+    public ClassVisitor transform(@Nonnull ClassVisitor v) {
         return new ClassRemapper(v, remapper);
     }
 

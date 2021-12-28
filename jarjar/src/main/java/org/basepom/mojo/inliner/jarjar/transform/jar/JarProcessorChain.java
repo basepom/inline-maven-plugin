@@ -34,8 +34,9 @@ public class JarProcessorChain implements JarProcessor {
         this.processors = Arrays.stream(processors).collect(Collectors.toUnmodifiableList());
     }
 
+    @Nonnull
     @Override
-    public Result scan(Transformable struct) throws IOException {
+    public Result scan(@Nonnull Transformable struct) throws IOException {
         for (JarProcessor processor : processors) {
             if (processor.scan(struct) == Result.DISCARD) {
                 return Result.DISCARD;
@@ -44,8 +45,9 @@ public class JarProcessorChain implements JarProcessor {
         return Result.KEEP;
     }
 
+    @Nonnull
     @Override
-    public Result process(Transformable struct) throws IOException {
+    public Result process(@Nonnull Transformable struct) throws IOException {
         for (JarProcessor processor : processors) {
             if (processor.process(struct) == Result.DISCARD) {
                 return Result.DISCARD;

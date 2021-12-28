@@ -28,7 +28,7 @@ public abstract class AbstractDependencyHandler implements DependencyHandler {
     }
 
     @Override
-    public void handle(Dependency from, Dependency to) throws IOException {
+    public void handle(@Nonnull Dependency from, @Nonnull Dependency to) throws IOException {
         Pair<String> pair;
         if (level == Level.JAR) {
             pair = new Pair<>(from.getClassPath(), to.getClassPath());

@@ -13,6 +13,8 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
+import javax.annotation.Nonnull;
+
 import org.basepom.mojo.inliner.jarjar.transform.asm.PackageRemapper;
 import org.basepom.mojo.inliner.jarjar.transform.asm.RemappingClassTransformer;
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassDelete;
@@ -40,22 +42,22 @@ public class DefaultJarProcessor implements RulesFileParser.Output {
     }
 
     @Override
-    public void addClassDelete(ClassDelete classDelete) {
+    public void addClassDelete(@Nonnull ClassDelete classDelete) {
         classFilterJarProcessor.addClassDelete(classDelete);
     }
 
     @Override
-    public void addClassRename(ClassRename classRename) {
+    public void addClassRename(@Nonnull ClassRename classRename) {
         packageRemapper.addRule(classRename);
     }
 
     @Override
-    public void addClassKeep(ClassKeep classKeep) {
+    public void addClassKeep(@Nonnull ClassKeep classKeep) {
         classFilterJarProcessor.addClassKeep(classKeep);
     }
 
     @Override
-    public void addClassKeepTransitive(ClassKeepTransitive classKeepTransitive) {
+    public void addClassKeepTransitive(@Nonnull ClassKeepTransitive classKeepTransitive) {
         classClosureFilterJarProcessor.addKeep(classKeepTransitive);
     }
 

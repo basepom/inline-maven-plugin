@@ -13,6 +13,8 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
+import static java.lang.String.format;
+
 import java.io.IOException;
 import javax.annotation.Nonnull;
 
@@ -25,7 +27,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractFilterJarProcessor implements JarProcessor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractFilterJarProcessor.class);
+    protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
     protected abstract boolean isFiltered(@Nonnull String name);
 
@@ -33,22 +35,24 @@ public abstract class AbstractFilterJarProcessor implements JarProcessor {
         return true;
     }
 
+    @Nonnull
     @Override
-    public Result scan(Transformable struct) throws IOException {
+    public Result scan(@Nonnull Transformable struct) {
         if (isFiltered(struct.name)) {
             if (isVerbose()) {
-                LOG.debug("{}.scan discarded {}", getClass().getSimpleName(), struct.name);
+                log.debug(format("scan discarded '%s'", struct.name));
             }
             return Result.DISCARD;
         }
         return Result.KEEP;
     }
 
+    @Nonnull
     @Override
-    public Result process(Transformable struct) throws IOException {
+    public Result process(@Nonnull Transformable struct) throws IOException {
         if (isFiltered(struct.name)) {
             if (isVerbose()) {
-                LOG.debug("{}.process discarded {}", getClass().getSimpleName(), struct.name);
+                log.debug(format("process discarded %s", struct.name));
             }
             return Result.DISCARD;
         }

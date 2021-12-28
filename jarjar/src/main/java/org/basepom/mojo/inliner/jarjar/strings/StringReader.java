@@ -50,7 +50,7 @@ public abstract class StringReader extends ClassVisitor {
     @Override
     public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
         handleObject(value);
-        return new FieldVisitor(Opcodes.ASM5) {
+        return new FieldVisitor(Opcodes.ASM9) {
             @Override
             public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
                 return StringReader.this.visitAnnotation(desc, visible);
@@ -60,7 +60,7 @@ public abstract class StringReader extends ClassVisitor {
 
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-        return new AnnotationVisitor(Opcodes.ASM5) {
+        return new AnnotationVisitor(Opcodes.ASM9) {
             @Override
             public void visit(String name, Object value) {
                 handleObject(value);
@@ -81,7 +81,7 @@ public abstract class StringReader extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc,
             String signature, String[] exceptions) {
-        return new MethodVisitor(Opcodes.ASM5) {
+        return new MethodVisitor(Opcodes.ASM9) {
             @Override
             public void visitLdcInsn(Object cst) {
                 handleObject(cst);

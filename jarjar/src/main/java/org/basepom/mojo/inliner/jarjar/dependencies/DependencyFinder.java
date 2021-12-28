@@ -13,6 +13,8 @@
  */
 package org.basepom.mojo.inliner.jarjar.dependencies;
 
+import static java.lang.String.format;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -22,9 +24,13 @@ import java.util.Map;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathArchive;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathResource;
+import org.basepom.mojo.inliner.jarjar.strings.StringDumper;
 import org.objectweb.asm.ClassReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DependencyFinder {
+    private static final Logger LOG = LoggerFactory.getLogger(StringDumper.class);
 
     public void run(DependencyHandler handler, ClassPath from, ClassPath to) throws IOException {
         try {
@@ -36,7 +42,7 @@ public class DependencyFinder {
                         header.read(in);
                         classToArchiveMap.put(header.getClassName(), toArchive.getArchiveName());
                     } catch (Exception e) {
-                        System.err.println("Error reading " + toResource.getName() + ": " + e.getMessage());
+                        LOG.error(format("Error reading %s", toResource.getName()), e);
                     }
                 }
             }
@@ -48,7 +54,7 @@ public class DependencyFinder {
                         new ClassReader(in).accept(new DependencyFinderClassVisitor(classToArchiveMap, fromArchive.getArchiveName(), handler),
                                 ClassReader.SKIP_DEBUG);
                     } catch (Exception e) {
-                        System.err.println("Error reading " + fromResource.getName() + ": " + e.getMessage());
+                        LOG.error(format("Error reading %s", fromResource.getName()), e);
                     }
                 }
             }

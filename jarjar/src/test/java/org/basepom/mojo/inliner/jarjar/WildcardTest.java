@@ -14,6 +14,7 @@
 package org.basepom.mojo.inliner.jarjar;
 
 
+import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.basepom.mojo.inliner.jarjar.transform.config.ResourceRename;
@@ -39,9 +40,9 @@ public class WildcardTest {
 
     private static void wildcard(String pattern, String result, String value, String expect) {
         ResourceRename wc = new ResourceRename(pattern, result);
-        LOG.info("Compile: " + pattern + " -> " + wc);
+        LOG.info(format("Compile: '%s' -> '%s'", pattern, wc));
         String actual = wc.replace(value);
-        LOG.info("Replace: " + value + " -> " + actual + " (expected " + expect + ")");
+        LOG.info(format("Replace: '%s' -> '%s' (expected: '%s')", value, actual, expect));
         assertEquals(expect, actual);
     }
 }

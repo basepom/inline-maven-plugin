@@ -13,6 +13,8 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
+import static java.lang.String.format;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,8 +34,6 @@ import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Keeps all classes reachable from a given set of roots.
@@ -41,8 +41,6 @@ import org.slf4j.LoggerFactory;
  * Put this early in the chain as it does not honour renames.
  */
 public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ClassClosureJarProcessor.class);
 
     private static class DependencyCollector extends Remapper {
 
@@ -94,8 +92,9 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
         return !patterns.isEmpty();
     }
 
+    @Nonnull
     @Override
-    public Result scan(Transformable struct) {
+    public Result scan(@Nonnull Transformable struct) {
         if (!isEnabled()) {
             return Result.KEEP;
         }
@@ -113,7 +112,7 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
                 collector.dependencies.remove(name);
             }
         } catch (Exception e) {
-            LOG.warn("Error reading " + struct.name + ": " + e.getMessage());
+            log.warn(format("Error reading '%s'", struct.name), e);
         }
         return Result.KEEP;
     }
@@ -130,7 +129,7 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
     }
 
     @Override
-    protected boolean isFiltered(String name) {
+    protected boolean isFiltered(@Nonnull String name) {
         if (closure == null) {
             closure = new HashSet<>();
             addTransitiveClosure(closure, roots);
@@ -138,8 +137,9 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
         return !closure.contains(name);
     }
 
+    @Nonnull
     @Override
-    public Result process(Transformable struct) throws IOException {
+    public Result process(@Nonnull Transformable struct) throws IOException {
         if (!isEnabled()) {
             return Result.KEEP;
         }

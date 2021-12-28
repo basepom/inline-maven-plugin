@@ -13,6 +13,8 @@
  */
 package org.basepom.mojo.inliner.jarjar.strings;
 
+import static java.lang.String.format;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -23,8 +25,11 @@ import org.basepom.mojo.inliner.jarjar.classpath.ClassPathArchive;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathResource;
 import org.basepom.mojo.inliner.jarjar.util.IoUtil;
 import org.objectweb.asm.ClassReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StringDumper {
+    private static final Logger LOG = LoggerFactory.getLogger(StringDumper.class);
 
     public void run(Appendable out, ClassPath classPath) throws IOException {
         StringReader stringReader = new DumpStringReader(out);
@@ -33,7 +38,7 @@ public class StringDumper {
                 try (InputStream in = classPathResource.openStream()) {
                     new ClassReader(in).accept(stringReader, 0);
                 } catch (Exception e) {
-                    System.err.println("Error reading " + classPathResource + ": " + e.getMessage());
+                    LOG.error(format("Error reading %s", classPathResource), e);
                 }
                 IoUtil.flush(out);
             }
@@ -50,7 +55,7 @@ public class StringDumper {
         }
 
         @Override
-        public void visitString(String className, String value, int line) {
+        public void visitString(@Nonnull String className, @Nonnull String value, int line) {
             if (value.length() > 0) {
                 try {
                     if (!className.equals(this.className)) {
@@ -59,7 +64,7 @@ public class StringDumper {
                     }
                     out.append("\t");
                     if (line >= 0) {
-                        out.append(line + ": ");
+                        out.append(String.valueOf(line)).append(": ");
                     }
                     out.append(escapeStringLiteral(value));
                     out.append("\n");

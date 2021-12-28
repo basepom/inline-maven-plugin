@@ -74,7 +74,6 @@ public class PatternUtils {
         regex = replaceAllLiteral(regex, estar, "*\\??)");  // Although we replaced with + above, we mean *
         regex = replaceAllLiteral(regex, internal, "\\$");  // Convert internal class symbols to regular expressions
         return Pattern.compile("\\A" + regex + "\\Z");
-        // this.count = this.pattern.matcher("foo").groupCount();
     }
 
     private enum State {
@@ -132,7 +131,6 @@ public class PatternUtils {
         if (count < max) {
             throw new IllegalArgumentException("Result includes impossible placeholder \"@" + max + "\": " + result);
         }
-        // System.err.println(this);
         return parts;
     }
 

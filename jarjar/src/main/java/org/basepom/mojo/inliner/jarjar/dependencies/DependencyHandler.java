@@ -14,6 +14,7 @@
 package org.basepom.mojo.inliner.jarjar.dependencies;
 
 import java.io.IOException;
+import javax.annotation.Nonnull;
 
 public interface DependencyHandler {
 
@@ -24,7 +25,7 @@ public interface DependencyHandler {
 
     void handleStart() throws IOException;
 
-    void handle(Dependency from, Dependency to) throws IOException;
+    void handle(@Nonnull Dependency from, @Nonnull Dependency to) throws IOException;
 
     void handleEnd() throws IOException;
 }

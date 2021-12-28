@@ -54,7 +54,7 @@ public class Pair<T> {
         if (!getClass().equals(obj.getClass())) {
             return false;
         }
-        Pair o = (Pair) obj;
+        Pair<?> o = (Pair<?>) obj;
         return left.equals(o.left)
                 && right.equals(o.right);
     }

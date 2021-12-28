@@ -32,13 +32,15 @@ public class ResourceRenamerJarProcessor implements JarProcessor {
         this.pr = pr;
     }
 
+    @Nonnull
     @Override
-    public Result scan(Transformable struct) {
+    public Result scan(@Nonnull Transformable struct) {
         return Result.KEEP;
     }
 
+    @Nonnull
     @Override
-    public Result process(Transformable struct) {
+    public Result process(@Nonnull Transformable struct) {
         if (!ClassNameUtils.isClass(struct.name)) {
             struct.name = pr.mapPath(struct.name);
         }

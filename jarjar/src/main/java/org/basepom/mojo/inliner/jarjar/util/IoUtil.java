@@ -24,9 +24,10 @@ import java.io.OutputStream;
 import javax.annotation.Nonnull;
 import javax.annotation.WillNotClose;
 
-public class IoUtil {
+public final class IoUtil {
 
     private IoUtil() {
+        throw new AssertionError("IoUtil can not be instantiated");
     }
 
     public static void copy(@Nonnull @WillNotClose InputStream is, @Nonnull @WillNotClose OutputStream out, @Nonnull byte[] buf) throws IOException {
@@ -57,5 +58,4 @@ public class IoUtil {
             ((Closeable) o).close();
         }
     }
-
 }

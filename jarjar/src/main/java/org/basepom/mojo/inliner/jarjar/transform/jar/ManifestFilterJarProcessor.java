@@ -14,6 +14,7 @@
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
 import java.util.Collections;
+import javax.annotation.Nonnull;
 
 /**
  * Excludes the manifest.
@@ -37,7 +38,7 @@ public class ManifestFilterJarProcessor extends PathFilterJarProcessor {
     }
 
     @Override
-    protected boolean isFiltered(String name) {
+    protected boolean isFiltered(@Nonnull String name) {
         if (!isEnabled()) {
             return false;
         }

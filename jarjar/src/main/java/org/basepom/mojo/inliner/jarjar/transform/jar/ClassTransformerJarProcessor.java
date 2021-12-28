@@ -13,6 +13,8 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
+import static java.lang.String.format;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public class ClassTransformerJarProcessor implements JarProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClassTransformerJarProcessor.class);
+
     private final List<ClassTransformer> classProcessors;
 
     public ClassTransformerJarProcessor(@Nonnull List<ClassTransformer> classProcessors) {
@@ -52,7 +55,7 @@ public class ClassTransformerJarProcessor implements JarProcessor {
 
     @Override
     @Nonnull
-    public Result process(Transformable struct) {
+    public Result process(@Nonnull Transformable struct) {
         if (ClassNameUtils.isClass(struct.name)) {
             try {
                 ClassReader reader = new ClassReader(struct.data);
@@ -66,7 +69,7 @@ public class ClassTransformerJarProcessor implements JarProcessor {
                 struct.name = ClassNameUtils.javaNameToPath(namer.getClassName());
                 struct.data = writer.toByteArray();
             } catch (Exception e) {
-                LOG.warn("Failed to read class " + struct.name + ": " + e);
+                LOG.warn(format("Failed to read class '%s'", struct.name), e);
             }
         }
         return Result.KEEP;

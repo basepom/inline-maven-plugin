@@ -14,6 +14,7 @@
 package org.basepom.mojo.inliner.jarjar.dependencies;
 
 import java.io.IOException;
+import javax.annotation.Nonnull;
 
 public class TextDependencyHandler extends AbstractDependencyHandler {
 
@@ -25,7 +26,7 @@ public class TextDependencyHandler extends AbstractDependencyHandler {
     }
 
     @Override
-    protected void handle(String from, String to) throws IOException {
+    protected void handle(@Nonnull String from, @Nonnull String to) throws IOException {
         out.append(from).append(" -> ").append(to).append("\n");
     }
 }

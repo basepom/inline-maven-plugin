@@ -78,11 +78,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
         @Override
         public boolean hasNext() {
             if (!zipEntries.hasMoreElements()) {
-                try {
-                    close();
-                } catch (IOException e) {
-                    // ignore
-                }
+                close();
                 return false;
             } else {
                 return true;
@@ -96,11 +92,13 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
                 throw new NoSuchElementException();
             }
             return new ClassPathResource() {
+                @Nonnull
                 @Override
                 public String getArchiveName() {
                     return zipFile.getName();
                 }
 
+                @Nonnull
                 @Override
                 public String getName() {
                     return entry.getName();
@@ -111,6 +109,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
                     return entry.getTime();
                 }
 
+                @Nonnull
                 @Override
                 public InputStream openStream() throws IOException {
                     return zipFile.getInputStream(entry);
@@ -124,8 +123,12 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
         }
 
         @Override
-        public void close() throws IOException {
-            zipFile.close();
+        public void close() {
+            try {
+                zipFile.close();
+            } catch (IOException e) {
+                // ignore
+            }
         }
     }
 
@@ -144,7 +147,6 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
     private static class DirectoryIterator implements Iterator<ClassPathResource> {
 
-        @Nonnull
         private static void findClassFiles(@Nonnull Collection<? super File> out, @Nonnull File dir) {
             final File[] files = dir.listFiles();
             if (files != null) {
@@ -165,7 +167,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
         DirectoryIterator(@Nonnull File root) {
             this.root = root;
-            List<File> files = new ArrayList<File>();
+            List<File> files = new ArrayList<>();
             findClassFiles(files, root);
             this.entries = files.iterator();
         }
@@ -180,11 +182,13 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
             final File file = entries.next();
             return new ClassPathResource() {
                 @Override
+                @Nonnull
                 public String getArchiveName() {
                     return root.getPath();
                 }
 
                 @Override
+                @Nonnull
                 public String getName() {
                     return file.getName();
                 }
@@ -195,6 +199,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
                 }
 
                 @Override
+                @Nonnull
                 public InputStream openStream() throws IOException {
                     return new BufferedInputStream(new FileInputStream(file));
                 }

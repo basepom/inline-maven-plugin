@@ -13,6 +13,8 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform;
 
+import static java.lang.String.format;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -84,7 +86,7 @@ public class JarTransformer {
     public void transform(@Nonnull ClassPath inputPath) throws IOException {
 
         for (ClassPathArchive inputArchive : inputPath) {
-            LOG.debug("Scanning archive {}", inputArchive);
+            LOG.debug(format("Scanning archive %s", inputArchive));
             for (ClassPathResource inputResource : inputArchive) {
                 Transformable struct = newTransformable(inputResource);
                 processor.scan(struct);
@@ -93,7 +95,7 @@ public class JarTransformer {
 
         JarOutputStream outputJarStream = new JarOutputStream(new FileOutputStream(outputFile));
         for (ClassPathArchive inputArchive : inputPath) {
-            LOG.info("Transforming archive {}", inputArchive);
+            LOG.info(format("Transforming archive %s", inputArchive));
             for (ClassPathResource inputResource : inputArchive) {
                 Transformable struct = newTransformable(inputResource);
                 if (processor.process(struct) == JarProcessor.Result.DISCARD) {
@@ -104,12 +106,12 @@ public class JarTransformer {
 
                 if (DuplicatePolicy.DISCARD.equals(duplicatePolicy)) {
                     if (!files.add(struct.name)) {
-                        LOG.debug("Discarding duplicate {}", struct.name);
+                        LOG.debug(format("Discarding duplicate %s", struct.name));
                         continue;
                     }
                 }
 
-                LOG.debug("Writing {}", struct.name);
+                LOG.debug(format("Writing %s", struct.name));
                 JarEntry outputEntry = new JarEntry(struct.name);
                 outputEntry.setTime(struct.time);
                 outputEntry.setCompressedSize(-1);
