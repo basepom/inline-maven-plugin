@@ -14,7 +14,6 @@
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
 /**
- *
  * @author shevek
  */
 public class DirectoryFilterJarProcessor extends AbstractFilterJarProcessor {

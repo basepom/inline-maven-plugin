@@ -17,9 +17,9 @@ import java.io.IOException;
 
 public interface DependencyHandler {
 
-    public enum Level {
+    enum Level {
 
-        CLASS, JAR;
+        CLASS, JAR
     }
 
     void handleStart() throws IOException;

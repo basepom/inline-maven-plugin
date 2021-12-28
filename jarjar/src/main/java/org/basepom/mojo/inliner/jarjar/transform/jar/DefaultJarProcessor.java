@@ -14,11 +14,11 @@
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
 import org.basepom.mojo.inliner.jarjar.transform.asm.PackageRemapper;
+import org.basepom.mojo.inliner.jarjar.transform.asm.RemappingClassTransformer;
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassDelete;
+import org.basepom.mojo.inliner.jarjar.transform.config.ClassKeep;
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassKeepTransitive;
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassRename;
-import org.basepom.mojo.inliner.jarjar.transform.asm.RemappingClassTransformer;
-import org.basepom.mojo.inliner.jarjar.transform.config.ClassKeep;
 import org.basepom.mojo.inliner.jarjar.transform.config.RulesFileParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

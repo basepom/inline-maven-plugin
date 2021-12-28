@@ -16,7 +16,6 @@ package org.basepom.mojo.inliner.jarjar.transform.config;
 import javax.annotation.Nonnull;
 
 /**
- *
  * @author shevek
  */
 public abstract class AbstractResourcePattern extends AbstractPattern {

@@ -13,10 +13,10 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.config;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 public class PatternUtils {
@@ -27,7 +27,7 @@ public class PatternUtils {
     private static final Pattern dstar = Pattern.compile("\\*\\*");
     private static final Pattern star = Pattern.compile("\\*");
     private static final Pattern estar = Pattern.compile("\\+\\??\\)\\Z");
-    private static final Pattern internal  = Pattern.compile("\\$");
+    private static final Pattern internal = Pattern.compile("\\$");
 
     @Nonnull
     private static String replaceAllLiteral(@Nonnull String value, @Nonnull Pattern pattern, @Nonnull String replace) {
@@ -41,13 +41,15 @@ public class PatternUtils {
         StringBuilder b = new StringBuilder();
 
         for (int i = 0; i < parts.length; i++) {
-            if (i != 0)
+            if (i != 0) {
                 b.append('.');
+            }
 
-            if (parts[i].contains("*"))
+            if (parts[i].contains("*")) {
                 b.append(parts[i]);
-            else
+            } else {
                 b.append(Pattern.quote(parts[i]));
+            }
         }
 
         return b.toString();
@@ -56,12 +58,15 @@ public class PatternUtils {
 
     @Nonnull
     public static Pattern newPattern(@Nonnull String pattern) {
-        if (pattern.equals("**"))
+        if (pattern.equals("**")) {
             throw new IllegalArgumentException("'**' is not a valid pattern");
-        if (!isPossibleQualifiedName(pattern, "/*"))
+        }
+        if (!isPossibleQualifiedName(pattern, "/*")) {
             throw new IllegalArgumentException("Not a valid package pattern: " + pattern);
-        if (pattern.indexOf("***") >= 0)
+        }
+        if (pattern.indexOf("***") >= 0) {
             throw new IllegalArgumentException("The sequence '***' is invalid in a package pattern");
+        }
 
         String regex = escapeComponents(pattern);
         regex = replaceAllLiteral(regex, dstar, "(.+?)");   // One wildcard test requires the argument to be allowably empty.
@@ -72,9 +77,9 @@ public class PatternUtils {
         // this.count = this.pattern.matcher("foo").groupCount();
     }
 
-    private static enum State {
+    private enum State {
 
-        NORMAL, ESCAPE;
+        NORMAL, ESCAPE
     }
 
     @Nonnull
@@ -107,11 +112,13 @@ public class PatternUtils {
                         case '9':
                             break;
                         default:
-                            if (i == mark)
+                            if (i == mark) {
                                 throw new IllegalArgumentException("Backslash not followed by a digit");
+                            }
                             int n = Integer.parseInt(result.substring(mark, i));
-                            if (n > max)
+                            if (n > max) {
                                 max = n;
+                            }
                             parts.add(Integer.valueOf(n));
                             mark = i--;
                             state = State.NORMAL;
@@ -122,29 +129,32 @@ public class PatternUtils {
         }
 
         int count = pattern.matcher("foo").groupCount();
-        if (count < max)
+        if (count < max) {
             throw new IllegalArgumentException("Result includes impossible placeholder \"@" + max + "\": " + result);
+        }
         // System.err.println(this);
         return parts;
     }
 
     public static String replace(@Nonnull AbstractPattern pattern, @Nonnull List<Object> replace, String value) {
         Matcher matcher = pattern.getMatcher(value);
-        if (matcher == null)
+        if (matcher == null) {
             return null;
+        }
         StringBuilder sb = new StringBuilder();
         for (Object part : replace) {
-            if (part instanceof String)
+            if (part instanceof String) {
                 sb.append((String) part);
-            else
+            } else {
                 sb.append(matcher.group((Integer) part));
+            }
         }
         return sb.toString();
     }
 
     public static final String PACKAGE_INFO = "package-info";
 
-    /* pp */ static boolean isPossibleQualifiedName(@Nonnull String value, @Nonnull String extraAllowedCharacters) {
+    static boolean isPossibleQualifiedName(@Nonnull String value, @Nonnull String extraAllowedCharacters) {
         // package-info violates the spec for Java Identifiers.
         // Nevertheless, expressions that end with this string are still legal.
         // See 7.4.1.1 of the Java language spec for discussion.
@@ -153,10 +163,12 @@ public class PatternUtils {
         }
         for (int i = 0, len = value.length(); i < len; i++) {
             char c = value.charAt(i);
-            if (Character.isJavaIdentifierPart(c))
+            if (Character.isJavaIdentifierPart(c)) {
                 continue;
-            if (extraAllowedCharacters.indexOf(c) >= 0)
+            }
+            if (extraAllowedCharacters.indexOf(c) >= 0) {
                 continue;
+            }
             return false;
         }
         return true;
@@ -166,14 +178,15 @@ public class PatternUtils {
      * Copies the given {@link Iterable} into a new {@link List}.
      *
      * @param <T> The free parameter for the element type.
-     * @param in The Iterable to copy.
+     * @param in  The Iterable to copy.
      * @return A new, mutable {@link ArrayList}.
      */
     @Nonnull
     public static <T extends AbstractPattern> List<T> toList(@Nonnull Iterable<? extends T> in) {
         List<T> out = new ArrayList<T>();
-        for (T i : in)
+        for (T i : in) {
             out.add(i);
+        }
         return out;
     }
 
@@ -198,16 +211,18 @@ public class PatternUtils {
         for (char currentChar : line.toCharArray()) {
             switch (currentChar) {
                 case '*':
-                    if (escaping)
+                    if (escaping) {
                         sb.append("\\*");
-                    else
+                    } else {
                         sb.append(".*");
+                    }
                     break;
                 case '?':
-                    if (escaping)
+                    if (escaping) {
                         sb.append("\\?");
-                    else
+                    } else {
                         sb.append('.');
+                    }
                     break;
                 case '.':
                 case '(':
@@ -222,37 +237,39 @@ public class PatternUtils {
                     sb.append(currentChar);
                     break;
                 case '\\':
-                    if (escaping)
+                    if (escaping) {
                         sb.append("\\\\");
-                    else {
+                    } else {
                         escaping = true;
                         continue CHAR;
                     }
                     break;
                 case '{':
-                    if (escaping)
+                    if (escaping) {
                         sb.append("\\{");
-                    else {
+                    } else {
                         sb.append('(');
                         inCurlies++;
                     }
                     break;
                 case '}':
-                    if (escaping)
+                    if (escaping) {
                         sb.append("\\}");
-                    else if (inCurlies > 0) {
+                    } else if (inCurlies > 0) {
                         sb.append(')');
                         inCurlies--;
-                    } else
+                    } else {
                         sb.append("}");
+                    }
                     break;
                 case ',':
-                    if (escaping)
+                    if (escaping) {
                         sb.append("\\,");
-                    else if (inCurlies > 0)
+                    } else if (inCurlies > 0) {
                         sb.append('|');
-                    else
+                    } else {
                         sb.append(",");
+                    }
                     break;
                 default:
                     sb.append(currentChar);

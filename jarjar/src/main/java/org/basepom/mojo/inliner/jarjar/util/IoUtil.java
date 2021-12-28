@@ -13,7 +13,14 @@
  */
 package org.basepom.mojo.inliner.jarjar.util;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.Flushable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import javax.annotation.Nonnull;
 import javax.annotation.WillNotClose;
 
@@ -23,10 +30,11 @@ public class IoUtil {
     }
 
     public static void copy(@Nonnull @WillNotClose InputStream is, @Nonnull @WillNotClose OutputStream out, @Nonnull byte[] buf) throws IOException {
-        for (;;) {
+        for (; ; ) {
             int amt = is.read(buf);
-            if (amt < 0)
+            if (amt < 0) {
                 break;
+            }
             out.write(buf, 0, amt);
         }
     }
@@ -46,13 +54,15 @@ public class IoUtil {
     }
 
     public static void flush(Object o) throws IOException {
-        if (o instanceof Flushable)
+        if (o instanceof Flushable) {
             ((Flushable) o).flush();
+        }
     }
 
     public static void close(Object o) throws IOException {
-        if (o instanceof Closeable)
+        if (o instanceof Closeable) {
             ((Closeable) o).close();
+        }
     }
 
 }

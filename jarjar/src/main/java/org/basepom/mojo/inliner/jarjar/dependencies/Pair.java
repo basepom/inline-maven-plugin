@@ -16,7 +16,6 @@ package org.basepom.mojo.inliner.jarjar.dependencies;
 import javax.annotation.Nonnull;
 
 /**
- *
  * @author shevek
  */
 public class Pair<T> {
@@ -46,12 +45,15 @@ public class Pair<T> {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (null == obj)
+        }
+        if (null == obj) {
             return false;
-        if (!getClass().equals(obj.getClass()))
+        }
+        if (!getClass().equals(obj.getClass())) {
             return false;
+        }
         Pair o = (Pair) obj;
         return left.equals(o.left)
                 && right.equals(o.right);

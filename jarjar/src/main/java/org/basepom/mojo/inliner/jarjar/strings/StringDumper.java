@@ -13,14 +13,15 @@
  */
 package org.basepom.mojo.inliner.jarjar.strings;
 
+import java.io.IOException;
+import java.io.InputStream;
+import javax.annotation.Nonnull;
+
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathArchive;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathResource;
 import org.basepom.mojo.inliner.jarjar.util.IoUtil;
 import org.basepom.mojo.inliner.jarjar.util.RuntimeIOException;
-import java.io.IOException;
-import java.io.InputStream;
-import javax.annotation.Nonnull;
 import org.objectweb.asm.ClassReader;
 
 public class StringDumper {
@@ -47,7 +48,7 @@ public class StringDumper {
         private final Appendable out;
         private String className;
 
-        public DumpStringReader(@Nonnull Appendable out) {
+        DumpStringReader(@Nonnull Appendable out) {
             this.out = out;
         }
 
@@ -60,8 +61,9 @@ public class StringDumper {
                         out.append(className.replace('/', '.'));
                     }
                     out.append("\t");
-                    if (line >= 0)
+                    if (line >= 0) {
                         out.append(line + ": ");
+                    }
                     out.append(escapeStringLiteral(value));
                     out.append("\n");
                 } catch (IOException e) {
@@ -69,7 +71,7 @@ public class StringDumper {
                 }
             }
         }
-    };
+    }
 
     @Nonnull
     private static String escapeStringLiteral(@Nonnull String value) {

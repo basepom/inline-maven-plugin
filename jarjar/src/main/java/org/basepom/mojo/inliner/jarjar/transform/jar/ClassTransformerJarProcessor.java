@@ -13,14 +13,15 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
-import org.basepom.mojo.inliner.jarjar.transform.asm.ClassTransformer;
-import org.basepom.mojo.inliner.jarjar.transform.asm.GetNameClassWriter;
-import org.basepom.mojo.inliner.jarjar.transform.Transformable;
-import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nonnull;
+
+import org.basepom.mojo.inliner.jarjar.transform.Transformable;
+import org.basepom.mojo.inliner.jarjar.transform.asm.ClassTransformer;
+import org.basepom.mojo.inliner.jarjar.transform.asm.GetNameClassWriter;
+import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -28,8 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A JarProcessor which applies a list of {@link ClassTransformer ClassTransformers}
- * to any files ending in .class.
+ * A JarProcessor which applies a list of {@link ClassTransformer ClassTransformers} to any files ending in .class.
  */
 public class ClassTransformerJarProcessor implements JarProcessor {
 
@@ -57,8 +57,9 @@ public class ClassTransformerJarProcessor implements JarProcessor {
                 ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 GetNameClassWriter namer = new GetNameClassWriter(writer);
                 ClassVisitor cv = namer;
-                for (ClassTransformer classProcessor : classProcessors)
+                for (ClassTransformer classProcessor : classProcessors) {
                     cv = classProcessor.transform(cv);
+                }
                 reader.accept(cv, ClassReader.EXPAND_FRAMES);
                 struct.name = ClassNameUtils.javaNameToPath(namer.getClassName());
                 struct.data = writer.toByteArray();

@@ -13,10 +13,6 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
-import org.basepom.mojo.inliner.jarjar.transform.config.PatternUtils;
-import org.basepom.mojo.inliner.jarjar.transform.config.ClassKeepTransitive;
-import org.basepom.mojo.inliner.jarjar.transform.Transformable;
-import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
+
+import org.basepom.mojo.inliner.jarjar.transform.Transformable;
+import org.basepom.mojo.inliner.jarjar.transform.config.ClassKeepTransitive;
+import org.basepom.mojo.inliner.jarjar.transform.config.PatternUtils;
+import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
@@ -36,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Keeps all classes reachable from a given set of roots.
- *
+ * <p>
  * Put this early in the chain as it does not honour renames.
  */
 public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
@@ -49,8 +50,9 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
 
         @Override
         public String map(String key) {
-            if (key.startsWith("java/") || key.startsWith("javax/"))
+            if (key.startsWith("java/") || key.startsWith("javax/")) {
                 return null;
+            }
             dependencies.add(key);
             return null;
         }
@@ -94,14 +96,17 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
 
     @Override
     public Result scan(Transformable struct) throws IOException {
-        if (!isEnabled())
+        if (!isEnabled()) {
             return Result.KEEP;
+        }
         try {
             if (ClassNameUtils.isClass(struct.name)) {
                 String name = struct.name.substring(0, struct.name.length() - 6);
-                for (ClassKeepTransitive pattern : patterns)
-                    if (pattern.matches(name))
+                for (ClassKeepTransitive pattern : patterns) {
+                    if (pattern.matches(name)) {
                         roots.add(name);
+                    }
+                }
                 DependencyCollector collector = new DependencyCollector();
                 dependencies.put(name, collector.dependencies);
                 new ClassReader(new ByteArrayInputStream(struct.data)).accept(new ClassRemapper(null, collector), ClassReader.EXPAND_FRAMES);
@@ -114,11 +119,14 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
     }
 
     private void addTransitiveClosure(Collection<? super String> out, Collection<String> itemDependencies) {
-        if (itemDependencies == null)
+        if (itemDependencies == null) {
             return;
-        for (String name : itemDependencies)
-            if (out.add(name))
+        }
+        for (String name : itemDependencies) {
+            if (out.add(name)) {
                 addTransitiveClosure(out, dependencies.get(name));
+            }
+        }
     }
 
     @Override
@@ -132,10 +140,12 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
 
     @Override
     public Result process(Transformable struct) throws IOException {
-        if (!isEnabled())
+        if (!isEnabled()) {
             return Result.KEEP;
-        if (!ClassNameUtils.isClass(struct.name))
+        }
+        if (!ClassNameUtils.isClass(struct.name)) {
             return Result.KEEP;
+        }
         return super.process(struct);
     }
 }

@@ -13,8 +13,8 @@
  */
 package org.basepom.mojo.inliner.jarjar.classpath;
 
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import javax.annotation.Nonnull;
 
 public abstract class ClassPathResource {

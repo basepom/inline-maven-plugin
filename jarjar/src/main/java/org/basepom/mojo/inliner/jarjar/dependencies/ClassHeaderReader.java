@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 
-/* pp */ class ClassHeaderReader {
+class ClassHeaderReader {
 
     private int access;
     private String thisClass;
@@ -31,8 +31,8 @@ import java.lang.reflect.Array;
     private byte[] b = new byte[0x2000];
     private int[] items = new int[1000];
     private int bsize = 0;
-    private MyByteArrayInputStream bin = new MyByteArrayInputStream();
-    private DataInputStream data = new DataInputStream(bin);
+    private final MyByteArrayInputStream bin = new MyByteArrayInputStream();
+    private final DataInputStream data = new DataInputStream(bin);
 
     public int getAccess() {
         return access;
@@ -63,8 +63,9 @@ import java.lang.reflect.Array;
             } catch (IOException e) {
                 // ignore
             }
-            if (b[0] != (byte) 0xCA || b[1] != (byte) 0xFE || b[2] != (byte) 0xBA || b[3] != (byte) 0xBE)
+            if (b[0] != (byte) 0xCA || b[1] != (byte) 0xFE || b[2] != (byte) 0xBA || b[3] != (byte) 0xBE) {
                 throw new ClassFormatError("Bad magic number");
+            }
 
             buffer(6);
             readUnsignedShort(4); // minorVersion
@@ -125,8 +126,9 @@ import java.lang.reflect.Array;
 
     private String readClass(int index) throws IOException {
         index = readUnsignedShort(index);
-        if (index == 0)
+        if (index == 0) {
             return null;
+        }
         index = readUnsignedShort(items[index]);
         bin.readFrom(b, items[index]);
         return data.readUTF();
@@ -140,13 +142,15 @@ import java.lang.reflect.Array;
     private static final int CHUNK = 2048;
 
     private void buffer(int amount) throws IOException {
-        if (amount > b.length)
+        if (amount > b.length) {
             b = (byte[]) resizeArray(b, b.length * 2);
+        }
         if (amount > bsize) {
             int rounded = (int) (CHUNK * Math.ceil((float) amount / CHUNK));
             bsize += read(in, b, bsize, rounded - bsize);
-            if (amount > bsize)
+            if (amount > bsize) {
                 throw new EOFException();
+            }
         }
     }
 
@@ -154,8 +158,9 @@ import java.lang.reflect.Array;
         int total = 0;
         while (total < len) {
             int result = in.read(b, off + total, len - total);
-            if (result == -1)
+            if (result == -1) {
                 break;
+            }
             total += result;
         }
         return total;
@@ -173,7 +178,7 @@ import java.lang.reflect.Array;
 
     private static class MyByteArrayInputStream extends ByteArrayInputStream {
 
-        public MyByteArrayInputStream() {
+        MyByteArrayInputStream() {
             super(new byte[0]);
         }
 

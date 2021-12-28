@@ -30,13 +30,13 @@ public class RulesFileParser {
 
     public interface Output {
 
-        public void addClassDelete(@Nonnull ClassDelete classDelete);
+        void addClassDelete(@Nonnull ClassDelete classDelete);
 
-        public void addClassRename(@Nonnull ClassRename classRename);
+        void addClassRename(@Nonnull ClassRename classRename);
 
-        public void addClassKeep(@Nonnull ClassKeep classKeep);
+        void addClassKeep(@Nonnull ClassKeep classKeep);
 
-        public void addClassKeepTransitive(@Nonnull ClassKeepTransitive classKeepTransitive);
+        void addClassKeepTransitive(@Nonnull ClassKeepTransitive classKeepTransitive);
     }
 
     private RulesFileParser() {
@@ -58,8 +58,9 @@ public class RulesFileParser {
         List<String> out = new ArrayList<String>();
         while (tok.hasMoreTokens()) {
             String token = tok.nextToken();
-            if (token.startsWith("#"))
+            if (token.startsWith("#")) {
                 break;
+            }
             out.add(token);
         }
         return out;
@@ -73,14 +74,17 @@ public class RulesFileParser {
             String line;
             while ((line = br.readLine()) != null) {
                 List<String> words = split(line);
-                if (words.isEmpty())
+                if (words.isEmpty()) {
                     continue;
-                if (words.size() < 2)
+                }
+                if (words.size() < 2) {
                     throw error(lineNumber, words, "not enough words on line.");
+                }
                 String type = words.get(0);
                 if (type.equals("rule")) {
-                    if (words.size() < 3)
+                    if (words.size() < 3) {
                         throw error(lineNumber, words, "'rule' requires 2 arguments.");
+                    }
                     output.addClassRename(new ClassRename(words.get(1), words.get(2)));
                 } else if (type.equals("zap")) {
                     output.addClassDelete(new ClassDelete(words.get(1)));

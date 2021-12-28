@@ -14,14 +14,14 @@
 package org.basepom.mojo.inliner.jarjar.transform.asm;
 
 import javax.annotation.Nonnull;
+
 import org.objectweb.asm.ClassVisitor;
 
 /**
- *
  * @author shevek
  */
 public interface ClassTransformer {
 
     @Nonnull
-    public ClassVisitor transform(@Nonnull ClassVisitor v);
+    ClassVisitor transform(@Nonnull ClassVisitor v);
 }

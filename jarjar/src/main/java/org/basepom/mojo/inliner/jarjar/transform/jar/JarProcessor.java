@@ -13,34 +13,34 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
-import org.basepom.mojo.inliner.jarjar.transform.Transformable;
 import java.io.IOException;
 import javax.annotation.Nonnull;
 
+import org.basepom.mojo.inliner.jarjar.transform.Transformable;
+
 public interface JarProcessor {
 
-    public static enum Result {
+    enum Result {
 
         KEEP,
-        DISCARD;
+        DISCARD
     }
 
     // public boolean isEnabled();
 
     @Nonnull
-    public Result scan(@Nonnull Transformable struct) throws IOException;
+    Result scan(@Nonnull Transformable struct) throws IOException;
 
     /**
      * Process the entry (e.g. rename the file)
      * <p>
-     * Returns <code>true</code> if the processor wants to retain the entry. In this case, the entry can be removed
-     * from the jar file in a future time. Return <code>false</code> for the entries which do not have been changed and
-     * there fore are not to be deleted
+     * Returns <code>true</code> if the processor wants to retain the entry. In this case, the entry can be removed from the jar file in a future time. Return
+     * <code>false</code> for the entries which do not have been changed and there fore are not to be deleted
      *
      * @param struct The archive entry to be transformed.
      * @return <code>true</code> if he process chain can continue after this process
      * @throws IOException if it all goes upside down
      */
     @Nonnull
-    public Result process(@Nonnull Transformable struct) throws IOException;
+    Result process(@Nonnull Transformable struct) throws IOException;
 }

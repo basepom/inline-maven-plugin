@@ -13,11 +13,6 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform;
 
-import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
-import org.basepom.mojo.inliner.jarjar.classpath.ClassPathArchive;
-import org.basepom.mojo.inliner.jarjar.classpath.ClassPathResource;
-import org.basepom.mojo.inliner.jarjar.transform.jar.JarProcessor;
-import org.basepom.mojo.inliner.jarjar.util.IoUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -28,6 +23,12 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import javax.annotation.Nonnull;
+
+import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
+import org.basepom.mojo.inliner.jarjar.classpath.ClassPathArchive;
+import org.basepom.mojo.inliner.jarjar.classpath.ClassPathResource;
+import org.basepom.mojo.inliner.jarjar.transform.jar.JarProcessor;
+import org.basepom.mojo.inliner.jarjar.util.IoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,13 +36,14 @@ public class JarTransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(JarTransformer.class);
 
-    public static enum DuplicatePolicy {
+    public enum DuplicatePolicy {
 
-        DISCARD, ERROR;
+        DISCARD, ERROR
     }
+
     private final File outputFile;
     private final JarProcessor processor;
-    private DuplicatePolicy duplicatePolicy = DuplicatePolicy.DISCARD;
+    private final DuplicatePolicy duplicatePolicy = DuplicatePolicy.DISCARD;
     private final byte[] buf = new byte[0x2000];
     private final Set<String> dirs = new HashSet<String>();
     private final Set<String> files = new HashSet<String>();
@@ -72,8 +74,9 @@ public class JarTransformer {
 
     private void addDirs(JarOutputStream outputJarStream, String name) throws IOException {
         int dirIdx = name.lastIndexOf('/');
-        if (dirIdx == -1)
+        if (dirIdx == -1) {
             return;
+        }
         String dirName = name.substring(0, dirIdx + 1);
         if (dirs.add(dirName)) {
             JarEntry dirEntry = new JarEntry(dirName);
@@ -103,8 +106,9 @@ public class JarTransformer {
                 LOG.info("Transforming archive {}", inputArchive);
                 for (ClassPathResource inputResource : inputArchive) {
                     Transformable struct = newTransformable(inputResource);
-                    if (processor.process(struct) == JarProcessor.Result.DISCARD)
+                    if (processor.process(struct) == JarProcessor.Result.DISCARD) {
                         continue;
+                    }
 
                     addDirs(outputJarStream, struct.name);
 

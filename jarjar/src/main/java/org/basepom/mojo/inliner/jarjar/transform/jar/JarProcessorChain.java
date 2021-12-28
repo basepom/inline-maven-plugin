@@ -13,17 +13,19 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
-import org.basepom.mojo.inliner.jarjar.transform.Transformable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import javax.annotation.Nonnull;
 
+import org.basepom.mojo.inliner.jarjar.transform.Transformable;
+
 public class JarProcessorChain extends ArrayList<JarProcessor> implements JarProcessor {
 
     public JarProcessorChain(@Nonnull Iterable<? extends JarProcessor> processors) {
-        for (JarProcessor processor : processors)
+        for (JarProcessor processor : processors) {
             add(processor);
+        }
     }
 
     public JarProcessorChain(@Nonnull JarProcessor... processors) {
@@ -32,17 +34,21 @@ public class JarProcessorChain extends ArrayList<JarProcessor> implements JarPro
 
     @Override
     public Result scan(Transformable struct) throws IOException {
-        for (JarProcessor processor : this)
-            if (processor.scan(struct) == Result.DISCARD)
+        for (JarProcessor processor : this) {
+            if (processor.scan(struct) == Result.DISCARD) {
                 return Result.DISCARD;
+            }
+        }
         return Result.KEEP;
     }
 
     @Override
     public Result process(Transformable struct) throws IOException {
-        for (JarProcessor processor : this)
-            if (processor.process(struct) == Result.DISCARD)
+        for (JarProcessor processor : this) {
+            if (processor.process(struct) == Result.DISCARD) {
                 return Result.DISCARD;
+            }
+        }
         return Result.KEEP;
     }
 }

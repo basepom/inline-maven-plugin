@@ -29,8 +29,9 @@ public abstract class AbstractPattern {
     private final Pattern pattern;
 
     public AbstractPattern(@Nonnull String patternText) {
-        if (patternText == null)
+        if (patternText == null) {
             throw new IllegalArgumentException("Pattern text may not be null.");
+        }
         this.patternText = patternText;
         this.pattern = PatternUtils.newPattern(patternText);
     }
@@ -47,11 +48,13 @@ public abstract class AbstractPattern {
 
     @CheckForNull
     protected Matcher getMatcher(@Nonnull String value) {
-        if (!PatternUtils.isPossibleQualifiedName(value, "/"))
+        if (!PatternUtils.isPossibleQualifiedName(value, "/")) {
             return null;
+        }
         Matcher matcher = pattern.matcher(value);
-        if (matcher.matches())
+        if (matcher.matches()) {
             return matcher;
+        }
         return null;
     }
 

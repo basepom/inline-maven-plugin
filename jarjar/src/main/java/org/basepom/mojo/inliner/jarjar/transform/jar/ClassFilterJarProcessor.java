@@ -13,26 +13,24 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
-import org.basepom.mojo.inliner.jarjar.transform.config.AbstractPattern;
-import org.basepom.mojo.inliner.jarjar.transform.config.ClassDelete;
-import org.basepom.mojo.inliner.jarjar.transform.config.ClassKeep;
-import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import org.basepom.mojo.inliner.jarjar.transform.config.AbstractPattern;
+import org.basepom.mojo.inliner.jarjar.transform.config.ClassDelete;
+import org.basepom.mojo.inliner.jarjar.transform.config.ClassKeep;
+import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 
 /**
  * Filters classes by name.
+ * <p>
+ * Keeps all classes specified by ClassKeep (default all classes). Then removes all classes specified by ClassDelete (default no classes). Ignores non-class
+ * resources.
  *
- * Keeps all classes specified by ClassKeep (default all classes).
- * Then removes all classes specified by ClassDelete (default no classes).
- * Ignores non-class resources.
- *
- * @see ClassNameUtils#isClass(String)
  * @author shevek
+ * @see ClassNameUtils#isClass(String)
  */
 public class ClassFilterJarProcessor extends AbstractFilterJarProcessor {
 
@@ -62,16 +60,19 @@ public class ClassFilterJarProcessor extends AbstractFilterJarProcessor {
 
     @Override
     protected boolean isFiltered(@Nonnull String name) {
-        if (!ClassNameUtils.isClass(name))
+        if (!ClassNameUtils.isClass(name)) {
             return false;
+        }
         name = name.substring(0, name.length() - 6);
         // LOG.debug("Looking to include " + name);
         INCLUDE:
         {
-            if (keepPatterns.isEmpty())
+            if (keepPatterns.isEmpty()) {
                 break INCLUDE;
-            if (getMatchingPattern(keepPatterns, name) != null)
+            }
+            if (getMatchingPattern(keepPatterns, name) != null) {
                 break INCLUDE;
+            }
             // We have include patterns, but none matched. Filter it.
             return true;
         }

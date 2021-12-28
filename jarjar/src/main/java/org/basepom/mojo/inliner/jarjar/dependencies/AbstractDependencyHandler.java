@@ -35,8 +35,9 @@ public abstract class AbstractDependencyHandler implements DependencyHandler {
         } else {
             pair = new Pair<String>(from.getClassName(), to.getClassName());
         }
-        if (seen.add(pair))
+        if (seen.add(pair)) {
             handle(pair.getLeft(), pair.getRight());
+        }
     }
 
     protected abstract void handle(@Nonnull String from, @Nonnull String to) throws IOException;

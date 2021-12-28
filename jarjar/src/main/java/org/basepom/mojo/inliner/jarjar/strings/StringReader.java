@@ -15,6 +15,7 @@ package org.basepom.mojo.inliner.jarjar.strings;
 
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
+
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -35,8 +36,9 @@ public abstract class StringReader extends ClassVisitor {
     public abstract void visitString(@Nonnull String className, @Nonnull String value, @Nonnegative int line);
 
     private void handleObject(Object value) {
-        if (value instanceof String)
+        if (value instanceof String) {
             visitString(className, (String) value, line);
+        }
     }
 
     @Override
@@ -93,8 +95,9 @@ public abstract class StringReader extends ClassVisitor {
             @Override
             public void visitInvokeDynamicInsn(String name, String desc,
                     Handle bsm, Object... bsmArgs) {
-                for (Object bsmArg : bsmArgs)
+                for (Object bsmArg : bsmArgs) {
                     handleObject(bsmArg);
+                }
             }
 
             @Override

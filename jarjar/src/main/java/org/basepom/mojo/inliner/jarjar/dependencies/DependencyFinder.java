@@ -13,15 +13,16 @@
  */
 package org.basepom.mojo.inliner.jarjar.dependencies;
 
-import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
-import org.basepom.mojo.inliner.jarjar.classpath.ClassPathArchive;
-import org.basepom.mojo.inliner.jarjar.classpath.ClassPathResource;
-import org.basepom.mojo.inliner.jarjar.util.RuntimeIOException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
+import org.basepom.mojo.inliner.jarjar.classpath.ClassPathArchive;
+import org.basepom.mojo.inliner.jarjar.classpath.ClassPathResource;
+import org.basepom.mojo.inliner.jarjar.util.RuntimeIOException;
 import org.objectweb.asm.ClassReader;
 
 public class DependencyFinder {

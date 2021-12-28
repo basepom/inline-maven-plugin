@@ -13,14 +13,15 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.asm;
 
-import org.basepom.mojo.inliner.jarjar.transform.config.ClassRename;
-import org.basepom.mojo.inliner.jarjar.transform.config.PatternUtils;
-import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
+
+import org.basepom.mojo.inliner.jarjar.transform.config.ClassRename;
+import org.basepom.mojo.inliner.jarjar.transform.config.PatternUtils;
+import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +53,9 @@ public class PackageRemapper extends Remapper {
         String s = typeCache.get(key);
         if (s == null) {
             s = replaceHelper(key);
-            if (key.equals(s))
+            if (key.equals(s)) {
                 s = null;
+            }
             typeCache.put(key, s);
         }
         return s;
@@ -73,15 +75,18 @@ public class PackageRemapper extends Remapper {
                 s = s.substring(0, slash + 1) + RESOURCE_SUFFIX;
             }
             boolean absolute = s.startsWith("/");
-            if (absolute)
+            if (absolute) {
                 s = s.substring(1);
+            }
 
             s = replaceHelper(s);
 
-            if (absolute)
+            if (absolute) {
                 s = "/" + s;
-            if (s.indexOf(RESOURCE_SUFFIX) < 0)
+            }
+            if (s.indexOf(RESOURCE_SUFFIX) < 0) {
                 return path;
+            }
             s = s.substring(0, s.length() - RESOURCE_SUFFIX.length()) + end;
             pathCache.put(path, s);
         }
@@ -97,8 +102,9 @@ public class PackageRemapper extends Remapper {
                 if (ClassNameUtils.isArrayForName(s)) {
                     String desc1 = s.replace('.', '/');
                     String desc2 = mapDesc(desc1);
-                    if (!desc2.equals(desc1))
+                    if (!desc2.equals(desc1)) {
                         return desc2.replace('/', '.');
+                    }
                 } else {
                     s = mapPath(s);
                     if (s.equals(value)) {
@@ -116,9 +122,11 @@ public class PackageRemapper extends Remapper {
                 valueCache.put(value, s);
             }
             // TODO: add back class name to verbose message
-            if (!s.equals(value))
-                if (LOG.isDebugEnabled())
+            if (!s.equals(value)) {
+                if (LOG.isDebugEnabled()) {
                     LOG.debug("Changed \"" + value + "\" -> \"" + s + "\"");
+                }
+            }
             return s;
         } else {
             return super.mapValue(value);
@@ -128,8 +136,9 @@ public class PackageRemapper extends Remapper {
     private String replaceHelper(String value) {
         for (ClassRename pattern : patterns) {
             String result = pattern.replace(value);
-            if (result != null)
+            if (result != null) {
                 return result;
+            }
         }
         return value;
     }

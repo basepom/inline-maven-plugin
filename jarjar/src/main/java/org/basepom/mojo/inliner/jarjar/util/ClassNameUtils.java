@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 /**
- *
  * @author shevek
  */
 public class ClassNameUtils {
@@ -28,6 +27,7 @@ public class ClassNameUtils {
 
     /**
      * Returns true if the given string looks like a Java array name.
+     *
      * @param value The name to inspect.
      * @return true if the given string looks like a Java array name.
      */
@@ -40,18 +40,22 @@ public class ClassNameUtils {
     }
 
     // TODO: use this for package remapping too?
+
     /**
      * Returns true if the String looks like a Java type name.
+     *
      * @param value The name to inspect.
      * @return true if the String looks like a Java type name.
      */
     public static boolean isForName(@Nonnull String value) {
-        if (value.equals(""))
+        if (value.equals("")) {
             return false;
+        }
         for (int i = 0, len = value.length(); i < len; i++) {
             char c = value.charAt(i);
-            if (c != '.' && !Character.isJavaIdentifierPart(c))
+            if (c != '.' && !Character.isJavaIdentifierPart(c)) {
                 return false;
+            }
         }
         return true;
     }
@@ -63,8 +67,9 @@ public class ClassNameUtils {
 
     @Nonnull
     public static String pathToJavaName(@Nonnull String path) {
-        if (isClass(path))
+        if (isClass(path)) {
             path = path.substring(0, path.length() - EXT_CLASS.length());
+        }
         return path.replace('/', '.');
     }
 
@@ -79,8 +84,9 @@ public class ClassNameUtils {
     }
 
     public static boolean hasExtension(@Nonnull String name, @Nonnull String ext) {
-        if (name.length() < ext.length())
+        if (name.length() < ext.length()) {
             return false;
+        }
         String actual = name.substring(name.length() - ext.length());
         return actual.equalsIgnoreCase(ext);
     }

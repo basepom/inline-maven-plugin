@@ -19,7 +19,6 @@ import java.util.Iterator;
 import javax.annotation.Nonnull;
 
 /**
- *
  * @author shevek
  */
 public class ClassPath implements Iterable<ClassPathArchive> {
@@ -50,7 +49,7 @@ public class ClassPath implements Iterable<ClassPathArchive> {
 
         private final Iterator<? extends File> entryIterator;
 
-        public PathIterator() {
+        PathIterator() {
             this.entryIterator = entries.iterator();
         }
 
@@ -62,12 +61,14 @@ public class ClassPath implements Iterable<ClassPathArchive> {
         @Override
         public ClassPathArchive next() {
             File entryFile = entryIterator.next();
-            if (!entryFile.isAbsolute())
+            if (!entryFile.isAbsolute()) {
                 entryFile = new File(root, entryFile.getPath());
-            if (entryFile.isDirectory())
+            }
+            if (entryFile.isDirectory()) {
                 return new ClassPathArchive.DirectoryArchive(entryFile);
-            else
+            } else {
                 return new ClassPathArchive.ZipArchive(entryFile);
+            }
         }
 
         @Override

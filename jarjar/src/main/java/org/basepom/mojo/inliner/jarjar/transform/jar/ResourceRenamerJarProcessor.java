@@ -13,11 +13,12 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
-import org.basepom.mojo.inliner.jarjar.transform.asm.PackageRemapper;
-import org.basepom.mojo.inliner.jarjar.transform.Transformable;
-import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 import java.io.IOException;
 import javax.annotation.Nonnull;
+
+import org.basepom.mojo.inliner.jarjar.transform.Transformable;
+import org.basepom.mojo.inliner.jarjar.transform.asm.PackageRemapper;
+import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 
 /**
  * Allows any file which is NOT a JAR file.
@@ -37,8 +38,9 @@ public class ResourceRenamerJarProcessor implements JarProcessor {
 
     @Override
     public Result process(Transformable struct) throws IOException {
-        if (!ClassNameUtils.isClass(struct.name))
+        if (!ClassNameUtils.isClass(struct.name)) {
             struct.name = pr.mapPath(struct.name);
+        }
         return Result.KEEP;
     }
 }

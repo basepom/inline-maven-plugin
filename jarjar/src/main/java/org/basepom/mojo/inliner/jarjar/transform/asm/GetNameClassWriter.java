@@ -14,6 +14,7 @@
 package org.basepom.mojo.inliner.jarjar.transform.asm;
 
 import javax.annotation.Nonnull;
+
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -24,7 +25,7 @@ public class GetNameClassWriter extends ClassVisitor {
     /**
      * Constructs a new GetNameClassWriter.
      */
-     // * @param flags may include {@link ClassWriter#COMPUTE_FRAMES} * or {@link ClassWriter#COMPUTE_MAXS}.
+    // * @param flags may include {@link ClassWriter#COMPUTE_FRAMES} * or {@link ClassWriter#COMPUTE_MAXS}.
     public GetNameClassWriter(ClassVisitor cv) {
         super(Opcodes.ASM5, cv);
     }

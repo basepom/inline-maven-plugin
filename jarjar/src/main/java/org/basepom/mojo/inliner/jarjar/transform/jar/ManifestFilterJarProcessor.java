@@ -38,8 +38,9 @@ public class ManifestFilterJarProcessor extends PathFilterJarProcessor {
 
     @Override
     protected boolean isFiltered(String name) {
-        if (!isEnabled())
+        if (!isEnabled()) {
             return false;
+        }
         return super.isFiltered(name);
     }
 

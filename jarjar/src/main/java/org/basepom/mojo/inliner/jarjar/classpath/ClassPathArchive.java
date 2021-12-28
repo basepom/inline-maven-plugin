@@ -13,10 +13,6 @@
  */
 package org.basepom.mojo.inliner.jarjar.classpath;
 
-import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
-import org.basepom.mojo.inliner.jarjar.util.RuntimeIOException;
-
-import javax.annotation.Nonnull;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -31,6 +27,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import javax.annotation.Nonnull;
+
+import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
+import org.basepom.mojo.inliner.jarjar.util.RuntimeIOException;
 
 /**
  * @author shevek
@@ -68,7 +68,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
     private static class ZipIterator implements Iterator<ClassPathResource>, Closeable {
 
         private final ZipFile zipFile;
-        private Enumeration<? extends ZipEntry> zipEntries;
+        private final Enumeration<? extends ZipEntry> zipEntries;
 
         ZipIterator(@Nonnull File file) throws IOException {
             this.zipFile = new ZipFile(file);
@@ -92,8 +92,9 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
         @Override
         public ClassPathResource next() {
             final ZipEntry entry = zipEntries.nextElement();
-            if (entry == null)
+            if (entry == null) {
                 throw new NoSuchElementException();
+            }
             return new ClassPathResource() {
                 @Override
                 public String getArchiveName() {

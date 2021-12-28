@@ -13,14 +13,14 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
-import org.basepom.mojo.inliner.jarjar.transform.Transformable;
 import java.io.IOException;
 import javax.annotation.Nonnull;
+
+import org.basepom.mojo.inliner.jarjar.transform.Transformable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author shevek
  */
 public abstract class AbstractFilterJarProcessor implements JarProcessor {
@@ -36,8 +36,9 @@ public abstract class AbstractFilterJarProcessor implements JarProcessor {
     @Override
     public Result scan(Transformable struct) throws IOException {
         if (isFiltered(struct.name)) {
-            if (isVerbose())
+            if (isVerbose()) {
                 LOG.debug("{}.scan discarded {}", getClass().getSimpleName(), struct.name);
+            }
             return Result.DISCARD;
         }
         return Result.KEEP;
@@ -46,8 +47,9 @@ public abstract class AbstractFilterJarProcessor implements JarProcessor {
     @Override
     public Result process(Transformable struct) throws IOException {
         if (isFiltered(struct.name)) {
-            if (isVerbose())
+            if (isVerbose()) {
                 LOG.debug("{}.process discarded {}", getClass().getSimpleName(), struct.name);
+            }
             return Result.DISCARD;
         }
         return Result.KEEP;
