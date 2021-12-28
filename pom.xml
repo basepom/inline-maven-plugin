@@ -72,6 +72,7 @@
 
         <dep.slf4j.version>1.7.32</dep.slf4j.version>
         <dep.junit5.version>5.8.2</dep.junit5.version>
+        <dep.asm.version>9.2</dep.asm.version>
     </properties>
 
     <modules>
@@ -82,6 +83,12 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>org.basepom</groupId>
+                <artifactId>jarjar</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${dep.slf4j.version}</version>
@@ -91,6 +98,24 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
                 <version>${dep.slf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-annotations</artifactId>
+                <version>${dep.spotbugs.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>${dep.asm.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-commons</artifactId>
+                <version>${dep.asm.version}</version>
             </dependency>
 
             <dependency>

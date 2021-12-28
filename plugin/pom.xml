@@ -17,71 +17,24 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.basepom</groupId>
-        <artifactId>basepom-oss</artifactId>
-        <version>42</version>
+        <groupId>org.basepom.maven</groupId>
+        <artifactId>inliner-maven-plugin-root</artifactId>
+        <version>0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>org.basepom.maven</groupId>
     <artifactId>inliner-maven-plugin</artifactId>
-    <version>0.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
-    <description>
-        Inlines one or more dependencies to a library.
-    </description>
-    <inceptionYear>2021</inceptionYear>
-
-    <url>https://basepom.github.io/inliner-maven-plugin/</url>
-
-    <licenses>
-        <license>
-            <name>Apache License 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <organization>
-        <name>The basepom project</name>
-        <url>https://github.com/basepom</url>
-    </organization>
-
-    <developers>
-        <developer>
-            <id>hgschmie</id>
-            <name>Henning Schmiedehausen</name>
-            <timezone>-8</timezone>
-        </developer>
-    </developers>
-
-    <scm>
-        <connection>scm:git:git://github.com/basepom/inliner-maven-plugin.git</connection>
-        <developerConnection>scm:git:git://github.com/basepom/inliner-maven-plugin.git</developerConnection>
-        <tag>HEAD</tag>
-        <url>https://github.com/basepom/inliner-maven-plugin</url>
-    </scm>
-
-    <issueManagement>
-        <system>Github</system>
-        <url>https://github.com/basepom/inliner-maven-plugin/issues</url>
-    </issueManagement>
-
     <properties>
-        <project.build.targetJdk>11</project.build.targetJdk>
-
         <dep.maven-api.version>3.8.4</dep.maven-api.version>
         <!-- <dep.maven-resolver.version>1.4.2</dep.maven-resolver.version> -->
         <dep.plexus.version>2.1.1</dep.plexus.version>
         <dep.maven-shared-utils.version>3.3.4</dep.maven-shared-utils.version>
         <dep.plugin.plugin.version>3.6.2</dep.plugin.plugin.version>
-        <dep.slf4j.version>1.7.32</dep.slf4j.version>
         <dep.guava.version>31.0.1-jre</dep.guava.version>
-        <dep.junit5.version>5.8.2</dep.junit5.version>
         <dep.auto-value.version>1.8.2</dep.auto-value.version>
         <dep.plugin.gmavenplus.plugin>1.13.1</dep.plugin.gmavenplus.plugin>
         <dep.groovy.version>3.0.9</dep.groovy.version>
-        <dep.asm.version>9.2</dep.asm.version>
     </properties>
 
     <!-- <dependencyManagement> -->
@@ -154,7 +107,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>${dep.slf4j.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -196,13 +148,11 @@
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
-            <version>${dep.asm.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-commons</artifactId>
-            <version>${dep.asm.version}</version>
         </dependency>
 
         <dependency>
@@ -225,14 +175,12 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>${dep.junit5.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>${dep.junit5.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -392,7 +340,6 @@
                     </exceptions>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 </project>

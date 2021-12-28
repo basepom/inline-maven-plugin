@@ -26,11 +26,6 @@
     <artifactId>jarjar</artifactId>
     <packaging>jar</packaging>
 
-    <properties>
-        <project.build.targetJdk>11</project.build.targetJdk>
-        <dep.asm.version>9.2</dep.asm.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -40,19 +35,17 @@
         <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
-            <version>4.4.2</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
-            <version>${dep.asm.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-commons</artifactId>
-            <version>${dep.asm.version}</version>
         </dependency>
 
         <!-- Test code -->
