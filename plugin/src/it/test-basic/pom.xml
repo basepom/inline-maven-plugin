@@ -12,7 +12,7 @@
 ~   limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -69,7 +69,26 @@
                 <version>@project.version@</version>
                 <configuration>
                     <inlineDependencies>
-                        <inlineDependency>com.google.guava:guava</inlineDependency>
+                        <inlineDependency>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google.**.*</pattern>
+                                    <location>org.basepom.relocated.google.@1.$@2</location>
+                                </relocation>
+                            </relocations>
+                        </inlineDependency>
+                        <inlineDependency>
+                            <artifactId>jackson-core</artifactId>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.fasterxml.**.*</pattern>
+                                    <location>org.basepom.relocated.fasterxml.@1.$@2</location>
+                                </relocation>
+                            </relocations>
+                        </inlineDependency>
                     </inlineDependencies>
                 </configuration>
             </plugin>

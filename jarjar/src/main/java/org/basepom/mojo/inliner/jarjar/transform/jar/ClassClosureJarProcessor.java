@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import org.basepom.mojo.inliner.jarjar.transform.Transformable;
@@ -92,29 +93,28 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
         return !patterns.isEmpty();
     }
 
-    @Nonnull
     @Override
-    public Result scan(@Nonnull Transformable struct) {
-        if (!isEnabled()) {
-            return Result.KEEP;
-        }
-        try {
-            if (ClassNameUtils.isClass(struct.name)) {
-                String name = struct.name.substring(0, struct.name.length() - 6);
-                for (ClassKeepTransitive pattern : patterns) {
-                    if (pattern.matches(name)) {
-                        roots.add(name);
+    @CheckForNull
+    public Transformable scan(@Nonnull Transformable struct, Chain chain) throws IOException {
+        if (isEnabled()) {
+            try {
+                if (ClassNameUtils.isClass(struct.getName())) {
+                    String name = struct.getName().substring(0, struct.getName().length() - 6);
+                    for (ClassKeepTransitive pattern : patterns) {
+                        if (pattern.matches(name)) {
+                            roots.add(name);
+                        }
                     }
+                    DependencyCollector collector = new DependencyCollector();
+                    dependencies.put(name, collector.dependencies);
+                    new ClassReader(new ByteArrayInputStream(struct.getData())).accept(new ClassRemapper(null, collector), ClassReader.EXPAND_FRAMES);
+                    collector.dependencies.remove(name);
                 }
-                DependencyCollector collector = new DependencyCollector();
-                dependencies.put(name, collector.dependencies);
-                new ClassReader(new ByteArrayInputStream(struct.data)).accept(new ClassRemapper(null, collector), ClassReader.EXPAND_FRAMES);
-                collector.dependencies.remove(name);
+            } catch (Exception e) {
+                log.warn(format("Error reading '%s'", struct.getName()), e);
             }
-        } catch (Exception e) {
-            log.warn(format("Error reading '%s'", struct.name), e);
         }
-        return Result.KEEP;
+        return chain.next(struct);
     }
 
     private void addTransitiveClosure(Collection<? super String> out, Collection<String> itemDependencies) {
@@ -129,23 +129,22 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
     }
 
     @Override
-    protected boolean isFiltered(@Nonnull String name) {
+    protected boolean isFiltered(@Nonnull Transformable transformable) {
         if (closure == null) {
             closure = new HashSet<>();
             addTransitiveClosure(closure, roots);
         }
-        return !closure.contains(name);
+        return !closure.contains(transformable.getName());
     }
 
-    @Nonnull
     @Override
-    public Result process(@Nonnull Transformable struct) throws IOException {
-        if (!isEnabled()) {
-            return Result.KEEP;
+    @CheckForNull
+    public Transformable process(@Nonnull Transformable struct, Chain chain) throws IOException {
+        if (isEnabled()) {
+            if (ClassNameUtils.isClass(struct.getName())) {
+                return super.process(struct, chain);
+            }
         }
-        if (!ClassNameUtils.isClass(struct.name)) {
-            return Result.KEEP;
-        }
-        return super.process(struct);
+        return chain.next(struct);
     }
 }

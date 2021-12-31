@@ -14,8 +14,17 @@
 package org.basepom.mojo.inliner.jarjar.transform;
 
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.jar.JarFile;
 
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
@@ -26,24 +35,42 @@ import org.junit.jupiter.api.Test;
  * @author shevek
  */
 public class JarTransformerTest extends AbstractJarTransformerTest {
-    private final File outputFile = new File("target/test-output.jar");
     private final DefaultJarProcessor processor = new DefaultJarProcessor();
-    private final JarTransformer transformer = new JarTransformer(outputFile, processor.getJarProcessor());
-    private final ClassPath classPath = new ClassPath(new File("/"), jars);
+    private final CapturingConsumer consumer = new CapturingConsumer();
+    private final JarTransformer transformer = new JarTransformer(consumer, processor.getJarProcessors());
+    private final ClassPath classPath = new ClassPath(new File("/"));
+
+    public JarTransformerTest() {
+        Arrays.stream(jars).forEach(classPath::addFile);
+    }
 
     @Test
     public void testTransformRename() throws Exception {
-        processor.setSkipManifest(true);
         transformer.transform(classPath);
 
-        Method m = getMethod(outputFile, "org.anarres.jarjar.testdata.pkg0.Main", "main", String[].class);
+        final Map<String, Transformable> transformables = consumer.getContent();
+
+        ClassLoader transformedClassLoader = createClassLoader(transformables);
+
+        Method m = getMethod(transformedClassLoader, "org.anarres.jarjar.testdata.pkg0.Main", "main", String[].class);
         m.invoke(null, (Object) new String[]{});
 
-        JarFile jarFile = new JarFile(outputFile);
-        assertContains(jarFile, "org/anarres/jarjar/testdata/pkg0/Main.class");
-        assertContains(jarFile, "org/anarres/jarjar/testdata/pkg1/Cls1.class");
-        assertContains(jarFile, "org/anarres/jarjar/testdata/pkg2/Cls2.class");
-        assertContains(jarFile, "org/anarres/jarjar/testdata/pkg3/Cls3.class");
+        assertContains(transformables, "org/anarres/jarjar/testdata/pkg0/Main.class");
+        assertContains(transformables, "org/anarres/jarjar/testdata/pkg1/Cls1.class");
+        assertContains(transformables, "org/anarres/jarjar/testdata/pkg2/Cls2.class");
+        assertContains(transformables, "org/anarres/jarjar/testdata/pkg3/Cls3.class");
     }
 
+    public static class CapturingConsumer implements Consumer<Transformable> {
+        private final Map<String, Transformable> names = new LinkedHashMap<>();
+
+        @Override
+        public void accept(Transformable transformable) {
+            assertNull(names.put(transformable.getName(), transformable), "Already seen '%s'" + transformable.getName());
+        }
+
+        public Map<String, Transformable> getContent() {
+            return names;
+        }
+    }
 }

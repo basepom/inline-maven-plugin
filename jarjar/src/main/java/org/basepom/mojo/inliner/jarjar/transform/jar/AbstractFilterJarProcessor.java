@@ -16,6 +16,7 @@ package org.basepom.mojo.inliner.jarjar.transform.jar;
 import static java.lang.String.format;
 
 import java.io.IOException;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import org.basepom.mojo.inliner.jarjar.transform.Transformable;
@@ -29,33 +30,33 @@ public abstract class AbstractFilterJarProcessor implements JarProcessor {
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    protected abstract boolean isFiltered(@Nonnull String name);
+    protected abstract boolean isFiltered(@Nonnull Transformable transformable);
 
     protected boolean isVerbose() {
         return true;
     }
 
-    @Nonnull
     @Override
-    public Result scan(@Nonnull Transformable struct) {
-        if (isFiltered(struct.name)) {
+    @CheckForNull
+    public Transformable scan(@Nonnull Transformable struct, Chain chain) throws IOException {
+        if (isFiltered(struct)) {
             if (isVerbose()) {
-                log.debug(format("scan discarded '%s'", struct.name));
+                log.debug(format("scan discarded '%s'", struct.getName()));
             }
-            return Result.DISCARD;
+            return null;
         }
-        return Result.KEEP;
+        return chain.next(struct);
     }
 
-    @Nonnull
     @Override
-    public Result process(@Nonnull Transformable struct) throws IOException {
-        if (isFiltered(struct.name)) {
+    @CheckForNull
+    public Transformable process(@Nonnull Transformable struct, Chain chain) throws IOException {
+        if (isFiltered(struct)) {
             if (isVerbose()) {
-                log.debug(format("process discarded %s", struct.name));
+                log.debug(format("process discarded %s", struct.getName()));
             }
-            return Result.DISCARD;
+            return null;
         }
-        return Result.KEEP;
+        return chain.next(struct);
     }
 }

@@ -15,9 +15,18 @@ package org.basepom.mojo.inliner.jarjar.classpath;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 import javax.annotation.Nonnull;
 
+import com.google.common.collect.ImmutableSet;
+
 public abstract class ClassPathResource {
+
+    private final ImmutableSet<ClassPathTag> tags;
+
+    public ClassPathResource(ClassPathTag fileTag, Set<ClassPathTag> tags) {
+        this.tags = ImmutableSet.<ClassPathTag>builder().addAll(tags).add(fileTag).build();
+    }
 
     @Nonnull
     public abstract String getArchiveName();
@@ -28,11 +37,15 @@ public abstract class ClassPathResource {
     public abstract long getLastModifiedTime();
 
     @Nonnull
+    public final ImmutableSet<ClassPathTag> getClasspathTags() {
+        return tags;
+    }
+
+    @Nonnull
     public abstract InputStream openStream() throws IOException;
 
     @Override
     public String toString() {
         return getArchiveName() + "!" + getName();
     }
-
 }

@@ -13,6 +13,8 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
+import java.io.IOException;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -32,18 +34,13 @@ public class ResourceRenamerJarProcessor implements JarProcessor {
         this.pr = pr;
     }
 
-    @Nonnull
     @Override
-    public Result scan(@Nonnull Transformable struct) {
-        return Result.KEEP;
-    }
+    @CheckForNull
+    public Transformable process(@Nonnull Transformable struct, Chain chain) throws IOException {
 
-    @Nonnull
-    @Override
-    public Result process(@Nonnull Transformable struct) {
-        if (!ClassNameUtils.isClass(struct.name)) {
-            struct.name = pr.mapPath(struct.name);
+        if (!ClassNameUtils.isClass(struct.getName())) {
+            struct = struct.withName(pr.mapPath(struct.getName()));
         }
-        return Result.KEEP;
+        return chain.next(struct);
     }
 }

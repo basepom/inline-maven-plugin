@@ -71,8 +71,9 @@
         <project.build.targetJdk>11</project.build.targetJdk>
 
         <dep.slf4j.version>1.7.32</dep.slf4j.version>
-        <dep.junit5.version>5.8.2</dep.junit5.version>
+        <dep.guava.version>31.0.1-jre</dep.guava.version>
         <dep.asm.version>9.2</dep.asm.version>
+        <dep.junit5.version>5.8.2</dep.junit5.version>
     </properties>
 
     <modules>
@@ -98,6 +99,12 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
                 <version>${dep.slf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${dep.guava.version}</version>
             </dependency>
 
             <dependency>

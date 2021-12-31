@@ -11,23 +11,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.basepom.mojo.inliner.jarjar.transform.jar;
+package org.basepom.mojo.inliner.jarjar.classpath;
 
-import javax.annotation.Nonnull;
-
-/**
- * @author shevek
- */
-public class DirectoryFilterJarProcessor extends AbstractFilterJarProcessor {
-
-    @Override
-    protected boolean isFiltered(@Nonnull String name) {
-        return name.endsWith("/");
-    }
-
-    @Override
-    protected boolean isVerbose() {
-        return false;
-    }
-
+public enum ClassPathTag {
+    FILE,          // tags a file
+    DIRECTORY,     // tags a directory
+    KEEP_MANIFEST  // maintain manifest for this archive
 }

@@ -16,6 +16,9 @@ package org.basepom.mojo.inliner.jarjar.transform.jar;
 import java.util.Collections;
 import javax.annotation.Nonnull;
 
+import org.basepom.mojo.inliner.jarjar.classpath.ClassPathTag;
+import org.basepom.mojo.inliner.jarjar.transform.Transformable;
+
 /**
  * Excludes the manifest.
  */
@@ -23,26 +26,16 @@ public class ManifestFilterJarProcessor extends PathFilterJarProcessor {
 
     public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
 
-    private boolean enabled = false;
-
     public ManifestFilterJarProcessor() {
         super(Collections.singleton(MANIFEST_PATH));
     }
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
     @Override
-    protected boolean isFiltered(@Nonnull String name) {
-        if (!isEnabled()) {
+    protected boolean isFiltered(@Nonnull Transformable transformable) {
+
+        if (transformable.getTags().contains(ClassPathTag.KEEP_MANIFEST)) {
             return false;
         }
-        return super.isFiltered(name);
+        return super.isFiltered(transformable);
     }
-
 }

@@ -27,7 +27,7 @@ public class GetNameClassWriter extends ClassVisitor {
      */
     // * @param flags may include {@link ClassWriter#COMPUTE_FRAMES} * or {@link ClassWriter#COMPUTE_MAXS}.
     public GetNameClassWriter(ClassVisitor cv) {
-        super(Opcodes.ASM5, cv);
+        super(Opcodes.ASM9, cv);
     }
 
     @Override

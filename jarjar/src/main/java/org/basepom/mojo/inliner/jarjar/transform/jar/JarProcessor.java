@@ -13,23 +13,29 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
-import java.io.IOException;
-import javax.annotation.Nonnull;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import com.google.common.collect.ImmutableSet;
 import org.basepom.mojo.inliner.jarjar.transform.Transformable;
 
 public interface JarProcessor {
 
-    enum Result {
-
-        KEEP,
-        DISCARD
+    @CheckForNull
+    default Transformable scan(@Nonnull Transformable transformable, JarProcessor.Chain chain) throws IOException {
+        return chain.next(transformable);
     }
-
-    // public boolean isEnabled();
-
-    @Nonnull
-    Result scan(@Nonnull Transformable struct) throws IOException;
 
     /**
      * Process the entry (e.g. rename the file)
@@ -37,10 +43,66 @@ public interface JarProcessor {
      * Returns <code>true</code> if the processor wants to retain the entry. In this case, the entry can be removed from the jar file in a future time. Return
      * <code>false</code> for the entries which do not have been changed and there fore are not to be deleted
      *
-     * @param struct The archive entry to be transformed.
-     * @return <code>true</code> if he process chain can continue after this process
+     * @param transformable The archive entry to be transformed.
      * @throws IOException if it all goes upside down
      */
-    @Nonnull
-    Result process(@Nonnull Transformable struct) throws IOException;
+    @CheckForNull
+    default Transformable process(@Nonnull Transformable transformable, JarProcessor.Chain chain) throws IOException {
+        return chain.next(transformable);
+    }
+
+    interface Chain {
+        @CheckForNull
+        Transformable next(@Nullable Transformable source) throws IOException;
+    }
+
+    class Holder {
+        private final Set<JarProcessor> processors;
+
+        public Holder(Set<JarProcessor> processors) {
+            this.processors = ImmutableSet.copyOf(checkNotNull(processors, "processors is null"));
+        }
+
+        public Holder(JarProcessor... processors) {
+            this.processors = ImmutableSet.copyOf(processors);
+        }
+
+        @FunctionalInterface
+        interface ProcessorOperation {
+
+            Transformable apply(JarProcessor jarProcessor, Transformable transformable, JarProcessor.Chain chain) throws IOException;
+        }
+
+        @Nonnull
+        public Optional<Transformable> scan(@Nonnull Transformable transformable) throws IOException {
+            ChainInstance instance = new ChainInstance(JarProcessor::scan);
+            return Optional.ofNullable(instance.next(transformable));
+        }
+
+        @Nonnull
+        public Optional<Transformable> process(@Nonnull Transformable transformable) throws IOException {
+            ChainInstance instance = new ChainInstance(JarProcessor::process);
+            return Optional.ofNullable(instance.next(transformable));
+        }
+
+        final class ChainInstance implements JarProcessor.Chain {
+            private final Iterator<JarProcessor> iterator;
+            private final ProcessorOperation operation;
+
+            ChainInstance(ProcessorOperation operation) {
+                this.operation = operation;
+                this.iterator = processors.iterator();
+            }
+
+            @Override
+            @CheckForNull
+            public Transformable next(@Nullable Transformable source) throws IOException {
+                if (source != null  && iterator.hasNext()) {
+                    return operation.apply(iterator.next(), source, this);
+                }
+                return source;
+            }
+        }
+    }
+
 }

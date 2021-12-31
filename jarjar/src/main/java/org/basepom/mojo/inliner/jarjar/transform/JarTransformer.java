@@ -13,24 +13,29 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
+import java.util.TreeSet;
+import java.util.function.Consumer;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathArchive;
 import org.basepom.mojo.inliner.jarjar.classpath.ClassPathResource;
+import org.basepom.mojo.inliner.jarjar.classpath.ClassPathTag;
+import org.basepom.mojo.inliner.jarjar.transform.jar.AbstractFilterJarProcessor;
 import org.basepom.mojo.inliner.jarjar.transform.jar.JarProcessor;
-import org.basepom.mojo.inliner.jarjar.util.IoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,49 +43,24 @@ public class JarTransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(JarTransformer.class);
 
-    public enum DuplicatePolicy {
-
-        DISCARD, ERROR
-    }
-
-    private final File outputFile;
-    private final JarProcessor processor;
-    private final DuplicatePolicy duplicatePolicy = DuplicatePolicy.DISCARD;
-    private final byte[] buf = new byte[0x2000];
-    private final Set<String> dirs = new HashSet<>();
+    private final Consumer<Transformable> outputSink;
+    private final JarProcessor.Holder holder;
     private final Set<String> files = new HashSet<>();
+    private final DirectoryScanProcessor directoryScanProcessor = new DirectoryScanProcessor();
 
-    public JarTransformer(@Nonnull File outputFile, @Nonnull JarProcessor processor) {
-        this.outputFile = outputFile;
-        this.processor = processor;
-    }
+    public JarTransformer(@Nonnull Consumer<Transformable> outputSink, @Nonnull List<JarProcessor> jarProcessors) {
+        this.outputSink = checkNotNull(outputSink, "outputFile is null");
+        checkNotNull(jarProcessors, "jarProcessors is null");
 
-    @Nonnull
-    private Transformable newTransformable(@Nonnull ClassPathResource inputResource)
-            throws IOException {
-        Transformable struct = new Transformable();
-        struct.name = inputResource.getName();
-        struct.time = inputResource.getLastModifiedTime();
+        ImmutableSet.Builder<JarProcessor> builder = ImmutableSet.builder();
+        // must come first
+        builder.add(new DirectoryFilterProcessor());
+        builder.addAll(jarProcessors);
+        builder.add(directoryScanProcessor);
+        // must come last
+        builder.add(new DuplicateDiscardProcessor());
 
-        try (InputStream in = inputResource.openStream()) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            IoUtil.copy(in, out, buf);
-            struct.data = out.toByteArray();
-        }
-
-        return struct;
-    }
-
-    private void addDirs(JarOutputStream outputJarStream, String name) throws IOException {
-        int dirIdx = name.lastIndexOf('/');
-        if (dirIdx == -1) {
-            return;
-        }
-        String dirName = name.substring(0, dirIdx + 1);
-        if (dirs.add(dirName)) {
-            JarEntry dirEntry = new JarEntry(dirName);
-            outputJarStream.putNextEntry(dirEntry);
-        }
+        this.holder = new JarProcessor.Holder(builder.build());
     }
 
     public void transform(@Nonnull ClassPath inputPath) throws IOException {
@@ -88,37 +68,107 @@ public class JarTransformer {
         for (ClassPathArchive inputArchive : inputPath) {
             LOG.debug(format("Scanning archive %s", inputArchive));
             for (ClassPathResource inputResource : inputArchive) {
-                Transformable struct = newTransformable(inputResource);
-                processor.scan(struct);
+                Transformable struct = Transformable.fromClasspathResource(inputResource);
+                holder.scan(struct);
             }
         }
 
-        JarOutputStream outputJarStream = new JarOutputStream(new FileOutputStream(outputFile));
-        for (ClassPathArchive inputArchive : inputPath) {
-            LOG.info(format("Transforming archive %s", inputArchive));
-            for (ClassPathResource inputResource : inputArchive) {
-                Transformable struct = newTransformable(inputResource);
-                if (processor.process(struct) == JarProcessor.Result.DISCARD) {
-                    continue;
-                }
-
-                addDirs(outputJarStream, struct.name);
-
-                if (DuplicatePolicy.DISCARD.equals(duplicatePolicy)) {
-                    if (!files.add(struct.name)) {
-                        LOG.debug(format("Discarding duplicate %s", struct.name));
-                        continue;
-                    }
-                }
-
-                LOG.debug(format("Writing %s", struct.name));
-                JarEntry outputEntry = new JarEntry(struct.name);
-                outputEntry.setTime(struct.time);
-                outputEntry.setCompressedSize(-1);
-                outputJarStream.putNextEntry(outputEntry);
-                outputJarStream.write(struct.data);
+        try {
+            // write out directories for the new jar
+            for (String directory : directoryScanProcessor.getDirectories()) {
+                LOG.debug(format("Adding directory '%s' to jar", directory));
+                Transformable transformable = Transformable.forDirectory(directory);
+                outputSink.accept(transformable);
             }
+
+            for (ClassPathArchive inputArchive : inputPath) {
+                LOG.info(format("Transforming archive %s", inputArchive));
+
+                for (ClassPathResource inputResource : inputArchive) {
+                    Transformable struct = Transformable.fromClasspathResource(inputResource);
+                    Optional<Transformable> result = holder.process(struct);
+                    result.ifPresent(outputSink::accept);
+                }
+            }
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
         }
-        outputJarStream.close();
+    }
+
+    /**
+     * Strips out the existing directories from the classpath. Directories are then re-added when the new jar is written. This ensures that no remnants of the
+     * old class structure is present in the new jar.
+     *
+     * @author shevek
+     */
+    static class DirectoryFilterProcessor extends AbstractFilterJarProcessor {
+
+        DirectoryFilterProcessor() {
+        }
+
+        @Override
+        protected boolean isVerbose() {
+            return false;
+        }
+
+        @Override
+        protected boolean isFiltered(@Nonnull Transformable transformable) {
+            return transformable.getTags().contains(ClassPathTag.DIRECTORY);
+        }
+    }
+
+
+    /**
+     * Re-add the directory structure if a given class file is written.
+     */
+    static class DirectoryScanProcessor implements JarProcessor {
+
+        private final Set<String> directories = new TreeSet<>();
+
+        DirectoryScanProcessor() {
+        }
+
+        @CheckForNull
+        @Override
+        public Transformable scan(@Nonnull Transformable transformable, Chain chain) throws IOException {
+            String name = transformable.getName();
+            List<String> elements = Splitter.on('/').splitToList(name);
+            if (elements.size() > 1) {
+                // any single level directories have been removed by the Directory Filter Processor.
+                for (int i = 1; i < elements.size(); i++) {
+                    String dirName = Joiner.on('/').join(elements.subList(0, i));
+                    directories.add(dirName);
+                }
+            }
+
+            return chain.next(transformable);
+        }
+
+        public Set<String> getDirectories() {
+            return directories;
+        }
+    }
+
+    static class DuplicateDiscardProcessor implements JarProcessor {
+
+        private final Set<String> files = new HashSet<>();
+
+        DuplicateDiscardProcessor() {
+        }
+
+        @CheckForNull
+        @Override
+        public Transformable process(@Nonnull Transformable transformable, Chain chain) throws IOException {
+            if (transformable.getTags().contains(ClassPathTag.FILE)) {
+                final String name = transformable.getName();
+
+                if (!files.add(name)) {
+                    LOG.warn(format("Entry '%s' is a duplicate, discarding!", name));
+                    return null;
+                }
+            }
+            // emit to jar
+            return chain.next(transformable);
+        }
     }
 }

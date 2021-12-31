@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.basepom.mojo.inliner.util;
+package org.basepom.mojo.inliner;
 
 import static java.lang.String.format;
 
@@ -23,6 +23,7 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.basepom.mojo.inliner.model.InlineDependency;
 import org.jdom2.Content;
 import org.jdom2.Content.CType;
 import org.jdom2.Document;
@@ -69,7 +70,8 @@ public class PomUtil {
     public void removeDependency(InlineDependency inlineDependency) {
         Namespace pomNs = Namespace.getNamespace("pom", pomDocument.getRootElement().getNamespaceURI());
         XPathFactory xpathFactory = XPathFactory.instance();
-        String xpathExpression = format("//pom:dependencies/pom:dependency[pom:artifactId[text() = '%s'] and pom:groupId[text() = '%s']]", inlineDependency.artifactId(), inlineDependency.groupId());
+        String xpathExpression = format("//pom:dependencies/pom:dependency[pom:artifactId[text() = '%s'] and pom:groupId[text() = '%s']]",
+                inlineDependency.getArtifactId(), inlineDependency.getGroupId());
         XPathExpression<Content> dependencies = xpathFactory.compile(xpathExpression, Filters.content(), null, pomNs);
         List<Content> contents = dependencies.evaluate(pomDocument.getRootElement());
         for (Content content : contents) {

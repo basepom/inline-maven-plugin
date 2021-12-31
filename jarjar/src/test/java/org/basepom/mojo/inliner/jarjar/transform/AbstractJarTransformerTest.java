@@ -19,10 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.Map;
 import javax.annotation.Nonnull;
 
 /**
@@ -42,22 +39,35 @@ public class AbstractJarTransformerTest {
             newJar("jar3")
     };
 
+    protected ClassLoader createClassLoader(Map<String, Transformable> transformables) {
+        return new ClassLoader() {
+            @Override
+            public Class<?> findClass(String name) throws ClassNotFoundException {
+                String fileName = name.replace('.', '/') + ".class";
+                if (transformables.containsKey(fileName)) {
+                    byte[] classData = transformables.get(fileName).getData();
+                    return defineClass(name, classData, 0, classData.length);
+                }
+                throw new ClassNotFoundException(name);
+            }
+        };
+    }
+
     @Nonnull
-    protected Method getMethod(@Nonnull File file, @Nonnull String className, @Nonnull String methodName, @Nonnull Class<?>... parameterTypes)
+    protected Method getMethod(@Nonnull ClassLoader classLoader, @Nonnull String className, @Nonnull String methodName, @Nonnull Class<?>... parameterTypes)
             throws Exception {
-        URLClassLoader loader = new URLClassLoader(new URL[]{file.toURI().toURL()}, getClass().getClassLoader());
-        Class<?> c = loader.loadClass(className);
+        Class<?> c = classLoader.loadClass(className);
         return c.getMethod("main", parameterTypes);
     }
 
-    protected static void assertContains(@Nonnull JarFile jarFile, @Nonnull String resourceName) {
-        JarEntry jarEntry = jarFile.getJarEntry(resourceName);
-        assertNotNull(jarEntry, "JarFile " + jarFile + " does not contain entry " + resourceName);
+    protected static void assertContains(@Nonnull Map<String, Transformable> transformables, @Nonnull String resourceName) {
+        Transformable transformable = transformables.get(resourceName);
+        assertNotNull(transformable, "does not contain entry " + resourceName);
     }
 
-    protected static void assertNotContains(@Nonnull JarFile jarFile, @Nonnull String resourceName) {
-        JarEntry jarEntry = jarFile.getJarEntry(resourceName);
-        assertNull(jarEntry, "JarFile " + jarFile + " does contains unexpected entry " + resourceName);
+    protected static void assertNotContains(@Nonnull Map<String, Transformable> transformables, @Nonnull String resourceName) {
+        Transformable transformable = transformables.get(resourceName);
+        assertNull(transformable, "contains unexpected entry " + resourceName);
     }
 
 }

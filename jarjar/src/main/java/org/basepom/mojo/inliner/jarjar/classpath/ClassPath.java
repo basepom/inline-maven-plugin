@@ -14,66 +14,40 @@
 package org.basepom.mojo.inliner.jarjar.classpath;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import javax.annotation.Nonnull;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
- * @author shevek
+ * Defines a class path.
  */
 public class ClassPath implements Iterable<ClassPathArchive> {
 
+    private final List<ClassPathArchive> entries = new ArrayList<>();
     private final File root;
-    private final Iterable<? extends File> entries;
 
-    public ClassPath(@Nonnull File root, @Nonnull Iterable<? extends File> entries) {
+    public ClassPath(@Nonnull File root) {
         this.root = root;
-        this.entries = entries;
     }
 
-    public ClassPath(@Nonnull File root, @Nonnull File[] entries) {
-        this(root, Arrays.asList(entries));
+    public void addFile(File file, ClassPathTag... tags) {
+        if (!file.isAbsolute()) {
+            file = new File(root, file.getPath());
+        }
+        if (file.isDirectory()) {
+            entries.add(new ClassPathArchive.DirectoryArchive(file, ImmutableSet.copyOf(tags)));
+        } else {
+            entries.add(new ClassPathArchive.ZipArchive(file, ImmutableSet.copyOf(tags)));
+        }
     }
 
-    @Nonnull
-    public File getRoot() {
-        return root;
-    }
+
 
     @Override
     public Iterator<ClassPathArchive> iterator() {
-        return new PathIterator();
-    }
-
-    private class PathIterator implements Iterator<ClassPathArchive> {
-
-        private final Iterator<? extends File> entryIterator;
-
-        PathIterator() {
-            this.entryIterator = entries.iterator();
-        }
-
-        @Override
-        public boolean hasNext() {
-            return entryIterator.hasNext();
-        }
-
-        @Override
-        public ClassPathArchive next() {
-            File entryFile = entryIterator.next();
-            if (!entryFile.isAbsolute()) {
-                entryFile = new File(root, entryFile.getPath());
-            }
-            if (entryFile.isDirectory()) {
-                return new ClassPathArchive.DirectoryArchive(entryFile);
-            } else {
-                return new ClassPathArchive.ZipArchive(entryFile);
-            }
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
+        return entries.iterator();
     }
 }

@@ -17,6 +17,8 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
+import org.basepom.mojo.inliner.jarjar.transform.Transformable;
+
 /**
  * Excludes resources by exact name.
  */
@@ -29,7 +31,7 @@ public class PathFilterJarProcessor extends AbstractFilterJarProcessor {
     }
 
     @Override
-    protected boolean isFiltered(@Nonnull String name) {
-        return excludes.contains(name);
+    protected boolean isFiltered(@Nonnull Transformable transformable) {
+        return excludes.contains(transformable.getName());
     }
 }

@@ -122,11 +122,9 @@ public class PackageRemapper extends Remapper {
                         }
                     }
                 }
-                valueCache.put(value, s);
-            }
-            // TODO: add back class name to verbose message
-            if (!s.equals(value)) {
-                LOG.debug(format("Changed '%s' -> '%s'", value, s));
+                if (valueCache.put(value, s) == null && !s.equals(value)) {
+                    LOG.debug(format("Mapped '%s' -> '%s'", value, s));
+                }
             }
             return s;
         } else {

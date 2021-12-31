@@ -26,10 +26,12 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.annotation.Nonnull;
 
+import com.google.common.collect.ImmutableSet;
 import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
 
 /**
@@ -37,27 +39,29 @@ import org.basepom.mojo.inliner.jarjar.util.ClassNameUtils;
  */
 public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
-    protected final File root;
+    protected final File archiveFile;
+    protected final Set<ClassPathTag> tags;
 
-    public ClassPathArchive(@Nonnull File root) {
-        this.root = root;
+    public ClassPathArchive(@Nonnull File archiveFile, Set<ClassPathTag> tags) {
+        this.archiveFile = archiveFile;
+        this.tags = ImmutableSet.copyOf(tags);
     }
 
     @Nonnull
     public String getArchiveName() {
-        return root.getPath();
+        return archiveFile.getPath();
     }
 
     public static class ZipArchive extends ClassPathArchive {
 
-        public ZipArchive(@Nonnull File root) {
-            super(root);
+        public ZipArchive(@Nonnull File archiveFile, Set<ClassPathTag> tags) {
+            super(archiveFile, tags);
         }
 
         @Override
         public Iterator<ClassPathResource> iterator() {
             try {
-                return new ZipIterator(root);
+                return new ZipIterator(archiveFile, tags);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -69,10 +73,12 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
         private final ZipFile zipFile;
         private final Enumeration<? extends ZipEntry> zipEntries;
+        private final Set<ClassPathTag> tags;
 
-        ZipIterator(@Nonnull File file) throws IOException {
-            this.zipFile = new ZipFile(file);
+        ZipIterator(@Nonnull File archiveFile, Set<ClassPathTag> tags) throws IOException {
+            this.zipFile = new ZipFile(archiveFile);
             this.zipEntries = zipFile.entries();
+            this.tags = tags;
         }
 
         @Override
@@ -91,7 +97,10 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
             if (entry == null) {
                 throw new NoSuchElementException();
             }
-            return new ClassPathResource() {
+
+            ClassPathTag fileTag = entry.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE;
+
+            return new ClassPathResource(fileTag, tags) {
                 @Nonnull
                 @Override
                 public String getArchiveName() {
@@ -114,6 +123,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
                 public InputStream openStream() throws IOException {
                     return zipFile.getInputStream(entry);
                 }
+
             };
         }
 
@@ -134,13 +144,13 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
     public static class DirectoryArchive extends ClassPathArchive {
 
-        public DirectoryArchive(@Nonnull File root) {
-            super(root);
+        public DirectoryArchive(@Nonnull File root, Set<ClassPathTag> tags) {
+            super(root, tags);
         }
 
         @Override
         public Iterator<ClassPathResource> iterator() {
-            return new DirectoryIterator(root);
+            return new DirectoryIterator(archiveFile, tags);
         }
 
     }
@@ -162,14 +172,18 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
             }
         }
 
-        private final File root;
+        private final File directory;
         private final Iterator<File> entries;
+        private final Set<ClassPathTag> tags;
 
-        DirectoryIterator(@Nonnull File root) {
-            this.root = root;
+
+        DirectoryIterator(@Nonnull File directory, Set<ClassPathTag> tags) {
+            this.directory = directory;
+
             List<File> files = new ArrayList<>();
-            findClassFiles(files, root);
+            findClassFiles(files, directory);
             this.entries = files.iterator();
+            this.tags = ImmutableSet.copyOf(tags);
         }
 
         @Override
@@ -180,11 +194,12 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
         @Override
         public ClassPathResource next() {
             final File file = entries.next();
-            return new ClassPathResource() {
+            ClassPathTag fileTag = file.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE;
+            return new ClassPathResource(fileTag, tags) {
                 @Override
                 @Nonnull
                 public String getArchiveName() {
-                    return root.getPath();
+                    return directory.getPath();
                 }
 
                 @Override
@@ -203,6 +218,11 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
                 public InputStream openStream() throws IOException {
                     return new BufferedInputStream(new FileInputStream(file));
                 }
+
+                @Override
+                public String toString() {
+                    return getArchiveName() + "!" + getName();
+                }
             };
         }
 
@@ -215,7 +235,6 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "(" + root + ")";
+        return getClass().getSimpleName() + "(" + archiveFile + ")";
     }
-
 }

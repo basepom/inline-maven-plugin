@@ -13,17 +13,19 @@
  */
 package org.basepom.mojo.inliner;
 
-import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
-import com.google.common.io.CharStreams;
+import com.google.common.collect.ImmutableList;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
@@ -35,8 +37,13 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
-import org.basepom.mojo.inliner.util.InlineDependency;
-import org.basepom.mojo.inliner.util.PomUtil;
+import org.basepom.mojo.inliner.jarjar.classpath.ClassPath;
+import org.basepom.mojo.inliner.jarjar.classpath.ClassPathTag;
+import org.basepom.mojo.inliner.jarjar.transform.JarTransformer;
+import org.basepom.mojo.inliner.jarjar.transform.Transformable;
+import org.basepom.mojo.inliner.jarjar.transform.jar.JarProcessor;
+import org.basepom.mojo.inliner.jarjar.transform.jar.ManifestFilterJarProcessor;
+import org.basepom.mojo.inliner.model.InlineDependency;
 
 /**
  * InlineDependency one or more dependencies of a library into a new jar.
@@ -64,17 +71,12 @@ public final class InlineMojo extends AbstractMojo {
     public File pomFile = null;
 
     @Parameter
-    private InlineDependency[] inlineDependencies = new InlineDependency[0];
-
+    private List<InlineDependency> inlineDependencies = ImmutableList.of();
 
     // called by maven
-    public void setInlineDependencies(final String[] values) {
-        inlineDependencies = new InlineDependency[values.length];
-        for (int i = 0; i < values.length; i++) {
-            inlineDependencies[i] = InlineDependency.valueOf(values[i]);
-        }
+    public void setInlineDependencies(List<InlineDependency> inlineDependencies) {
+        this.inlineDependencies = ImmutableList.copyOf(inlineDependencies);
     }
-
 
     /**
      * Skip the execution.
@@ -101,41 +103,98 @@ public final class InlineMojo extends AbstractMojo {
             LOG.report(quiet, "Ignoring POM project");
             return;
         }
-        try {
-            String pomContents;
-            try (Reader r = new FileReader(pomFile, StandardCharsets.UTF_8)) {
-                pomContents = CharStreams.toString(r);
+
+        final List<Dependency> dependencies = project.getModel().getDependencies();
+        if (dependencies == null) {
+            LOG.warn("No dependencies found, nothing to inline!");
+            return;
+        }
+
+        boolean error = false;
+        depCheck:
+        for (InlineDependency inlineDependency : inlineDependencies) {
+            for (Dependency dependency : dependencies) {
+                if (inlineDependency.matchDependency(dependency)) {
+                    continue depCheck;
+                }
             }
+            LOG.error(format("Dependency '%s' not found, can only inline direct dependencies!", inlineDependency));
+            error = true;
+        }
 
-            PomUtil pomUtil = new PomUtil(pomContents);
+        if (error) {
+            throw new MojoExecutionException("Could not inline dependencies!");
+        }
 
-            final List<Dependency> dependencies = project.getModel().getDependencies();
-            checkState(dependencies != null, "No dependencies found!");
+        ImmutableList.Builder<JarProcessor> builder = ImmutableList.builder();
+
+        builder.add(new ManifestFilterJarProcessor());   // only keep tagged manifests
+
+//        private final ClassFilterJarProcessor classFilterJarProcessor = new ClassFilterJarProcessor();
+//        private final ClassClosureJarProcessor classClosureFilterJarProcessor = new ClassClosureJarProcessor();
+//        private final PackageRemapper packageRemapper = new PackageRemapper();
+//        private final RemappingClassTransformer remappingClassTransformer = new RemappingClassTransformer(packageRemapper);
+//        private final ResourceRenamerJarProcessor resourceRenamerJarProcessor = new ResourceRenamerJarProcessor(packageRemapper);
+
+        File outputFile = new File(project.getBasedir(), "transformed.jar");
+        try (JarOutputStream outputJarStream = new JarOutputStream(new FileOutputStream(outputFile))) {
+
+            Consumer<Transformable> jarConsumer = transformable -> {
+                try {
+                    final String name = transformable.getName();
+                    LOG.debug(format("Writing '%s' to jar", name));
+                    JarEntry outputEntry = new JarEntry(name);
+                    outputEntry.setTime(transformable.getTime());
+                    outputEntry.setCompressedSize(-1);
+                    outputJarStream.putNextEntry(outputEntry);
+                    outputJarStream.write(transformable.getData());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            };
+
+            JarTransformer transformer = new JarTransformer(jarConsumer, builder.build());
+
+            // Build the class path
+            ClassPath classPath = new ClassPath(project.getBasedir());
+            // maintain the manifest file for the main artifact
+            classPath.addFile(project.getArtifact().getFile(), ClassPathTag.KEEP_MANIFEST);
 
             for (InlineDependency inlineDependency : inlineDependencies) {
-                for (Dependency dependency : dependencies) {
-                    if (inlineDependency.matchDependency(dependency)) {
-                        System.out.println("Found match: " + dependency);
-
-                        pomUtil.removeDependency(inlineDependency);
-
-                        continue;
+                for (Artifact dependencyArtifact : project.getArtifacts()) {
+                    if (inlineDependency.matchArtifact(dependencyArtifact)) {
+                        classPath.addFile(dependencyArtifact.getFile());
+                        break; // for(Artifact ...
                     }
-                    System.out.println("No match for dependency: " + inlineDependency);
                 }
             }
 
-            File outputFile = new File(pomFile.getName() + ".transformed");
-
-            try (FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
-                    BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);) {
-
-                pomUtil.writePom(bufferedOutputStream);
-                bufferedOutputStream.flush();
-            }
-
-        } catch (Exception e) {
+            transformer.transform(classPath);
+        } catch (IOException e) {
             throw new MojoExecutionException(e);
+        } catch (UncheckedIOException e) {
+            throw new MojoExecutionException(e.getCause());
         }
+
+        // try {
+        //     String pomContents;
+        //     try (Reader r = new FileReader(pomFile, StandardCharsets.UTF_8)) {
+        //         pomContents = CharStreams.toString(r);
+        //     }
+
+        //     PomUtil pomUtil = new PomUtil(pomContents);
+
+        //     File outputFile = new File(pomFile.getName() + ".transformed");
+
+        //     try (FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
+        //             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);) {
+
+        //         pomUtil.writePom(bufferedOutputStream);
+        //         bufferedOutputStream.flush();
+        //     }
+
+        // } catch (Exception e) {
+        //     throw new MojoExecutionException(e);
+        // }
     }
 }

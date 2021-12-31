@@ -11,18 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.basepom.mojo.inliner.util;
+package org.basepom.mojo.inliner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 import com.google.common.io.CharStreams;
+import org.basepom.mojo.inliner.model.InlineDependency;
 import org.junit.jupiter.api.Test;
 
 public class TestPomUtil {
@@ -48,6 +46,9 @@ public class TestPomUtil {
 
         PomUtil pomUtil = new PomUtil(pomContents);
 
-        pomUtil.removeDependency(InlineDependency.valueOf("com.google.guava:guava"));
+        InlineDependency inlineDependency = new InlineDependency();
+        inlineDependency.setGroupId("com.google.guava");
+        inlineDependency.setArtifactId("guava");
+        pomUtil.removeDependency(inlineDependency);
     }
 }

@@ -13,8 +13,10 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
+import java.util.List;
 import javax.annotation.Nonnull;
 
+import com.google.common.collect.ImmutableList;
 import org.basepom.mojo.inliner.jarjar.transform.asm.PackageRemapper;
 import org.basepom.mojo.inliner.jarjar.transform.asm.RemappingClassTransformer;
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassDelete;
@@ -32,8 +34,8 @@ public class DefaultJarProcessor implements RulesFileParser.Output {
     private final RemappingClassTransformer remappingClassTransformer = new RemappingClassTransformer(packageRemapper);
     private final ResourceRenamerJarProcessor resourceRenamerJarProcessor = new ResourceRenamerJarProcessor(packageRemapper);
 
-    public JarProcessorChain getJarProcessor() {
-        return new JarProcessorChain(new DirectoryFilterJarProcessor(),
+    public List<JarProcessor> getJarProcessors() {
+        return ImmutableList.of(
                 this.manifestFilterJarProcessor,
                 this.classFilterJarProcessor,
                 this.classClosureFilterJarProcessor,
@@ -59,9 +61,5 @@ public class DefaultJarProcessor implements RulesFileParser.Output {
     @Override
     public void addClassKeepTransitive(@Nonnull ClassKeepTransitive classKeepTransitive) {
         classClosureFilterJarProcessor.addKeep(classKeepTransitive);
-    }
-
-    public void setSkipManifest(boolean value) {
-        manifestFilterJarProcessor.setEnabled(value);
     }
 }

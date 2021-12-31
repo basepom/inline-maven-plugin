@@ -30,7 +30,7 @@ public abstract class StringReader extends ClassVisitor {
     private String className;
 
     public StringReader() {
-        super(Opcodes.ASM5);
+        super(Opcodes.ASM9);
     }
 
     public abstract void visitString(@Nonnull String className, @Nonnull String value, @Nonnegative int line);

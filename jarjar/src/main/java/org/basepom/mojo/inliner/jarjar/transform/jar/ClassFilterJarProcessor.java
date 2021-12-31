@@ -13,11 +13,14 @@
  */
 package org.basepom.mojo.inliner.jarjar.transform.jar;
 
+import static java.lang.String.format;
+
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
+import org.basepom.mojo.inliner.jarjar.transform.Transformable;
 import org.basepom.mojo.inliner.jarjar.transform.config.AbstractPattern;
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassDelete;
 import org.basepom.mojo.inliner.jarjar.transform.config.ClassKeep;
@@ -59,24 +62,25 @@ public class ClassFilterJarProcessor extends AbstractFilterJarProcessor {
     }
 
     @Override
-    protected boolean isFiltered(@Nonnull String name) {
+    protected boolean isFiltered(@Nonnull Transformable transformable) {
+        String name = transformable.getName();
         if (!ClassNameUtils.isClass(name)) {
             return false;
         }
         name = name.substring(0, name.length() - 6);
-        // LOG.debug("Looking to include " + name);
-        INCLUDE:
-        {
-            if (keepPatterns.isEmpty()) {
-                break INCLUDE;
-            }
-            if (getMatchingPattern(keepPatterns, name) != null) {
-                break INCLUDE;
-            }
-            // We have include patterns, but none matched. Filter it.
+
+        // filter if there are keep patterns (no implicit "all included") and no matching pattern exists.
+        boolean filtered = !keepPatterns.isEmpty() && getMatchingPattern(keepPatterns, name) == null;
+        if (filtered) {
+            log.debug(format("Excluded '%s' because no matching include pattern found!", name));
             return true;
         }
-        // LOG.debug("Looking to exclude " + name);
-        return getMatchingPattern(deletePatterns, name) != null;
+
+        // filter if delete patterns are not empty (no explicit "nothing excluded") and a matching pattern exists.
+        filtered =  !deletePatterns.isEmpty() && getMatchingPattern(deletePatterns, name) != null;
+        if (filtered) {
+            log.debug(format("Excluded '%s' because a matching exclude pattern was found!", name));
+        }
+        return filtered;
     }
 }

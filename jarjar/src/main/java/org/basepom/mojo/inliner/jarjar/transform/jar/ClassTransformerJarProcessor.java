@@ -15,9 +15,11 @@ package org.basepom.mojo.inliner.jarjar.transform.jar;
 
 import static java.lang.String.format;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import org.basepom.mojo.inliner.jarjar.transform.Transformable;
@@ -48,17 +50,11 @@ public class ClassTransformerJarProcessor implements JarProcessor {
     }
 
     @Override
-    @Nonnull
-    public Result scan(@Nonnull Transformable struct) {
-        return Result.KEEP;
-    }
-
-    @Override
-    @Nonnull
-    public Result process(@Nonnull Transformable struct) {
-        if (ClassNameUtils.isClass(struct.name)) {
+    @CheckForNull
+    public Transformable process(@Nonnull Transformable struct, Chain chain) throws IOException {
+        if (ClassNameUtils.isClass(struct.getName())) {
             try {
-                ClassReader reader = new ClassReader(struct.data);
+                ClassReader reader = new ClassReader(struct.getData());
                 ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 GetNameClassWriter namer = new GetNameClassWriter(writer);
                 ClassVisitor cv = namer;
@@ -66,12 +62,11 @@ public class ClassTransformerJarProcessor implements JarProcessor {
                     cv = classProcessor.transform(cv);
                 }
                 reader.accept(cv, ClassReader.EXPAND_FRAMES);
-                struct.name = ClassNameUtils.javaNameToPath(namer.getClassName());
-                struct.data = writer.toByteArray();
+                struct = struct.withName(ClassNameUtils.javaNameToPath(namer.getClassName())).withData(writer.toByteArray());
             } catch (Exception e) {
-                LOG.warn(format("Failed to read class '%s'", struct.name), e);
+                LOG.warn(format("Failed to read class '%s'", struct.getName()), e);
             }
         }
-        return Result.KEEP;
+        return chain.next(struct);
     }
 }
