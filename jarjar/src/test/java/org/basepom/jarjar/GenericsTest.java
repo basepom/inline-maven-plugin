@@ -11,36 +11,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.basepom.mojo.inliner.model;
+package org.basepom.jarjar;
 
+import org.basepom.jarjar.transform.asm.PackageRemapper;
 import org.basepom.jarjar.transform.config.ClassRename;
+import org.junit.jupiter.api.Test;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.commons.ClassRemapper;
 
-public class Relocation {
+public class GenericsTest {
 
-    private String pattern;
-
-    private String location;
-
-    public Relocation() {
-    }
-
-    public String getPattern() {
-        return pattern;
-    }
-
-    public void setPattern(String pattern) {
-        this.pattern = pattern;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public ClassRename toClassRename() {
-        return new ClassRename(getPattern(), getLocation());
+    @Test
+    public void testTransform() throws Exception {
+        ClassRename rule = new ClassRename("java.lang.String", "com.tonicsystems.String");
+        ClassRemapper t = new ClassRemapper(null, new PackageRemapper(rule));
+        ClassReader reader = new ClassReader(getClass().getResourceAsStream("/Generics.class"));
+        reader.accept(t, 0);
     }
 }
