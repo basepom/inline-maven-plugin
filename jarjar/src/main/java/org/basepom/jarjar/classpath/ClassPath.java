@@ -19,8 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-import com.google.common.collect.ImmutableSet;
-
 /**
  * Defines a class path.
  */
@@ -37,14 +35,8 @@ public class ClassPath implements Iterable<ClassPathArchive> {
         if (!file.isAbsolute()) {
             file = new File(root, file.getPath());
         }
-        if (file.isDirectory()) {
-            entries.add(new ClassPathArchive.DirectoryArchive(file, ImmutableSet.copyOf(tags)));
-        } else {
-            entries.add(new ClassPathArchive.ZipArchive(file, ImmutableSet.copyOf(tags)));
-        }
+        entries.add(ClassPathArchive.forFile(file, tags));
     }
-
-
 
     @Override
     public Iterator<ClassPathArchive> iterator() {

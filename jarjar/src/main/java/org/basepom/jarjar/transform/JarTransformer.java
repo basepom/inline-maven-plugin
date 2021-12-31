@@ -43,12 +43,12 @@ public class JarTransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(JarTransformer.class);
 
-    private final Consumer<Transformable> outputSink;
+    private final Consumer<ClassPathResource> outputSink;
     private final JarProcessor.Holder holder;
     private final Set<String> files = new HashSet<>();
     private final DirectoryScanProcessor directoryScanProcessor = new DirectoryScanProcessor();
 
-    public JarTransformer(@Nonnull Consumer<Transformable> outputSink, @Nonnull List<JarProcessor> jarProcessors) {
+    public JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink, @Nonnull List<JarProcessor> jarProcessors) {
         this.outputSink = checkNotNull(outputSink, "outputFile is null");
         checkNotNull(jarProcessors, "jarProcessors is null");
 
@@ -68,8 +68,7 @@ public class JarTransformer {
         for (ClassPathArchive inputArchive : inputPath) {
             LOG.debug(format("Scanning archive %s", inputArchive));
             for (ClassPathResource inputResource : inputArchive) {
-                Transformable struct = Transformable.fromClasspathResource(inputResource);
-                holder.scan(struct);
+                holder.scan(inputResource);
             }
         }
 
@@ -77,16 +76,15 @@ public class JarTransformer {
             // write out directories for the new jar
             for (String directory : directoryScanProcessor.getDirectories()) {
                 LOG.debug(format("Adding directory '%s' to jar", directory));
-                Transformable transformable = Transformable.forDirectory(directory);
-                outputSink.accept(transformable);
+                ClassPathResource directoryResource = ClassPathResource.forDirectory(directory);
+                outputSink.accept(directoryResource);
             }
 
             for (ClassPathArchive inputArchive : inputPath) {
                 LOG.info(format("Transforming archive %s", inputArchive));
 
                 for (ClassPathResource inputResource : inputArchive) {
-                    Transformable struct = Transformable.fromClasspathResource(inputResource);
-                    Optional<Transformable> result = holder.process(struct);
+                    Optional<ClassPathResource> result = holder.process(inputResource);
                     result.ifPresent(outputSink::accept);
                 }
             }
@@ -112,8 +110,8 @@ public class JarTransformer {
         }
 
         @Override
-        protected boolean isFiltered(@Nonnull Transformable transformable) {
-            return transformable.getTags().contains(ClassPathTag.DIRECTORY);
+        protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
+            return classPathResource.getTags().contains(ClassPathTag.DIRECTORY);
         }
     }
 
@@ -130,8 +128,8 @@ public class JarTransformer {
 
         @CheckForNull
         @Override
-        public Transformable scan(@Nonnull Transformable transformable, Chain chain) throws IOException {
-            String name = transformable.getName();
+        public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+            String name = classPathResource.getName();
             List<String> elements = Splitter.on('/').splitToList(name);
             if (elements.size() > 1) {
                 // any single level directories have been removed by the Directory Filter Processor.
@@ -141,7 +139,7 @@ public class JarTransformer {
                 }
             }
 
-            return chain.next(transformable);
+            return chain.next(classPathResource);
         }
 
         public Set<String> getDirectories() {
@@ -158,9 +156,9 @@ public class JarTransformer {
 
         @CheckForNull
         @Override
-        public Transformable process(@Nonnull Transformable transformable, Chain chain) throws IOException {
-            if (transformable.getTags().contains(ClassPathTag.FILE)) {
-                final String name = transformable.getName();
+        public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+            if (classPathResource.getTags().contains(ClassPathTag.FILE)) {
+                final String name = classPathResource.getName();
 
                 if (!files.add(name)) {
                     LOG.warn(format("Entry '%s' is a duplicate, discarding!", name));
@@ -168,7 +166,7 @@ public class JarTransformer {
                 }
             }
             // emit to jar
-            return chain.next(transformable);
+            return chain.next(classPathResource);
         }
     }
 }

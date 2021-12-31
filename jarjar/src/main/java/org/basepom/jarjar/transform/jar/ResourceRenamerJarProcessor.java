@@ -19,7 +19,7 @@ import javax.annotation.Nonnull;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.basepom.jarjar.ClassNameUtils;
-import org.basepom.jarjar.transform.Transformable;
+import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.transform.asm.PackageRemapper;
 
 /**
@@ -36,11 +36,11 @@ public class ResourceRenamerJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
-    public Transformable process(@Nonnull Transformable struct, Chain chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
 
-        if (!ClassNameUtils.isClass(struct.getName())) {
-            struct = struct.withName(pr.mapPath(struct.getName()));
+        if (!ClassNameUtils.isClass(classPathResource.getName())) {
+            classPathResource = classPathResource.withName(pr.mapPath(classPathResource.getName()));
         }
-        return chain.next(struct);
+        return chain.next(classPathResource);
     }
 }

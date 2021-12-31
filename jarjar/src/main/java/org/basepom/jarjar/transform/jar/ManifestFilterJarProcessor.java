@@ -16,8 +16,8 @@ package org.basepom.jarjar.transform.jar;
 import java.util.Collections;
 import javax.annotation.Nonnull;
 
+import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.classpath.ClassPathTag;
-import org.basepom.jarjar.transform.Transformable;
 
 /**
  * Excludes the manifest.
@@ -31,11 +31,11 @@ public class ManifestFilterJarProcessor extends PathFilterJarProcessor {
     }
 
     @Override
-    protected boolean isFiltered(@Nonnull Transformable transformable) {
+    protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
 
-        if (transformable.getTags().contains(ClassPathTag.KEEP_MANIFEST)) {
+        if (classPathResource.getTags().contains(ClassPathTag.KEEP_MANIFEST)) {
             return false;
         }
-        return super.isFiltered(transformable);
+        return super.isFiltered(classPathResource);
     }
 }

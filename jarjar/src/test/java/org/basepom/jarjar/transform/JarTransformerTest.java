@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.basepom.jarjar.classpath.ClassPath;
+import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.transform.jar.DefaultJarProcessor;
 import org.junit.jupiter.api.Test;
 
@@ -45,29 +46,29 @@ public class JarTransformerTest {
     public void testTransformRename() throws Exception {
         transformer.transform(classPath);
 
-        final Map<String, Transformable> transformables = consumer.getContent();
+        final Map<String, ClassPathResource> resources = consumer.getContent();
 
-        ClassLoader transformedClassLoader = JarTransformerUtil.createClassLoader(transformables);
+        ClassLoader transformedClassLoader = JarTransformerUtil.createClassLoader(resources);
 
         Method m = JarTransformerUtil.getMethod(transformedClassLoader, "org.anarres.jarjar.testdata.pkg0.Main", "main", String[].class);
         m.invoke(null, (Object) new String[]{});
 
-        JarTransformerUtil.assertContains(transformables, "org/anarres/jarjar/testdata/pkg0/Main.class");
-        JarTransformerUtil.assertContains(transformables, "org/anarres/jarjar/testdata/pkg1/Cls1.class");
-        JarTransformerUtil.assertContains(transformables, "org/anarres/jarjar/testdata/pkg2/Cls2.class");
-        JarTransformerUtil.assertContains(transformables, "org/anarres/jarjar/testdata/pkg3/Cls3.class");
+        JarTransformerUtil.assertContains(resources, "org/anarres/jarjar/testdata/pkg0/Main.class");
+        JarTransformerUtil.assertContains(resources, "org/anarres/jarjar/testdata/pkg1/Cls1.class");
+        JarTransformerUtil.assertContains(resources, "org/anarres/jarjar/testdata/pkg2/Cls2.class");
+        JarTransformerUtil.assertContains(resources, "org/anarres/jarjar/testdata/pkg3/Cls3.class");
     }
 
-    public static class CapturingConsumer implements Consumer<Transformable> {
+    public static class CapturingConsumer implements Consumer<ClassPathResource> {
 
-        private final Map<String, Transformable> names = new LinkedHashMap<>();
+        private final Map<String, ClassPathResource> names = new LinkedHashMap<>();
 
         @Override
-        public void accept(Transformable transformable) {
-            assertNull(names.put(transformable.getName(), transformable), "Already seen '%s'" + transformable.getName());
+        public void accept(ClassPathResource resource) {
+            assertNull(names.put(resource.getName(), resource), "Already seen '%s'" + resource.getName());
         }
 
-        public Map<String, Transformable> getContent() {
+        public Map<String, ClassPathResource> getContent() {
             return names;
         }
     }

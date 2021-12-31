@@ -16,6 +16,7 @@ package org.basepom.jarjar.transform.jar;
 import static java.lang.String.format;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +24,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import org.basepom.jarjar.ClassNameUtils;
-import org.basepom.jarjar.transform.Transformable;
+import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.transform.asm.ClassTransformer;
 import org.basepom.jarjar.transform.asm.GetNameClassWriter;
 import org.objectweb.asm.ClassReader;
@@ -51,10 +52,10 @@ public class ClassTransformerJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
-    public Transformable process(@Nonnull Transformable struct, Chain chain) throws IOException {
-        if (ClassNameUtils.isClass(struct.getName())) {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+        if (ClassNameUtils.isClass(classPathResource.getName())) {
             try {
-                ClassReader reader = new ClassReader(struct.getData());
+                ClassReader reader = new ClassReader(classPathResource.getContent());
                 ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 GetNameClassWriter namer = new GetNameClassWriter(writer);
                 ClassVisitor cv = namer;
@@ -62,11 +63,11 @@ public class ClassTransformerJarProcessor implements JarProcessor {
                     cv = classProcessor.transform(cv);
                 }
                 reader.accept(cv, ClassReader.EXPAND_FRAMES);
-                struct = struct.withName(ClassNameUtils.javaNameToPath(namer.getClassName())).withData(writer.toByteArray());
-            } catch (Exception e) {
-                LOG.warn(format("Failed to read class '%s'", struct.getName()), e);
+                classPathResource = classPathResource.withName(ClassNameUtils.javaNameToPath(namer.getClassName())).withContent(writer.toByteArray());
+            } catch (UncheckedIOException e) {
+                LOG.warn(format("Failed to read class '%s'", classPathResource.getName()), e.getCause());
             }
         }
-        return chain.next(struct);
+        return chain.next(classPathResource);
     }
 }

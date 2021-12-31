@@ -16,5 +16,8 @@ package org.basepom.jarjar.classpath;
 public enum ClassPathTag {
     FILE,          // tags a file
     DIRECTORY,     // tags a directory
+    CLASS,         // is a class
+    RESOURCE,      // is a resource
+
     KEEP_MANIFEST  // maintain manifest for this archive
 }

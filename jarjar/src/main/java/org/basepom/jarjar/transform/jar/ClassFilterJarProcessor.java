@@ -21,7 +21,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import org.basepom.jarjar.ClassNameUtils;
-import org.basepom.jarjar.transform.Transformable;
+import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.transform.config.AbstractPattern;
 import org.basepom.jarjar.transform.config.ClassDelete;
 import org.basepom.jarjar.transform.config.ClassKeep;
@@ -62,8 +62,8 @@ public class ClassFilterJarProcessor extends AbstractFilterJarProcessor {
     }
 
     @Override
-    protected boolean isFiltered(@Nonnull Transformable transformable) {
-        String name = transformable.getName();
+    protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
+        String name = classPathResource.getName();
         if (!ClassNameUtils.isClass(name)) {
             return false;
         }

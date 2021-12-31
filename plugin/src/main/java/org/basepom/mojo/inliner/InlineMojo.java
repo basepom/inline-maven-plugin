@@ -38,9 +38,9 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
 import org.basepom.jarjar.classpath.ClassPath;
+import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.classpath.ClassPathTag;
 import org.basepom.jarjar.transform.JarTransformer;
-import org.basepom.jarjar.transform.Transformable;
 import org.basepom.jarjar.transform.jar.JarProcessor;
 import org.basepom.jarjar.transform.jar.ManifestFilterJarProcessor;
 import org.basepom.mojo.inliner.model.InlineDependency;
@@ -139,15 +139,15 @@ public final class InlineMojo extends AbstractMojo {
         File outputFile = new File(project.getBasedir(), "transformed.jar");
         try (JarOutputStream outputJarStream = new JarOutputStream(new FileOutputStream(outputFile))) {
 
-            Consumer<Transformable> jarConsumer = transformable -> {
+            Consumer<ClassPathResource> jarConsumer = transformable -> {
                 try {
                     final String name = transformable.getName();
                     LOG.debug(format("Writing '%s' to jar", name));
                     JarEntry outputEntry = new JarEntry(name);
-                    outputEntry.setTime(transformable.getTime());
+                    outputEntry.setTime(transformable.getLastModifiedTime());
                     outputEntry.setCompressedSize(-1);
                     outputJarStream.putNextEntry(outputEntry);
-                    outputJarStream.write(transformable.getData());
+                    outputJarStream.write(transformable.getContent());
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }

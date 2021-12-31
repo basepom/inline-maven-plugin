@@ -26,6 +26,10 @@
     <artifactId>jarjar</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <dep.maven-loader.version>1.2</dep.maven-loader.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -64,6 +68,13 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>de.softwareforge.testing</groupId>
+            <artifactId>maven-loader</artifactId>
+            <version>${dep.maven-loader.version}</version>
             <scope>test</scope>
         </dependency>
 

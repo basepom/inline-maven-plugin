@@ -24,13 +24,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableSet;
-import org.basepom.jarjar.transform.Transformable;
+import org.basepom.jarjar.classpath.ClassPathResource;
 
 public interface JarProcessor {
 
     @CheckForNull
-    default Transformable scan(@Nonnull Transformable transformable, JarProcessor.Chain chain) throws IOException {
-        return chain.next(transformable);
+    default ClassPathResource scan(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain chain) throws IOException {
+        return chain.next(classPathResource);
     }
 
     /**
@@ -39,17 +39,17 @@ public interface JarProcessor {
      * Returns <code>true</code> if the processor wants to retain the entry. In this case, the entry can be removed from the jar file in a future time. Return
      * <code>false</code> for the entries which do not have been changed and there fore are not to be deleted
      *
-     * @param transformable The archive entry to be transformed.
+     * @param classPathResource The archive entry to be transformed.
      * @throws IOException if it all goes upside down
      */
     @CheckForNull
-    default Transformable process(@Nonnull Transformable transformable, JarProcessor.Chain chain) throws IOException {
-        return chain.next(transformable);
+    default ClassPathResource process(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain chain) throws IOException {
+        return chain.next(classPathResource);
     }
 
     interface Chain {
         @CheckForNull
-        Transformable next(@Nullable Transformable source) throws IOException;
+        ClassPathResource next(@Nullable ClassPathResource source) throws IOException;
     }
 
     class Holder {
@@ -66,19 +66,19 @@ public interface JarProcessor {
         @FunctionalInterface
         interface ProcessorOperation {
 
-            Transformable apply(JarProcessor jarProcessor, Transformable transformable, JarProcessor.Chain chain) throws IOException;
+            ClassPathResource apply(JarProcessor jarProcessor, ClassPathResource classPathResource, JarProcessor.Chain chain) throws IOException;
         }
 
         @Nonnull
-        public Optional<Transformable> scan(@Nonnull Transformable transformable) throws IOException {
+        public Optional<ClassPathResource> scan(@Nonnull ClassPathResource classPathResource) throws IOException {
             ChainInstance instance = new ChainInstance(JarProcessor::scan);
-            return Optional.ofNullable(instance.next(transformable));
+            return Optional.ofNullable(instance.next(classPathResource));
         }
 
         @Nonnull
-        public Optional<Transformable> process(@Nonnull Transformable transformable) throws IOException {
+        public Optional<ClassPathResource> process(@Nonnull ClassPathResource classPathResource) throws IOException {
             ChainInstance instance = new ChainInstance(JarProcessor::process);
-            return Optional.ofNullable(instance.next(transformable));
+            return Optional.ofNullable(instance.next(classPathResource));
         }
 
         final class ChainInstance implements JarProcessor.Chain {
@@ -92,7 +92,7 @@ public interface JarProcessor {
 
             @Override
             @CheckForNull
-            public Transformable next(@Nullable Transformable source) throws IOException {
+            public ClassPathResource next(@Nullable ClassPathResource source) throws IOException {
                 if (source != null  && iterator.hasNext()) {
                     return operation.apply(iterator.next(), source, this);
                 }

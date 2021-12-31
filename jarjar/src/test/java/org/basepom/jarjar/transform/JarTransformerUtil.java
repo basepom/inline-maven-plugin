@@ -22,6 +22,8 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import javax.annotation.Nonnull;
 
+import org.basepom.jarjar.classpath.ClassPathResource;
+
 /**
  * @author shevek
  */
@@ -44,13 +46,13 @@ public final class JarTransformerUtil {
         return new File(System.getProperty("jarTestPath"), "jarjar-testdata-1.1.1-" + jarName + ".jar");
     }
 
-    public static ClassLoader createClassLoader(Map<String, Transformable> transformables) {
+    public static ClassLoader createClassLoader(Map<String, ClassPathResource> resources) {
         return new ClassLoader() {
             @Override
             public Class<?> findClass(String name) throws ClassNotFoundException {
                 String fileName = name.replace('.', '/') + ".class";
-                if (transformables.containsKey(fileName)) {
-                    byte[] classData = transformables.get(fileName).getData();
+                if (resources.containsKey(fileName)) {
+                    byte[] classData = resources.get(fileName).getContent();
                     return defineClass(name, classData, 0, classData.length);
                 }
                 throw new ClassNotFoundException(name);
@@ -62,17 +64,17 @@ public final class JarTransformerUtil {
     public static Method getMethod(@Nonnull ClassLoader classLoader, @Nonnull String className, @Nonnull String methodName, @Nonnull Class<?>... parameterTypes)
             throws Exception {
         Class<?> c = classLoader.loadClass(className);
-        return c.getMethod("main", parameterTypes);
+        return c.getMethod(methodName, parameterTypes);
     }
 
-    public static void assertContains(@Nonnull Map<String, Transformable> transformables, @Nonnull String resourceName) {
-        Transformable transformable = transformables.get(resourceName);
-        assertNotNull(transformable, "does not contain entry " + resourceName);
+    public static void assertContains(@Nonnull Map<String, ClassPathResource> resources, @Nonnull String resourceName) {
+        ClassPathResource resource = resources.get(resourceName);
+        assertNotNull(resource, "does not contain entry " + resourceName);
     }
 
-    public static void assertNotContains(@Nonnull Map<String, Transformable> transformables, @Nonnull String resourceName) {
-        Transformable transformable = transformables.get(resourceName);
-        assertNull(transformable, "contains unexpected entry " + resourceName);
+    public static void assertNotContains(@Nonnull Map<String, ClassPathResource> resources, @Nonnull String resourceName) {
+        ClassPathResource resource = resources.get(resourceName);
+        assertNull(resource, "contains unexpected entry " + resourceName);
     }
 
 }

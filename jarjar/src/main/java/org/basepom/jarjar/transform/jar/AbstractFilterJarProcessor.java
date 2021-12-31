@@ -19,7 +19,7 @@ import java.io.IOException;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-import org.basepom.jarjar.transform.Transformable;
+import org.basepom.jarjar.classpath.ClassPathResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ public abstract class AbstractFilterJarProcessor implements JarProcessor {
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    protected abstract boolean isFiltered(@Nonnull Transformable transformable);
+    protected abstract boolean isFiltered(@Nonnull ClassPathResource classPathResource);
 
     protected boolean isVerbose() {
         return true;
@@ -38,25 +38,25 @@ public abstract class AbstractFilterJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
-    public Transformable scan(@Nonnull Transformable struct, Chain chain) throws IOException {
-        if (isFiltered(struct)) {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+        if (isFiltered(classPathResource)) {
             if (isVerbose()) {
-                log.debug(format("scan discarded '%s'", struct.getName()));
+                log.debug(format("scan discarded '%s'", classPathResource.getName()));
             }
             return null;
         }
-        return chain.next(struct);
+        return chain.next(classPathResource);
     }
 
     @Override
     @CheckForNull
-    public Transformable process(@Nonnull Transformable struct, Chain chain) throws IOException {
-        if (isFiltered(struct)) {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+        if (isFiltered(classPathResource)) {
             if (isVerbose()) {
-                log.debug(format("process discarded %s", struct.getName()));
+                log.debug(format("process discarded %s", classPathResource.getName()));
             }
             return null;
         }
-        return chain.next(struct);
+        return chain.next(classPathResource);
     }
 }

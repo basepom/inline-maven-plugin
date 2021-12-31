@@ -13,39 +13,141 @@
  */
 package org.basepom.jarjar.classpath;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
+import java.io.UncheckedIOException;
+import java.util.StringJoiner;
+import java.util.function.Supplier;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public abstract class ClassPathResource {
+public final class ClassPathResource {
 
+    private static final String CLASS_SUFFIX = ".class";
+
+    private final String name;
+    private final long lastModifiedTime;
+    private final String archiveName;
+    private final Supplier<InputStream> inputStreamSupplier;
     private final ImmutableSet<ClassPathTag> tags;
 
-    public ClassPathResource(ClassPathTag fileTag, Set<ClassPathTag> tags) {
-        this.tags = ImmutableSet.<ClassPathTag>builder().addAll(tags).add(fileTag).build();
+    private transient byte[] content = null;
+
+    public static ClassPathResource fromZipEntry(ZipFile zipFile, ZipEntry entry) {
+
+        ImmutableSet<ClassPathTag> tags = ImmutableSet.of(
+                entry.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE,
+                entry.getName().endsWith(CLASS_SUFFIX) ? ClassPathTag.CLASS : ClassPathTag.RESOURCE
+        );
+
+        return new ClassPathResource(entry.getName(), entry.getTime(), zipFile.getName(), supplierForZipEntry(zipFile, entry), null, tags);
+    }
+
+    public static ClassPathResource fromFile(File directory, File file) {
+        ImmutableSet<ClassPathTag> tags = ImmutableSet.of(
+                file.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE,
+                file.getName().endsWith(CLASS_SUFFIX) ? ClassPathTag.CLASS : ClassPathTag.RESOURCE
+        );
+
+        return new ClassPathResource(file.getName(), file.lastModified(), directory.getPath(), supplierForFile(file), null, tags);
+    }
+
+    public static ClassPathResource forDirectory(String directory) {
+        return new ClassPathResource(directory, 0, "", InputStream::nullInputStream, null, ImmutableSet.of(ClassPathTag.DIRECTORY, ClassPathTag.RESOURCE));
+    }
+
+    public ClassPathResource withName(String name) {
+        return new ClassPathResource(name, this.lastModifiedTime, this.archiveName, this.inputStreamSupplier, this.content, this.tags);
+    }
+
+    public ClassPathResource withContent(byte [] content) {
+        return new ClassPathResource(name, this.lastModifiedTime, this.archiveName, this.inputStreamSupplier, content, this.tags);
+    }
+
+    private ClassPathResource(String name, long lastModifiedTime, String archiveName, Supplier<InputStream> inputStreamSupplier, byte [] content,
+            ImmutableSet<ClassPathTag> tags) {
+        this.name = name;
+        this.lastModifiedTime = lastModifiedTime;
+        this.archiveName = archiveName;
+        this.inputStreamSupplier = inputStreamSupplier;
+        this.content = content;
+        this.tags = tags;
     }
 
     @Nonnull
-    public abstract String getArchiveName();
+    public String getArchiveName() {
+        return archiveName;
+    }
 
     @Nonnull
-    public abstract String getName();
+    public String getName() {
+        return name;
+    }
 
-    public abstract long getLastModifiedTime();
+    public long getLastModifiedTime() {
+        return lastModifiedTime;
+    }
 
     @Nonnull
-    public final ImmutableSet<ClassPathTag> getClasspathTags() {
+    public ImmutableSet<ClassPathTag> getTags() {
         return tags;
     }
 
     @Nonnull
-    public abstract InputStream openStream() throws IOException;
+    @SuppressFBWarnings("EI_EXPOSE_REP")
+    public byte[] getContent() {
+
+        if (content == null) {
+            try (InputStream in = inputStreamSupplier.get()) {
+                content = ByteStreams.toByteArray(in);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return content;
+    }
 
     @Override
     public String toString() {
-        return getArchiveName() + "!" + getName();
+        StringJoiner joiner = new StringJoiner(", ", ClassPathResource.class.getSimpleName() + "[", "]")
+                .add("name='" + name + "'")
+                .add("lastModifiedTime=" + lastModifiedTime)
+                .add("archiveName='" + archiveName + "'")
+                .add("tags=" + tags);
+        if (content == null) {
+            joiner.add("content=<not loaded>");
+        } else {
+            joiner.add("content length=" + content.length);
+        }
+
+        return joiner.toString();
+    }
+
+    private static Supplier<InputStream> supplierForZipEntry(ZipFile zipFile, ZipEntry zipEntry) {
+        return () -> {
+            try {
+                return zipFile.getInputStream(zipEntry);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        };
+    }
+
+    private static Supplier<InputStream> supplierForFile(File file) {
+        return () -> {
+            try {
+                return new BufferedInputStream(new FileInputStream(file));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        };
     }
 }
