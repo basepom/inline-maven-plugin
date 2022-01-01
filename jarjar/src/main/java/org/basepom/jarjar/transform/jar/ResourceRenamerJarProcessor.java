@@ -20,6 +20,7 @@ import javax.annotation.Nonnull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.basepom.jarjar.ClassNameUtils;
 import org.basepom.jarjar.classpath.ClassPathResource;
+import org.basepom.jarjar.classpath.ClassPathTag;
 import org.basepom.jarjar.transform.asm.PackageRemapper;
 
 /**
@@ -27,19 +28,24 @@ import org.basepom.jarjar.transform.asm.PackageRemapper;
  */
 public class ResourceRenamerJarProcessor implements JarProcessor {
 
-    private final PackageRemapper pr;
+    private final PackageRemapper packageRemapper;
 
     @SuppressFBWarnings("EI_EXPOSE_REP2")
-    public ResourceRenamerJarProcessor(@Nonnull PackageRemapper pr) {
-        this.pr = pr;
+    public ResourceRenamerJarProcessor(@Nonnull PackageRemapper packageRemapper) {
+        this.packageRemapper = packageRemapper;
     }
 
     @Override
     @CheckForNull
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+        return process(classPathResource, chain);
+    }
+    @Override
+    @CheckForNull
     public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
 
-        if (!ClassNameUtils.isClass(classPathResource.getName())) {
-            classPathResource = classPathResource.withName(pr.mapPath(classPathResource.getName()));
+        if (classPathResource.getTags().contains(ClassPathTag.RESOURCE)) {
+            classPathResource = classPathResource.withName(packageRemapper.mapPath(classPathResource.getName()));
         }
         return chain.next(classPathResource);
     }

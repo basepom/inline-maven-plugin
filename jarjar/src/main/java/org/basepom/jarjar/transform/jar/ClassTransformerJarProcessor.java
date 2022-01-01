@@ -25,11 +25,13 @@ import javax.annotation.Nonnull;
 
 import org.basepom.jarjar.ClassNameUtils;
 import org.basepom.jarjar.classpath.ClassPathResource;
+import org.basepom.jarjar.classpath.ClassPathTag;
 import org.basepom.jarjar.transform.asm.ClassTransformer;
 import org.basepom.jarjar.transform.asm.GetNameClassWriter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,10 +52,26 @@ public class ClassTransformerJarProcessor implements JarProcessor {
         this(Arrays.asList(classProcessors));
     }
 
+    @CheckForNull
+    @Override
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+        if (classPathResource.getTags().contains(ClassPathTag.CLASS)) {
+            ClassReader reader = new ClassReader(classPathResource.getContent());
+            GetNameClassWriter namer = new GetNameClassWriter(new ClassVisitor(Opcodes.ASM9) {});
+            ClassVisitor cv = namer;
+            for (ClassTransformer classProcessor : classProcessors) {
+                cv = classProcessor.transform(cv);
+            }
+            reader.accept(cv, ClassReader.EXPAND_FRAMES);
+            classPathResource = classPathResource.withName(ClassNameUtils.javaNameToPath(namer.getClassName()));
+        }
+        return chain.next(classPathResource);
+    }
+
     @Override
     @CheckForNull
     public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
-        if (ClassNameUtils.isClass(classPathResource.getName())) {
+        if (classPathResource.getTags().contains(ClassPathTag.CLASS)) {
             try {
                 ClassReader reader = new ClassReader(classPathResource.getContent());
                 ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);

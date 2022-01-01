@@ -23,5 +23,5 @@ import org.objectweb.asm.ClassVisitor;
 public interface ClassTransformer {
 
     @Nonnull
-    ClassVisitor transform(@Nonnull ClassVisitor v);
+    ClassVisitor transform(@Nonnull ClassVisitor classVisitor);
 }

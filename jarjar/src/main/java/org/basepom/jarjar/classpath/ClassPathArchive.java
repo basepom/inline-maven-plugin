@@ -35,7 +35,7 @@ import org.basepom.jarjar.ClassNameUtils;
 public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
     private final File archiveFile;
-    private final ImmutableSet<ClassPathTag> tags;
+    protected final ImmutableSet<ClassPathTag> tags;
 
     public static ClassPathArchive forFile(File file, ClassPathTag... tags) {
         if (file.isDirectory()) {
@@ -75,7 +75,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
     public abstract Iterator<ClassPathResource> iterator();
 
-    private static class ZipIterator implements Iterator<ClassPathResource>, Closeable {
+    private class ZipIterator implements Iterator<ClassPathResource>, Closeable {
 
         private final ZipFile zipFile;
         private final Iterator<? extends ZipEntry> zipEntries;
@@ -96,7 +96,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
         @Override
         public ClassPathResource next() {
-            return ClassPathResource.fromZipEntry(zipFile, zipEntries.next());
+            return ClassPathResource.fromZipEntry(zipFile, zipEntries.next(), tags);
         }
 
         @Override
@@ -114,22 +114,22 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
         }
     }
 
-    private static class DirectoryIterator implements Iterator<ClassPathResource> {
-
-        private static void findClassFiles(@Nonnull Collection<? super File> out, @Nonnull File dir) {
-            final File[] files = dir.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        findClassFiles(out, file);
-                    } else if (file.isFile()) {
-                        if (ClassNameUtils.isClass(file.getName())) {
-                            out.add(file);
-                        }
+    private static void findClassFiles(@Nonnull Collection<? super File> out, @Nonnull File dir) {
+        final File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    findClassFiles(out, file);
+                } else if (file.isFile()) {
+                    if (ClassNameUtils.isClass(file.getName())) {
+                        out.add(file);
                     }
                 }
             }
         }
+    }
+
+    private class DirectoryIterator implements Iterator<ClassPathResource> {
 
         private final File directory;
         private final Iterator<File> entries;
@@ -151,7 +151,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
         @Override
         public ClassPathResource next() {
             final File file = entries.next();
-            return ClassPathResource.fromFile(directory, file);
+            return ClassPathResource.fromFile(directory, file, tags);
         }
 
         @Override

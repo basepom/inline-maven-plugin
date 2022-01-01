@@ -14,6 +14,7 @@
 package org.basepom.jarjar.transform;
 
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.File;
@@ -65,6 +66,7 @@ public class JarTransformerTest {
 
         @Override
         public void accept(ClassPathResource resource) {
+            assertNotNull(resource.getContent());
             assertNull(names.put(resource.getName(), resource), "Already seen '%s'" + resource.getName());
         }
 

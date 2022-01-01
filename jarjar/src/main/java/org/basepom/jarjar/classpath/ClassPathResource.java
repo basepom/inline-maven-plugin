@@ -41,23 +41,23 @@ public final class ClassPathResource {
 
     private transient byte[] content = null;
 
-    public static ClassPathResource fromZipEntry(ZipFile zipFile, ZipEntry entry) {
+    public static ClassPathResource fromZipEntry(ZipFile zipFile, ZipEntry entry, ImmutableSet<ClassPathTag> tags) {
 
-        ImmutableSet<ClassPathTag> tags = ImmutableSet.of(
-                entry.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE,
-                entry.getName().endsWith(CLASS_SUFFIX) ? ClassPathTag.CLASS : ClassPathTag.RESOURCE
-        );
+        ImmutableSet.Builder<ClassPathTag> builder = ImmutableSet.builder();
+        builder.addAll(tags);
+        builder.add(entry.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE);
+        builder.add(entry.getName().endsWith(CLASS_SUFFIX) ? ClassPathTag.CLASS : ClassPathTag.RESOURCE);
 
-        return new ClassPathResource(entry.getName(), entry.getTime(), zipFile.getName(), supplierForZipEntry(zipFile, entry), null, tags);
+        return new ClassPathResource(entry.getName(), entry.getTime(), zipFile.getName(), supplierForZipEntry(zipFile, entry), null, builder.build());
     }
 
-    public static ClassPathResource fromFile(File directory, File file) {
-        ImmutableSet<ClassPathTag> tags = ImmutableSet.of(
-                file.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE,
-                file.getName().endsWith(CLASS_SUFFIX) ? ClassPathTag.CLASS : ClassPathTag.RESOURCE
-        );
+    public static ClassPathResource fromFile(File directory, File file, ImmutableSet<ClassPathTag> tags) {
+        ImmutableSet.Builder<ClassPathTag> builder = ImmutableSet.builder();
+        builder.addAll(tags);
+        builder.add(file.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE);
+        builder.add(file.getName().endsWith(CLASS_SUFFIX) ? ClassPathTag.CLASS : ClassPathTag.RESOURCE);
 
-        return new ClassPathResource(file.getName(), file.lastModified(), directory.getPath(), supplierForFile(file), null, tags);
+        return new ClassPathResource(file.getName(), file.lastModified(), directory.getPath(), supplierForFile(file), null, builder.build());
     }
 
     public static ClassPathResource forDirectory(String directory) {

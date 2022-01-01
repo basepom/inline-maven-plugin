@@ -13,6 +13,7 @@
  */
 package org.basepom.jarjar.transform.jar;
 
+import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import javax.annotation.Nonnull;
 
 import org.basepom.jarjar.ClassNameUtils;
 import org.basepom.jarjar.classpath.ClassPathResource;
+import org.basepom.jarjar.classpath.ClassPathTag;
 import org.basepom.jarjar.transform.config.AbstractPattern;
 import org.basepom.jarjar.transform.config.ClassDelete;
 import org.basepom.jarjar.transform.config.ClassKeep;
@@ -64,9 +66,10 @@ public class ClassFilterJarProcessor extends AbstractFilterJarProcessor {
     @Override
     protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
         String name = classPathResource.getName();
-        if (!ClassNameUtils.isClass(name)) {
+        if (classPathResource.getTags().contains(ClassPathTag.RESOURCE)) {
             return false;
         }
+        checkState(name.endsWith(".class"), "%s is not a class!", name);
         name = name.substring(0, name.length() - 6);
 
         // filter if there are keep patterns (no implicit "all included") and no matching pattern exists.

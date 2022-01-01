@@ -32,8 +32,8 @@ public class RemappingClassTransformer implements ClassTransformer {
 
     @Nonnull
     @Override
-    public ClassVisitor transform(@Nonnull ClassVisitor v) {
-        return new ClassRemapper(v, remapper);
+    public ClassVisitor transform(@Nonnull ClassVisitor classVisitor) {
+        return new ClassRemapper(classVisitor, remapper);
     }
 
 }

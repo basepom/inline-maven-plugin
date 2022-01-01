@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 
 import org.basepom.jarjar.ClassNameUtils;
 import org.basepom.jarjar.classpath.ClassPathResource;
+import org.basepom.jarjar.classpath.ClassPathTag;
 import org.basepom.jarjar.transform.config.ClassKeepTransitive;
 import org.basepom.jarjar.transform.config.PatternUtils;
 import org.objectweb.asm.ClassReader;
@@ -98,7 +99,7 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
     public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
         if (isEnabled()) {
             try {
-                if (ClassNameUtils.isClass(classPathResource.getName())) {
+                if (classPathResource.getTags().contains(ClassPathTag.CLASS)) {
                     String name = classPathResource.getName().substring(0, classPathResource.getName().length() - 6);
                     for (ClassKeepTransitive pattern : patterns) {
                         if (pattern.matches(name)) {
@@ -141,7 +142,7 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
     @CheckForNull
     public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
         if (isEnabled()) {
-            if (ClassNameUtils.isClass(classPathResource.getName())) {
+            if (classPathResource.getTags().contains(ClassPathTag.CLASS)) {
                 return super.process(classPathResource, chain);
             }
         }
