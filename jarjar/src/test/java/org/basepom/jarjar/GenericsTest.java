@@ -14,7 +14,7 @@
 package org.basepom.jarjar;
 
 import org.basepom.jarjar.transform.asm.PackageRemapper;
-import org.basepom.jarjar.transform.config.ClassRename;
+import org.basepom.jarjar.transform.config.Rename;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -23,8 +23,10 @@ public class GenericsTest {
 
     @Test
     public void testTransform() throws Exception {
-        ClassRename rule = new ClassRename("java.lang.String", "com.tonicsystems.String");
-        ClassRemapper t = new ClassRemapper(null, new PackageRemapper(rule));
+        Rename rule = Rename.forClassName("java.lang.String", "com.tonicsystems.String", false);
+        PackageRemapper packageRemapper = new PackageRemapper();
+        packageRemapper.addRule("", rule);
+        ClassRemapper t = new ClassRemapper(null, packageRemapper);
         ClassReader reader = new ClassReader(getClass().getResourceAsStream("/Generics.class"));
         reader.accept(t, 0);
     }

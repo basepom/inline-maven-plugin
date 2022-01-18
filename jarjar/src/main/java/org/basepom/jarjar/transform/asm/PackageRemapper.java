@@ -14,41 +14,48 @@
 package org.basepom.jarjar.transform.asm;
 
 import static java.lang.String.format;
+import static org.basepom.jarjar.ClassNameUtils.toPackage;
+import static org.basepom.jarjar.ClassNameUtils.toPath;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import java.util.Set;
 import javax.annotation.Nonnull;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
 import org.basepom.jarjar.ClassNameUtils;
-import org.basepom.jarjar.transform.config.ClassRename;
+import org.basepom.jarjar.transform.config.Rename;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PackageRemapper extends Remapper {
-
     private static final Logger LOG = LoggerFactory.getLogger(PackageRemapper.class);
     private static final String RESOURCE_SUFFIX = "RESOURCE";
 
-    private final List<ClassRename> patterns;
     private final Map<String, String> typeCache = new HashMap<>();
     private final Map<String, String> pathCache = new HashMap<>();
     private final Map<Object, String> valueCache = new HashMap<>();
 
-    public PackageRemapper(@Nonnull Iterable<? extends ClassRename> patterns) {
-        this.patterns = StreamSupport.stream(patterns.spliterator(), false).collect(Collectors.toList());
+    private SetMultimap<String, Rename> renamers = HashMultimap.create();
+    private final SetMultimap<String, String> resources = HashMultimap.create();
+
+    public PackageRemapper() {
     }
 
-    public PackageRemapper(@Nonnull ClassRename... patterns) {
-        this(Arrays.asList(patterns));
+    public void addRule(@Nonnull String archiveName, @Nonnull Rename pattern) {
+        renamers.put(archiveName, pattern);
+        LOG.debug(format("Allowing %s in %s", pattern, archiveName));
     }
 
-    public void addRule(@Nonnull ClassRename pattern) {
-        this.patterns.add(pattern);
+    public void addResource(@Nonnull String resourceName, @Nonnull String archiveName) {
+        if (resourceName.endsWith(ClassNameUtils.EXT_CLASS)) {
+            resources.put(resourceName.substring(0, resourceName.length() - 6), archiveName);
+        } else {
+            resources.put(resourceName, archiveName);
+        }
+        LOG.debug(format("Accepting %s from %s", resourceName, archiveName));
     }
 
     @Override
@@ -82,7 +89,12 @@ public class PackageRemapper extends Remapper {
                 s = s.substring(1);
             }
 
+            String old = s;
             s = replaceHelper(s);
+
+            if (!s.equals(old)) {
+                LOG.debug(format("Changing '%s' to '%s'", old, s));
+            }
 
             if (absolute) {
                 s = "/" + s;
@@ -100,28 +112,34 @@ public class PackageRemapper extends Remapper {
     public Object mapValue(Object value) {
         if (value instanceof String) {
             String s = valueCache.get(value);
-            if (s == null) {
-                s = (String) value;
-                if (ClassNameUtils.isArrayForName(s)) {
-                    String desc1 = s.replace('.', '/');
-                    String desc2 = mapDesc(desc1);
-                    if (!desc2.equals(desc1)) {
-                        return desc2.replace('/', '.');
+            if (s != null) {
+                return s;
+            }
+
+            s = (String) value;
+            if (ClassNameUtils.isArrayForName(s)) {
+                String desc2 = mapDesc(s);
+                if (!desc2.equals(s)) {
+                    s = toPackage(desc2);
+                }
+            } else {
+                boolean hasDot = s.indexOf('.') >= 0;
+                boolean hasSlash = s.indexOf('/') >= 0;
+
+                if (hasSlash) {
+                    // resource or already translated class name
+                    if (hasDot) {
+                        // resource; a class name would have that dot translated
+                        s = replaceHelper(s);
+                    } else {
+                        // class name
+                        s = replaceHelper(s);
                     }
                 } else {
-                    s = mapPath(s);
-                    if (s.equals(value)) {
-                        boolean hasDot = s.indexOf('.') >= 0;
-                        boolean hasSlash = s.indexOf('/') >= 0;
-                        if (!(hasDot && hasSlash)) {
-                            if (hasDot) {
-                                s = replaceHelper(s.replace('.', '/')).replace('/', '.');
-                            } else {
-                                s = replaceHelper(s);
-                            }
-                        }
-                    }
+                    // class name in not-translated shape
+                    s = toPackage(replaceHelper(toPath(s)));
                 }
+
                 if (valueCache.put(value, s) == null && !s.equals(value)) {
                     LOG.debug(format("Mapped '%s' -> '%s'", value, s));
                 }
@@ -133,8 +151,15 @@ public class PackageRemapper extends Remapper {
     }
 
     private String replaceHelper(String value) {
-        for (ClassRename pattern : patterns) {
-            String result = pattern.replace(value);
+        Set<String> archives = resources.get(value);
+
+        if (archives.isEmpty()) {
+            LOG.debug(format("Rejecting '%s', not part of any rename!", value));
+            return value;
+        }
+
+        for (Rename pattern : renamers.values()) {
+            String result = pattern.renameClassName(value);
             if (result != null) {
                 return result;
             }

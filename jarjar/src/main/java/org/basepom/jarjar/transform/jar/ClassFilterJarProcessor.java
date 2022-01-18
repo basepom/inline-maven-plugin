@@ -21,7 +21,6 @@ import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-import org.basepom.jarjar.ClassNameUtils;
 import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.classpath.ClassPathTag;
 import org.basepom.jarjar.transform.config.AbstractPattern;
@@ -35,7 +34,6 @@ import org.basepom.jarjar.transform.config.ClassKeep;
  * resources.
  *
  * @author shevek
- * @see ClassNameUtils#isClass(String)
  */
 public class ClassFilterJarProcessor extends AbstractFilterJarProcessor {
 
@@ -73,17 +71,16 @@ public class ClassFilterJarProcessor extends AbstractFilterJarProcessor {
         name = name.substring(0, name.length() - 6);
 
         // filter if there are keep patterns (no implicit "all included") and no matching pattern exists.
-        boolean filtered = !keepPatterns.isEmpty() && getMatchingPattern(keepPatterns, name) == null;
-        if (filtered) {
+        boolean notIncluded = !keepPatterns.isEmpty() && getMatchingPattern(keepPatterns, name) == null;
+        if (notIncluded) {
             log.debug(format("Excluded '%s' because no matching include pattern found!", name));
-            return true;
         }
 
         // filter if delete patterns are not empty (no explicit "nothing excluded") and a matching pattern exists.
-        filtered =  !deletePatterns.isEmpty() && getMatchingPattern(deletePatterns, name) != null;
-        if (filtered) {
+        boolean excluded = !deletePatterns.isEmpty() && getMatchingPattern(deletePatterns, name) != null;
+        if (excluded) {
             log.debug(format("Excluded '%s' because a matching exclude pattern was found!", name));
         }
-        return filtered;
+        return notIncluded || excluded;
     }
 }

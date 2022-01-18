@@ -96,7 +96,7 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
 
     @Override
     @CheckForNull
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
         if (isEnabled()) {
             try {
                 if (classPathResource.getTags().contains(ClassPathTag.CLASS)) {
@@ -140,7 +140,7 @@ public class ClassClosureJarProcessor extends AbstractFilterJarProcessor {
 
     @Override
     @CheckForNull
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
         if (isEnabled()) {
             if (classPathResource.getTags().contains(ClassPathTag.CLASS)) {
                 return super.process(classPathResource, chain);

@@ -13,14 +13,19 @@
  */
 package org.basepom.jarjar;
 
-import java.io.File;
+import static com.google.common.base.Preconditions.checkState;
+
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 /**
  * @author shevek
  */
-public class ClassNameUtils {
+public final class ClassNameUtils {
+
+    private ClassNameUtils() {
+        throw new AssertionError("ClassNameUtils can not be instantiated");
+    }
 
     private static final Pattern ARRAY_FOR_NAME_PATTERN
             = Pattern.compile("\\[L[\\p{javaJavaIdentifierPart}\\.]+?;");
@@ -33,7 +38,7 @@ public class ClassNameUtils {
      */
     // also used by KeepProcessor
     public static boolean isArrayForName(String value) {
-        return ARRAY_FOR_NAME_PATTERN.matcher(value).matches();
+        return value.startsWith("[L");
     }
 
     // TODO: use this for package remapping too?
@@ -57,34 +62,26 @@ public class ClassNameUtils {
         return true;
     }
 
+    public static final String EXT_CLASS = ".class";
+
     @Nonnull
     public static String javaNameToPath(@Nonnull String className) {
-        return className.replace('.', '/') + ClassNameUtils.EXT_CLASS;
+        return toPath(className) + ClassNameUtils.EXT_CLASS;
     }
 
     @Nonnull
     public static String pathToJavaName(@Nonnull String path) {
-        if (isClass(path)) {
+        if (path.endsWith(EXT_CLASS)) {
             path = path.substring(0, path.length() - EXT_CLASS.length());
         }
-        return path.replace('/', '.');
+        return toPackage(path);
     }
 
-    public static final String EXT_CLASS = ".class";
-
-    public static boolean isClass(@Nonnull String name) {
-        return hasExtension(name, EXT_CLASS);
+    public static String toPath(String value) {
+        return value.replace('.', '/');
     }
 
-    public static boolean hasExtension(@Nonnull File file, @Nonnull String ext) {
-        return hasExtension(file.getName(), ext);
-    }
-
-    public static boolean hasExtension(@Nonnull String name, @Nonnull String ext) {
-        if (name.length() < ext.length()) {
-            return false;
-        }
-        String actual = name.substring(name.length() - ext.length());
-        return actual.equalsIgnoreCase(ext);
+    public static String toPackage(String value) {
+        return value.replace('/', '.');
     }
 }

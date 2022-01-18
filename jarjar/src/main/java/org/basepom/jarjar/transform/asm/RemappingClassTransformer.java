@@ -15,6 +15,7 @@ package org.basepom.jarjar.transform.asm;
 
 import javax.annotation.Nonnull;
 
+import org.basepom.jarjar.transform.jar.RemapperProcessor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
@@ -24,16 +25,16 @@ import org.objectweb.asm.commons.Remapper;
  */
 public class RemappingClassTransformer implements ClassTransformer {
 
-    private final Remapper remapper;
+    private final RemapperProcessor remapperProcessor;
 
-    public RemappingClassTransformer(@Nonnull Remapper remapper) {
-        this.remapper = remapper;
+    public RemappingClassTransformer(@Nonnull RemapperProcessor remapperProcessor) {
+        this.remapperProcessor = remapperProcessor;
     }
 
     @Nonnull
     @Override
     public ClassVisitor transform(@Nonnull ClassVisitor classVisitor) {
-        return new ClassRemapper(classVisitor, remapper);
+        return new ClassRemapper(classVisitor, remapperProcessor.getRemapper());
     }
 
 }

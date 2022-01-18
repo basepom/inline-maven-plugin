@@ -13,40 +13,62 @@
  */
 package org.basepom.jarjar.transform.jar;
 
+import static java.lang.String.format;
+
 import java.io.IOException;
+import java.util.Set;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.basepom.jarjar.ClassNameUtils;
 import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.classpath.ClassPathTag;
-import org.basepom.jarjar.transform.asm.PackageRemapper;
+import org.basepom.jarjar.transform.config.Rename;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Allows any file which is NOT a JAR file.
  */
 public class ResourceRenamerJarProcessor implements JarProcessor {
+    private static final Logger LOG = LoggerFactory.getLogger(ResourceRenamerJarProcessor.class);
 
-    private final PackageRemapper packageRemapper;
+    private final RemapperProcessor remapperProcessor;
 
     @SuppressFBWarnings("EI_EXPOSE_REP2")
-    public ResourceRenamerJarProcessor(@Nonnull PackageRemapper packageRemapper) {
-        this.packageRemapper = packageRemapper;
+    public ResourceRenamerJarProcessor(@Nonnull RemapperProcessor remapperProcessor) {
+        this.remapperProcessor = remapperProcessor;
     }
 
     @Override
     @CheckForNull
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
         return process(classPathResource, chain);
     }
     @Override
     @CheckForNull
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
 
         if (classPathResource.getTags().contains(ClassPathTag.RESOURCE)) {
-            classPathResource = classPathResource.withName(packageRemapper.mapPath(classPathResource.getName()));
+            Set<Rename> eligibleRenames = remapperProcessor.locateRenames(classPathResource);
+
+            classPathResource = classPathResource.withName(mapResourceName(classPathResource.getName(), eligibleRenames));
         }
         return chain.next(classPathResource);
+    }
+
+    private String mapResourceName(String value, Set<Rename> renames) {
+        if (renames.isEmpty()) {
+            LOG.debug(format("Rejecting '%s', not part of any rename!", value));
+            return value;
+        }
+
+        for (Rename pattern : renames) {
+            String result = pattern.renamePath(value);
+            if (result != null) {
+                return result;
+            }
+        }
+        return value;
     }
 }

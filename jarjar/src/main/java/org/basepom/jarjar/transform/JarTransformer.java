@@ -31,7 +31,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import org.basepom.jarjar.classpath.ClassPath;
-import org.basepom.jarjar.classpath.ClassPathArchive;
+import org.basepom.jarjar.classpath.ClassPathElement;
 import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.classpath.ClassPathTag;
 import org.basepom.jarjar.transform.jar.AbstractFilterJarProcessor;
@@ -65,7 +65,12 @@ public class JarTransformer {
 
     public void transform(@Nonnull ClassPath inputPath) throws IOException {
 
-        for (ClassPathArchive inputArchive : inputPath) {
+        for (ClassPathElement inputArchive : inputPath) {
+            LOG.debug(format("Pre-scanning archive %s", inputArchive));
+            holder.preScan(inputArchive);
+        }
+
+        for (ClassPathElement inputArchive : inputPath) {
             LOG.debug(format("Scanning archive %s", inputArchive));
             for (ClassPathResource inputResource : inputArchive) {
                 holder.scan(inputResource);
@@ -80,7 +85,7 @@ public class JarTransformer {
                 outputSink.accept(directoryResource);
             }
 
-            for (ClassPathArchive inputArchive : inputPath) {
+            for (ClassPathElement inputArchive : inputPath) {
                 LOG.info(format("Transforming archive %s", inputArchive));
 
                 for (ClassPathResource inputResource : inputArchive) {
@@ -128,7 +133,7 @@ public class JarTransformer {
 
         @CheckForNull
         @Override
-        public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+        public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
             String name = classPathResource.getName();
             List<String> elements = Splitter.on('/').splitToList(name);
             if (elements.size() > 1) {
@@ -156,7 +161,7 @@ public class JarTransformer {
 
         @CheckForNull
         @Override
-        public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+        public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
             if (classPathResource.getTags().contains(ClassPathTag.FILE)) {
                 final String name = classPathResource.getName();
 

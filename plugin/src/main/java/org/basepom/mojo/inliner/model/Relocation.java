@@ -13,34 +13,45 @@
  */
 package org.basepom.mojo.inliner.model;
 
-import org.basepom.jarjar.transform.config.ClassRename;
+import org.basepom.jarjar.transform.config.Rename;
 
 public class Relocation {
 
-    private String pattern;
-
-    private String location;
-
+    private String source;
+    private String destination;
+    private boolean hideClasses;
+    \
     public Relocation() {
     }
 
-    public String getPattern() {
-        return pattern;
+    public String getSource() {
+        return source;
     }
 
-    public void setPattern(String pattern) {
-        this.pattern = pattern;
+    public Relocation setSource(String source) {
+        this.source = source;
+        return this;
     }
 
-    public String getLocation() {
-        return location;
+    public String getDestination() {
+        return destination;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
+    public Relocation setDestination(String destination) {
+        this.destination = destination;
+        return this;
     }
 
-    public ClassRename toClassRename() {
-        return new ClassRename(getPattern(), getLocation());
+    public boolean isHideClasses() {
+        return hideClasses;
+    }
+
+    public Relocation setHideClasses(boolean hideClasses) {
+        this.hideClasses = hideClasses;
+        return this;
+    }
+
+    public Rename toRename() {
+        return new Rename(this.source, this.destination, this.hideClasses);
     }
 }

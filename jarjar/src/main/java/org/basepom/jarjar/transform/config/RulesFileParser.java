@@ -33,8 +33,6 @@ public class RulesFileParser {
 
         void addClassDelete(@Nonnull ClassDelete classDelete);
 
-        void addClassRename(@Nonnull ClassRename classRename);
-
         void addClassKeep(@Nonnull ClassKeep classKeep);
 
         void addClassKeepTransitive(@Nonnull ClassKeepTransitive classKeepTransitive);
@@ -81,12 +79,6 @@ public class RulesFileParser {
                 String type = words.get(0);
 
                 switch (type) {
-                    case "rule":
-                        if (words.size() < 3) {
-                            throw error(lineNumber, words, "'rule' requires 2 arguments.");
-                        }
-                        output.addClassRename(new ClassRename(words.get(1), words.get(2)));
-                        break;
                     case "zap":
                         output.addClassDelete(new ClassDelete(words.get(1)));
                         break;

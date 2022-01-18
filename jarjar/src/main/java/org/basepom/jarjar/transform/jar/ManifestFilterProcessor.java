@@ -22,11 +22,11 @@ import org.basepom.jarjar.classpath.ClassPathTag;
 /**
  * Excludes the manifest.
  */
-public class ManifestFilterJarProcessor extends PathFilterJarProcessor {
+public class ManifestFilterProcessor extends PathFilterJarProcessor {
 
     public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
 
-    public ManifestFilterJarProcessor() {
+    public ManifestFilterProcessor() {
         super(Collections.singleton(MANIFEST_PATH));
     }
 

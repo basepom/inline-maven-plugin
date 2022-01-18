@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class PatternUtils {
 
@@ -134,8 +135,7 @@ public class PatternUtils {
         return parts;
     }
 
-    public static String replace(@Nonnull AbstractPattern pattern, @Nonnull List<Object> replace, String value) {
-        Matcher matcher = pattern.getMatcher(value);
+    public static String replace(@Nullable Matcher matcher, @Nonnull List<Object> replace) {
         if (matcher == null) {
             return null;
         }
@@ -151,6 +151,7 @@ public class PatternUtils {
     }
 
     public static final String PACKAGE_INFO = "package-info";
+    public static final String MODULE_INFO = "module-info";
 
     static boolean isPossibleQualifiedName(@Nonnull String value, @Nonnull String extraAllowedCharacters) {
         // package-info violates the spec for Java Identifiers.
@@ -158,6 +159,9 @@ public class PatternUtils {
         // See 7.4.1.1 of the Java language spec for discussion.
         if (value.endsWith(PACKAGE_INFO)) {
             value = value.substring(0, value.length() - PACKAGE_INFO.length());
+        }
+        if (value.endsWith(MODULE_INFO)) {
+            value = value.substring(0, value.length() - MODULE_INFO.length());
         }
         for (int i = 0, len = value.length(); i < len; i++) {
             char c = value.charAt(i);

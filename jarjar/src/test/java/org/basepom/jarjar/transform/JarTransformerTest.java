@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.google.common.collect.ImmutableSet;
 import org.basepom.jarjar.classpath.ClassPath;
 import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.transform.jar.DefaultJarProcessor;
@@ -40,7 +41,7 @@ public class JarTransformerTest {
     private final ClassPath classPath = new ClassPath(new File("/"));
 
     public JarTransformerTest() {
-        Arrays.stream(JarTransformerUtil.JARS).forEach(classPath::addFile);
+        Arrays.stream(JarTransformerUtil.JARS).forEach(jar -> classPath.addFile(jar, ImmutableSet.of()));
     }
 
     @Test

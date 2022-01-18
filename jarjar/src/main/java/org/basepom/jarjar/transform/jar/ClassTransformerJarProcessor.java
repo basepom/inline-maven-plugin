@@ -42,25 +42,25 @@ public class ClassTransformerJarProcessor implements JarProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClassTransformerJarProcessor.class);
 
-    private final List<ClassTransformer> classProcessors;
+    private final List<ClassTransformer> classTransformers;
 
-    public ClassTransformerJarProcessor(@Nonnull List<ClassTransformer> classProcessors) {
-        this.classProcessors = new ArrayList<>(classProcessors);
+    public ClassTransformerJarProcessor(@Nonnull List<ClassTransformer> classTransformers) {
+        this.classTransformers = new ArrayList<>(classTransformers);
     }
 
-    public ClassTransformerJarProcessor(@Nonnull ClassTransformer... classProcessors) {
-        this(Arrays.asList(classProcessors));
+    public ClassTransformerJarProcessor(@Nonnull ClassTransformer... classTransformers) {
+        this(Arrays.asList(classTransformers));
     }
 
     @CheckForNull
     @Override
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
         if (classPathResource.getTags().contains(ClassPathTag.CLASS)) {
             ClassReader reader = new ClassReader(classPathResource.getContent());
             GetNameClassWriter namer = new GetNameClassWriter(new ClassVisitor(Opcodes.ASM9) {});
             ClassVisitor cv = namer;
-            for (ClassTransformer classProcessor : classProcessors) {
-                cv = classProcessor.transform(cv);
+            for (ClassTransformer classTransformer : classTransformers) {
+                cv = classTransformer.transform(cv);
             }
             reader.accept(cv, ClassReader.EXPAND_FRAMES);
             classPathResource = classPathResource.withName(ClassNameUtils.javaNameToPath(namer.getClassName()));
@@ -70,18 +70,24 @@ public class ClassTransformerJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
         if (classPathResource.getTags().contains(ClassPathTag.CLASS)) {
             try {
                 ClassReader reader = new ClassReader(classPathResource.getContent());
+                String oldName = reader.getClassName();
                 ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 GetNameClassWriter namer = new GetNameClassWriter(writer);
                 ClassVisitor cv = namer;
-                for (ClassTransformer classProcessor : classProcessors) {
+                for (ClassTransformer classProcessor : classTransformers) {
                     cv = classProcessor.transform(cv);
                 }
                 reader.accept(cv, ClassReader.EXPAND_FRAMES);
-                classPathResource = classPathResource.withName(ClassNameUtils.javaNameToPath(namer.getClassName())).withContent(writer.toByteArray());
+                final String newName = namer.getClassName();
+                classPathResource = classPathResource.withName(ClassNameUtils.javaNameToPath(newName)).withContent(writer.toByteArray());
+                if (!newName.equals(oldName)) {
+                    LOG.debug(format("Transformed '%s' to '%s' (in %s)", oldName, newName, classPathResource.getArchiveName()));
+                }
+
             } catch (UncheckedIOException e) {
                 LOG.warn(format("Failed to read class '%s'", classPathResource.getName()), e.getCause());
             }

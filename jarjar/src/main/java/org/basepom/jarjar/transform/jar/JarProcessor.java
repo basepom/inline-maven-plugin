@@ -24,12 +24,18 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableSet;
+import org.basepom.jarjar.classpath.ClassPathElement;
 import org.basepom.jarjar.classpath.ClassPathResource;
 
 public interface JarProcessor {
 
     @CheckForNull
-    default ClassPathResource scan(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain chain) throws IOException {
+    default ClassPathElement preScan(@Nonnull ClassPathElement classPathElement, JarProcessor.Chain<ClassPathElement> chain) throws IOException {
+        return chain.next(classPathElement);
+    }
+
+    @CheckForNull
+    default ClassPathResource scan(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain) throws IOException {
         return chain.next(classPathResource);
     }
 
@@ -43,13 +49,13 @@ public interface JarProcessor {
      * @throws IOException if it all goes upside down
      */
     @CheckForNull
-    default ClassPathResource process(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain chain) throws IOException {
+    default ClassPathResource process(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain) throws IOException {
         return chain.next(classPathResource);
     }
 
-    interface Chain {
+    interface Chain<T> {
         @CheckForNull
-        ClassPathResource next(@Nullable ClassPathResource source) throws IOException;
+        T next(@Nullable T source) throws IOException;
     }
 
     class Holder {
@@ -64,35 +70,40 @@ public interface JarProcessor {
         }
 
         @FunctionalInterface
-        interface ProcessorOperation {
+        interface ProcessorOperation<T> {
+            T apply(JarProcessor jarProcessor, T element, JarProcessor.Chain<T> chain) throws IOException;
+        }
 
-            ClassPathResource apply(JarProcessor jarProcessor, ClassPathResource classPathResource, JarProcessor.Chain chain) throws IOException;
+        @Nonnull
+        public Optional<ClassPathElement> preScan(@Nonnull ClassPathElement classPathElement) throws IOException {
+            ChainInstance<ClassPathElement> instance = new ChainInstance<>(JarProcessor::preScan);
+            return Optional.ofNullable(instance.next(classPathElement));
         }
 
         @Nonnull
         public Optional<ClassPathResource> scan(@Nonnull ClassPathResource classPathResource) throws IOException {
-            ChainInstance instance = new ChainInstance(JarProcessor::scan);
+            ChainInstance<ClassPathResource> instance = new ChainInstance<>(JarProcessor::scan);
             return Optional.ofNullable(instance.next(classPathResource));
         }
 
         @Nonnull
         public Optional<ClassPathResource> process(@Nonnull ClassPathResource classPathResource) throws IOException {
-            ChainInstance instance = new ChainInstance(JarProcessor::process);
+            ChainInstance<ClassPathResource> instance = new ChainInstance<>(JarProcessor::process);
             return Optional.ofNullable(instance.next(classPathResource));
         }
 
-        final class ChainInstance implements JarProcessor.Chain {
+        final class ChainInstance<T> implements JarProcessor.Chain<T> {
             private final Iterator<JarProcessor> iterator;
-            private final ProcessorOperation operation;
+            private final ProcessorOperation<T> operation;
 
-            ChainInstance(ProcessorOperation operation) {
+            ChainInstance(ProcessorOperation<T> operation) {
                 this.operation = operation;
                 this.iterator = processors.iterator();
             }
 
             @Override
             @CheckForNull
-            public ClassPathResource next(@Nullable ClassPathResource source) throws IOException {
+            public T next(@Nullable T source) throws IOException {
                 if (source != null  && iterator.hasNext()) {
                     return operation.apply(iterator.next(), source, this);
                 }
@@ -100,5 +111,4 @@ public interface JarProcessor {
             }
         }
     }
-
 }

@@ -42,7 +42,7 @@ import org.basepom.jarjar.classpath.ClassPathResource;
 import org.basepom.jarjar.classpath.ClassPathTag;
 import org.basepom.jarjar.transform.JarTransformer;
 import org.basepom.jarjar.transform.jar.JarProcessor;
-import org.basepom.jarjar.transform.jar.ManifestFilterJarProcessor;
+import org.basepom.jarjar.transform.jar.ManifestFilterProcessor;
 import org.basepom.mojo.inliner.model.InlineDependency;
 
 /**
@@ -128,7 +128,7 @@ public final class InlineMojo extends AbstractMojo {
 
         ImmutableList.Builder<JarProcessor> builder = ImmutableList.builder();
 
-        builder.add(new ManifestFilterJarProcessor());   // only keep tagged manifests
+        builder.add(new ManifestFilterProcessor());   // only keep tagged manifests
 
 //        private final ClassFilterJarProcessor classFilterJarProcessor = new ClassFilterJarProcessor();
 //        private final ClassClosureJarProcessor classClosureFilterJarProcessor = new ClassClosureJarProcessor();

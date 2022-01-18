@@ -17,7 +17,7 @@ package org.basepom.jarjar;
 import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.basepom.jarjar.transform.config.ResourceRename;
+import org.basepom.jarjar.transform.config.Rename;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,9 +39,9 @@ public class WildcardTest {
     }
 
     private static void wildcard(String pattern, String result, String value, String expect) {
-        ResourceRename wc = new ResourceRename(pattern, result);
+        Rename wc = Rename.forResourcePath(pattern, result);
         LOG.info(format("Compile: '%s' -> '%s'", pattern, wc));
-        String actual = wc.replace(value);
+        String actual = wc.renameClassName(value);
         LOG.info(format("Replace: '%s' -> '%s' (expected: '%s')", value, actual, expect));
         assertEquals(expect, actual);
     }

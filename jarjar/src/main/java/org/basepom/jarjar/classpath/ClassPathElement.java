@@ -17,36 +17,37 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.annotation.Nonnull;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
-import org.basepom.jarjar.ClassNameUtils;
+import org.basepom.jarjar.transform.config.Rename;
 
 /**
  * @author shevek
  */
-public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
+public abstract class ClassPathElement implements Iterable<ClassPathResource> {
 
     private final File archiveFile;
+    private final ImmutableSet<Rename> renamers;
     protected final ImmutableSet<ClassPathTag> tags;
 
-    public static ClassPathArchive forFile(File file, ClassPathTag... tags) {
+    public static ClassPathElement forFile(File file, Set<Rename> renamers, ClassPathTag... tags) {
+
         if (file.isDirectory()) {
-            return new ClassPathArchive(file, tags) {
+            return new ClassPathElement(file, renamers, tags) {
                 @Override
                 public Iterator<ClassPathResource> iterator() {
                     return new DirectoryIterator(file);
                 }
             };
         } else {
-            return new ClassPathArchive(file, tags) {
+            return new ClassPathElement(file, renamers, tags) {
                 @Override
                 public Iterator<ClassPathResource> iterator() {
                     try {
@@ -59,14 +60,19 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
         }
     }
 
-    private ClassPathArchive(@Nonnull File archiveFile, ClassPathTag... tags) {
+    private ClassPathElement(@Nonnull File archiveFile, Set<Rename> renamers, ClassPathTag... tags) {
         this.archiveFile = archiveFile;
+        this.renamers = ImmutableSet.copyOf(renamers);
         this.tags = ImmutableSet.copyOf(tags);
     }
 
     @Nonnull
     public String getArchiveName() {
         return archiveFile.getPath();
+    }
+
+    public ImmutableSet<Rename> getRenamers() {
+        return renamers;
     }
 
     public ImmutableSet<ClassPathTag> getTags() {
@@ -114,16 +120,14 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
         }
     }
 
-    private static void findClassFiles(@Nonnull Collection<? super File> out, @Nonnull File dir) {
+    private void findClassFiles(@Nonnull ImmutableList.Builder<ClassPathResource> out, @Nonnull File dir) {
         final File[] files = dir.listFiles();
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory()) {
                     findClassFiles(out, file);
                 } else if (file.isFile()) {
-                    if (ClassNameUtils.isClass(file.getName())) {
-                        out.add(file);
-                    }
+                    out.add(ClassPathResource.fromFile(dir, file, tags));
                 }
             }
         }
@@ -131,16 +135,12 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
     private class DirectoryIterator implements Iterator<ClassPathResource> {
 
-        private final File directory;
-        private final Iterator<File> entries;
-
+        private final Iterator<ClassPathResource> entries;
 
         DirectoryIterator(@Nonnull File directory) {
-            this.directory = directory;
-
-            List<File> files = new ArrayList<>();
-            findClassFiles(files, directory);
-            this.entries = files.iterator();
+            ImmutableList.Builder<ClassPathResource> builder = ImmutableList.builder();
+            findClassFiles(builder, directory);
+            this.entries = builder.build().iterator();
         }
 
         @Override
@@ -150,8 +150,7 @@ public abstract class ClassPathArchive implements Iterable<ClassPathResource> {
 
         @Override
         public ClassPathResource next() {
-            final File file = entries.next();
-            return ClassPathResource.fromFile(directory, file, tags);
+            return entries.next();
         }
 
         @Override

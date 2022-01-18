@@ -17,40 +17,31 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.ImmutableList;
-import org.basepom.jarjar.transform.asm.PackageRemapper;
-import org.basepom.jarjar.transform.asm.RemappingClassTransformer;
 import org.basepom.jarjar.transform.config.ClassDelete;
 import org.basepom.jarjar.transform.config.ClassKeep;
 import org.basepom.jarjar.transform.config.ClassKeepTransitive;
-import org.basepom.jarjar.transform.config.ClassRename;
 import org.basepom.jarjar.transform.config.RulesFileParser;
 
 public class DefaultJarProcessor implements RulesFileParser.Output {
 
-    private final ManifestFilterJarProcessor manifestFilterJarProcessor = new ManifestFilterJarProcessor();
+    private final ManifestFilterProcessor manifestFilterProcessor = new ManifestFilterProcessor();
     private final ClassFilterJarProcessor classFilterJarProcessor = new ClassFilterJarProcessor();
     private final ClassClosureJarProcessor classClosureFilterJarProcessor = new ClassClosureJarProcessor();
-    private final PackageRemapper packageRemapper = new PackageRemapper();
-    private final RemappingClassTransformer remappingClassTransformer = new RemappingClassTransformer(packageRemapper);
-    private final ResourceRenamerJarProcessor resourceRenamerJarProcessor = new ResourceRenamerJarProcessor(packageRemapper);
+//    private final PackageRemapper packageRemapper = new PackageRemapper();
+//    private final RemappingClassTransformer remappingClassTransformer = new RemappingClassTransformer(packageRemapper);
 
     public List<JarProcessor> getJarProcessors() {
         return ImmutableList.of(
-                this.manifestFilterJarProcessor,
+                this.manifestFilterProcessor,
                 this.classFilterJarProcessor,
-                this.classClosureFilterJarProcessor,
-                new ClassTransformerJarProcessor(this.remappingClassTransformer),
-                this.resourceRenamerJarProcessor);
+                this.classClosureFilterJarProcessor
+//                new ClassTransformerJarProcessor(this.remappingClassTransformer)
+        );
     }
 
     @Override
     public void addClassDelete(@Nonnull ClassDelete classDelete) {
         classFilterJarProcessor.addClassDelete(classDelete);
-    }
-
-    @Override
-    public void addClassRename(@Nonnull ClassRename classRename) {
-        packageRemapper.addRule(classRename);
     }
 
     @Override

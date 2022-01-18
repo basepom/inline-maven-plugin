@@ -38,7 +38,7 @@ public abstract class AbstractFilterJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
         if (isFiltered(classPathResource)) {
             if (isVerbose()) {
                 log.debug(format("scan discarded '%s'", classPathResource.getName()));
@@ -50,7 +50,7 @@ public abstract class AbstractFilterJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
         if (isFiltered(classPathResource)) {
             if (isVerbose()) {
                 log.debug(format("process discarded %s", classPathResource.getName()));

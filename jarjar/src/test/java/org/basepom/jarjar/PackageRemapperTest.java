@@ -16,10 +16,8 @@ package org.basepom.jarjar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Collections;
-
 import org.basepom.jarjar.transform.asm.PackageRemapper;
-import org.basepom.jarjar.transform.config.ClassRename;
+import org.basepom.jarjar.transform.config.Rename;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,15 +27,17 @@ public class PackageRemapperTest {
 
     @BeforeEach
     public void setUp() {
-        ClassRename rule = new ClassRename("org.**", "foo.@1");
-        remapper = new PackageRemapper(Collections.singletonList(rule));
+        Rename rule = Rename.forClassName("org", "foo", false);
+        remapper = new PackageRemapper();
+        remapper.addRule("foo.jar", rule);
+        remapper.addResource("org/example/Object", "foo.jar");
     }
 
     @Test
     public void testMapValue() {
         assertUnchangedValue("[^\\s;/@&=,.?:+$]");
         assertUnchangedValue("[Ljava/lang/Object;");
-        assertUnchangedValue("[Lorg/example/Object;");
+//         assertUnchangedValue("[Lorg/example/Object;");
         assertUnchangedValue("[Ljava.lang.Object;");
         assertUnchangedValue("[Lorg.example/Object;");
         assertUnchangedValue("[L;");
@@ -46,6 +46,7 @@ public class PackageRemapperTest {
         assertUnchangedValue("org.example/Object");
 
         assertEquals("[Lfoo.example.Object;", remapper.mapValue("[Lorg.example.Object;"));
+        assertEquals("[Lfoo/example/Object;", remapper.mapValue("[Lorg/example/Object;"));
         assertEquals("foo.example.Object", remapper.mapValue("org.example.Object"));
         assertEquals("foo/example/Object", remapper.mapValue("org/example/Object"));
         assertEquals("foo/example.Object", remapper.mapValue("org/example.Object")); // path match

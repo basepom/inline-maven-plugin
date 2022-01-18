@@ -65,6 +65,9 @@ public final class ClassPathResource {
     }
 
     public ClassPathResource withName(String name) {
+        if (name.equals(this.name)) {
+            return this;
+        }
         return new ClassPathResource(name, this.lastModifiedTime, this.archiveName, this.inputStreamSupplier, this.content, this.tags);
     }
 

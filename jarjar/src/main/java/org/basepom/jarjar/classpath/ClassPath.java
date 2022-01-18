@@ -17,29 +17,32 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nonnull;
+
+import org.basepom.jarjar.transform.config.Rename;
 
 /**
  * Defines a class path.
  */
-public class ClassPath implements Iterable<ClassPathArchive> {
+public class ClassPath implements Iterable<ClassPathElement> {
 
-    private final List<ClassPathArchive> entries = new ArrayList<>();
+    private final List<ClassPathElement> entries = new ArrayList<>();
     private final File root;
 
     public ClassPath(@Nonnull File root) {
         this.root = root;
     }
 
-    public void addFile(File file, ClassPathTag... tags) {
+    public void addFile(File file, Set<Rename> renamers, ClassPathTag... tags) {
         if (!file.isAbsolute()) {
             file = new File(root, file.getPath());
         }
-        entries.add(ClassPathArchive.forFile(file, tags));
+        entries.add(ClassPathElement.forFile(file, renamers, tags));
     }
 
     @Override
-    public Iterator<ClassPathArchive> iterator() {
+    public Iterator<ClassPathElement> iterator() {
         return entries.iterator();
     }
 }
