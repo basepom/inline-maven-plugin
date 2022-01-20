@@ -120,7 +120,7 @@ public class PackageRemapper extends Remapper {
             if (ClassNameUtils.isArrayForName(s)) {
                 String desc2 = mapDesc(s);
                 if (!desc2.equals(s)) {
-                    s = toPackage(desc2);
+                    s = desc2; // toPackage(desc2);
                 }
             } else {
                 boolean hasDot = s.indexOf('.') >= 0;

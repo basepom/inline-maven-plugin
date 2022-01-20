@@ -31,13 +31,17 @@ public class PackageRemapperTest {
         remapper = new PackageRemapper();
         remapper.addRule("foo.jar", rule);
         remapper.addResource("org/example/Object", "foo.jar");
+        remapper.addResource("org.example.Object", "foo.jar");
+        remapper.addResource("org/example.Object", "foo.jar");
+        remapper.addResource("org.example.package-info", "foo.jar");
+        remapper.addResource("org/example/package-info", "foo.jar");
+        remapper.addResource("org/example.package-info", "foo.jar");
     }
 
     @Test
     public void testMapValue() {
         assertUnchangedValue("[^\\s;/@&=,.?:+$]");
         assertUnchangedValue("[Ljava/lang/Object;");
-//         assertUnchangedValue("[Lorg/example/Object;");
         assertUnchangedValue("[Ljava.lang.Object;");
         assertUnchangedValue("[Lorg.example/Object;");
         assertUnchangedValue("[L;");

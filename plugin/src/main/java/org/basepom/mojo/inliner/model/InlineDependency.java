@@ -13,16 +13,17 @@
  */
 package org.basepom.mojo.inliner.model;
 
-import java.util.List;
+import java.util.Set;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Dependency;
 
 public final class InlineDependency {
+
     private String artifactId = null;
     private String groupId = null;
-    private ImmutableList<Relocation> relocations = ImmutableList.of();
+    private ImmutableSet<Relocation> relocations = ImmutableSet.of();
 
     public InlineDependency() {
     }
@@ -43,12 +44,12 @@ public final class InlineDependency {
         this.groupId = groupId;
     }
 
-    public ImmutableList<Relocation> getRelocations() {
+    public ImmutableSet<Relocation> getRelocations() {
         return relocations;
     }
 
-    public void setRelocations(List<Relocation> relocations) {
-        this.relocations = ImmutableList.copyOf(relocations);
+    public void setRelocations(Set<Relocation> relocations) {
+        this.relocations = ImmutableSet.copyOf(relocations);
     }
 
     public boolean matchDependency(Dependency dependency) {

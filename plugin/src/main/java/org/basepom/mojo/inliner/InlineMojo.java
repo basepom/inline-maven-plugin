@@ -25,6 +25,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
@@ -44,6 +45,7 @@ import org.basepom.jarjar.transform.JarTransformer;
 import org.basepom.jarjar.transform.jar.JarProcessor;
 import org.basepom.jarjar.transform.jar.ManifestFilterProcessor;
 import org.basepom.mojo.inliner.model.InlineDependency;
+import org.basepom.mojo.inliner.model.Relocation;
 
 /**
  * InlineDependency one or more dependencies of a library into a new jar.
@@ -130,12 +132,6 @@ public final class InlineMojo extends AbstractMojo {
 
         builder.add(new ManifestFilterProcessor());   // only keep tagged manifests
 
-//        private final ClassFilterJarProcessor classFilterJarProcessor = new ClassFilterJarProcessor();
-//        private final ClassClosureJarProcessor classClosureFilterJarProcessor = new ClassClosureJarProcessor();
-//        private final PackageRemapper packageRemapper = new PackageRemapper();
-//        private final RemappingClassTransformer remappingClassTransformer = new RemappingClassTransformer(packageRemapper);
-//        private final ResourceRenamerJarProcessor resourceRenamerJarProcessor = new ResourceRenamerJarProcessor(packageRemapper);
-
         File outputFile = new File(project.getBasedir(), "transformed.jar");
         try (JarOutputStream outputJarStream = new JarOutputStream(new FileOutputStream(outputFile))) {
 
@@ -158,12 +154,15 @@ public final class InlineMojo extends AbstractMojo {
             // Build the class path
             ClassPath classPath = new ClassPath(project.getBasedir());
             // maintain the manifest file for the main artifact
-            classPath.addFile(project.getArtifact().getFile(), ClassPathTag.KEEP_MANIFEST);
+            classPath.addFile(project.getArtifact().getFile(), ImmutableSet.of(), ClassPathTag.KEEP_MANIFEST);
 
             for (InlineDependency inlineDependency : inlineDependencies) {
                 for (Artifact dependencyArtifact : project.getArtifacts()) {
                     if (inlineDependency.matchArtifact(dependencyArtifact)) {
-                        classPath.addFile(dependencyArtifact.getFile());
+                        classPath.addFile(dependencyArtifact.getFile(),
+                                inlineDependency.getRelocations().stream()
+                                        .map(Relocation.toRename())
+                                        .collect(ImmutableSet.toImmutableSet()));
                         break; // for(Artifact ...
                     }
                 }

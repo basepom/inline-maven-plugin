@@ -13,10 +13,13 @@
  */
 package org.basepom.jarjar;
 
-import static com.google.common.base.Preconditions.checkState;
-
+import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 
 /**
  * @author shevek
@@ -71,10 +74,15 @@ public final class ClassNameUtils {
 
     @Nonnull
     public static String pathToJavaName(@Nonnull String path) {
-        if (path.endsWith(EXT_CLASS)) {
-            path = path.substring(0, path.length() - EXT_CLASS.length());
-        }
-        return toPackage(path);
+        return toPackage(stripClassExtension(path));
+    }
+
+    public static String stripClassExtension(@Nonnull String path) {
+        return ifClass(path, p -> p.substring(0, p.length() - EXT_CLASS.length()));
+    }
+
+    public static String ifClass(@Nonnull String path, Function<String, String> function) {
+        return path.endsWith(EXT_CLASS) ? function.apply(path) : path;
     }
 
     public static String toPath(String value) {
@@ -83,5 +91,13 @@ public final class ClassNameUtils {
 
     public static String toPackage(String value) {
         return value.replace('/', '.');
+    }
+
+    public static List<String> pathToElements(String path) {
+        return Splitter.on('/').trimResults().splitToList(path);
+    }
+
+    public static String elementsToPath(List<String> elements) {
+        return Joiner.on('/').join(elements);
     }
 }

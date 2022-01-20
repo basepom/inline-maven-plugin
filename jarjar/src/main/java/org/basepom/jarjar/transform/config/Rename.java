@@ -1,15 +1,16 @@
 package org.basepom.jarjar.transform.config;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.basepom.jarjar.ClassNameUtils.pathToElements;
 import static org.basepom.jarjar.ClassNameUtils.toPackage;
 import static org.basepom.jarjar.ClassNameUtils.toPath;
 
 import java.util.List;
+import java.util.StringJoiner;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
@@ -20,13 +21,9 @@ public final class Rename {
     private final boolean hideClasses;
 
     private Rename(String source, String destination, boolean hideClasses) {
-        this.sourceElements = toElements(source);
-        this.destinationElements = toElements(destination);
+        this.sourceElements = pathToElements(source);
+        this.destinationElements = pathToElements(destination);
         this.hideClasses = hideClasses;
-    }
-
-    private static List<String> toElements(String path) {
-        return Splitter.on('/').omitEmptyStrings().splitToList(path);
     }
 
     private int matchPrefix(List<String> pathElements, List<String> elements) {
@@ -55,7 +52,7 @@ public final class Rename {
 
     @CheckForNull
     public String renamePath(@Nonnull String path) {
-        List<String> pathElements = toElements(path);
+        List<String> pathElements = pathToElements(path);
         int index = matchPrefix(pathElements, sourceElements);
         if (index < 0) {
             return null;
@@ -65,15 +62,31 @@ public final class Rename {
 
     @CheckForNull
     public String renameClassName(@Nonnull String className) {
+        return renameClassName(className, true);
+    }
+    @CheckForNull
+    public String renameClassName(@Nonnull String className, boolean hideClasses) {
 
-        List<String> pathElements = className.indexOf('/') < 0 ? toElements(toPath(className)) : toElements(className);
+        boolean needPathConversion = className.indexOf('/') < 0;
+
+        List<String> pathElements = needPathConversion ? pathToElements(toPath(className)) : pathToElements(className);
         int index = matchPrefix(pathElements, sourceElements);
         if (index < 0) {
             return null;
         }
         String name = pathElements.get(pathElements.size() - 1);
-        return toPackage(Joiner.on('/').join(Iterables.concat(destinationElements,
+        String result = Joiner.on('/').join(Iterables.concat(destinationElements,
                 pathElements.subList(index, pathElements.size() - 1),
-                ImmutableList.of(hideClasses ? "$" + name : name))));
+                ImmutableList.of(this.hideClasses && hideClasses ? "$" + name : name)));
+        return needPathConversion ? toPackage(result) : result;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", Rename.class.getSimpleName() + "[", "]")
+                .add("sourceElements=" + sourceElements)
+                .add("destinationElements=" + destinationElements)
+                .add("hideClasses=" + hideClasses)
+                .toString();
     }
 }

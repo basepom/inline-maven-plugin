@@ -13,6 +13,8 @@
  */
 package org.basepom.mojo.inliner.model;
 
+import java.util.function.Function;
+
 import org.basepom.jarjar.transform.config.Rename;
 
 public class Relocation {
@@ -20,7 +22,7 @@ public class Relocation {
     private String source;
     private String destination;
     private boolean hideClasses;
-    \
+
     public Relocation() {
     }
 
@@ -51,7 +53,7 @@ public class Relocation {
         return this;
     }
 
-    public Rename toRename() {
-        return new Rename(this.source, this.destination, this.hideClasses);
+    public static Function<Relocation, Rename> toRename() {
+        return relocation -> Rename.forClassName(relocation.getSource(), relocation.getDestination(), relocation.isHideClasses());
     }
 }
