@@ -77,7 +77,7 @@
     </properties>
 
     <modules>
-        <module>jarjar</module>
+        <module>transformer</module>
         <module>plugin</module>
     </modules>
 
@@ -85,7 +85,7 @@
         <dependencies>
             <dependency>
                 <groupId>org.basepom</groupId>
-                <artifactId>jarjar</artifactId>
+                <artifactId>transformer</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

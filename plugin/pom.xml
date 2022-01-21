@@ -53,7 +53,7 @@
     <dependencies>
         <dependency>
             <groupId>org.basepom</groupId>
-            <artifactId>jarjar</artifactId>
+            <artifactId>transformer</artifactId>
         </dependency>
 
         <!-- Maven provided dependencies -->

@@ -15,7 +15,7 @@ package org.basepom.mojo.inliner.model;
 
 import java.util.function.Function;
 
-import org.basepom.jarjar.transform.config.Rename;
+import org.basepom.transformer.Rename;
 
 public class Relocation {
 

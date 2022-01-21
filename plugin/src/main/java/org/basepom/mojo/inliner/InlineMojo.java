@@ -38,12 +38,12 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
-import org.basepom.jarjar.classpath.ClassPath;
-import org.basepom.jarjar.classpath.ClassPathResource;
-import org.basepom.jarjar.classpath.ClassPathTag;
-import org.basepom.jarjar.transform.JarTransformer;
-import org.basepom.jarjar.transform.jar.JarProcessor;
-import org.basepom.jarjar.transform.jar.ManifestFilterProcessor;
+import org.basepom.transformer.ClassPath;
+import org.basepom.transformer.ClassPathResource;
+import org.basepom.transformer.ClassPathTag;
+import org.basepom.transformer.JarTransformer;
+import org.basepom.transformer.JarProcessor;
+import org.basepom.transformer.processor.ManifestFilterProcessor;
 import org.basepom.mojo.inliner.model.InlineDependency;
 import org.basepom.mojo.inliner.model.Relocation;
 
