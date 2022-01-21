@@ -53,7 +53,7 @@ public class ResourceRenamerJarProcessor implements JarProcessor {
     public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
 
         if (classPathResource.getTags().contains(ClassPathTag.RESOURCE)) {
-            Set<Rename> eligibleRenames = remapperProcessor.locateRenames(classPathResource);
+            Set<Rename> eligibleRenames = remapperProcessor.renamersForClassPathResource(classPathResource);
 
             classPathResource = classPathResource.withName(mapResourceName(classPathResource.getName(), eligibleRenames));
         }

@@ -64,6 +64,7 @@ public final class Rename {
     public String renameClassName(@Nonnull String className) {
         return renameClassName(className, true);
     }
+
     @CheckForNull
     public String renameClassName(@Nonnull String className, boolean hideClasses) {
 
@@ -71,7 +72,8 @@ public final class Rename {
 
         List<String> pathElements = needPathConversion ? pathToElements(toPath(className)) : pathToElements(className);
         int index = matchPrefix(pathElements, sourceElements);
-        if (index < 0) {
+        // no match or full length match (not a prefix)
+        if (index < 0 || index == pathElements.size()) {
             return null;
         }
         String name = pathElements.get(pathElements.size() - 1);

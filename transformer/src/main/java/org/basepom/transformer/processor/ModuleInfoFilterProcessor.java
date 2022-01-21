@@ -1,17 +1,26 @@
 package org.basepom.transformer.processor;
 
+import static org.basepom.transformer.ClassNameUtils.pathToElements;
+
 import java.io.IOException;
+import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import org.basepom.transformer.ClassPathResource;
-import org.basepom.transformer.ClassPattern;
 
-public class ModuleInfoFilterProcessor extends ClassFilterJarProcessor {
-    public static final String MODULE_INFO = "module-info";
+public class ModuleInfoFilterProcessor extends AbstractFilterJarProcessor {
+
+    public static final String MODULE_INFO = "module-info.class";
 
     public ModuleInfoFilterProcessor() {
-        addClassPattern(ClassPattern.exclude("module-info"));
+    }
+
+    @Override
+    protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
+        List<String> elements = pathToElements(classPathResource.getName());
+
+        return MODULE_INFO.equals(elements.get(elements.size() - 1));
     }
 
     @CheckForNull

@@ -25,6 +25,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.annotation.Nonnull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -62,6 +63,11 @@ public final class ClassPathResource {
 
     public static ClassPathResource forDirectory(String directory) {
         return new ClassPathResource(directory, 0, "", InputStream::nullInputStream, null, ImmutableSet.of(ClassPathTag.DIRECTORY, ClassPathTag.RESOURCE));
+    }
+
+    @VisibleForTesting
+    public static ClassPathResource forTesting(String path, ClassPathTag ... tags) {
+        return new ClassPathResource(path, 0, "", InputStream::nullInputStream, null, ImmutableSet.copyOf(tags));
     }
 
     public ClassPathResource withName(String name) {

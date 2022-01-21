@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author shevek
  */
-public abstract class AbstractFilterJarProcessor implements JarProcessor {
+abstract class AbstractFilterJarProcessor implements JarProcessor {
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 

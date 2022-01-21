@@ -11,34 +11,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.basepom.transformer;
+package org.basepom.transformer.processor;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.basepom.transformer.asm.PackageRemapper;
+import org.basepom.transformer.ClassPathResource;
+import org.basepom.transformer.ClassPathTag;
+import org.basepom.transformer.Rename;
+import org.basepom.transformer.asm.InlineRemapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.commons.Remapper;
 
-public class PackageRemapperTest {
+public class RemapperTest {
 
-    protected PackageRemapper remapper;
+    protected Remapper remapper;
 
     @BeforeEach
     public void setUp() {
+        RemapperProcessor processor = new RemapperProcessor();
         Rename rule = Rename.forClassName("org", "foo", false);
-        remapper = new PackageRemapper();
-        remapper.addRule("foo.jar", rule);
-        remapper.addResource("org/example/Object", "foo.jar");
-        remapper.addResource("org.example.Object", "foo.jar");
-        remapper.addResource("org/example.Object", "foo.jar");
-        remapper.addResource("org.example.package-info", "foo.jar");
-        remapper.addResource("org/example/package-info", "foo.jar");
-        remapper.addResource("org/example.package-info", "foo.jar");
+        processor.addRule("", rule);
+        processor.addResource(ClassPathResource.forTesting("org/example/Object.class", ClassPathTag.CLASS, ClassPathTag.FILE));
+        processor.addResource(ClassPathResource.forTesting("org/example/package-info.class", ClassPathTag.CLASS, ClassPathTag.FILE));
+
+        processor.addResource(ClassPathResource.forTesting("org.example.Object", ClassPathTag.RESOURCE, ClassPathTag.FILE));
+        processor.addResource(ClassPathResource.forTesting("org/example.Object", ClassPathTag.RESOURCE, ClassPathTag.FILE));
+        processor.addResource(ClassPathResource.forTesting("org.example.package-info", ClassPathTag.RESOURCE, ClassPathTag.FILE));
+        processor.addResource(ClassPathResource.forTesting("org/example.package-info", ClassPathTag.RESOURCE, ClassPathTag.FILE));
+        remapper = new InlineRemapper(processor);
     }
 
     @Test
     public void testMapValue() {
+
         assertUnchangedValue("[^\\s;/@&=,.?:+$]");
         assertUnchangedValue("[Ljava/lang/Object;");
         assertUnchangedValue("[Ljava.lang.Object;");

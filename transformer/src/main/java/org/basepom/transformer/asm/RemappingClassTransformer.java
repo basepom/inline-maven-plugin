@@ -19,23 +19,24 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.basepom.transformer.processor.RemapperProcessor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.commons.ClassRemapper;
+import org.objectweb.asm.commons.Remapper;
 
 /**
  * @author shevek
  */
 public class RemappingClassTransformer implements ClassTransformer {
 
-    private final RemapperProcessor remapperProcessor;
+    private final Remapper remapper;
 
     @SuppressFBWarnings("EI_EXPOSE_REP2")
     public RemappingClassTransformer(@Nonnull RemapperProcessor remapperProcessor) {
-        this.remapperProcessor = remapperProcessor;
+        this.remapper = new InlineRemapper(remapperProcessor);
     }
 
     @Nonnull
     @Override
     public ClassVisitor transform(@Nonnull ClassVisitor classVisitor) {
-        return new ClassRemapper(classVisitor, remapperProcessor.getRemapper());
+        return new ClassRemapper(classVisitor, remapper);
     }
 
 }

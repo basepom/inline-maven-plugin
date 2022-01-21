@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import de.softwareforge.testing.maven.MavenArtifactLoader;
 import org.basepom.transformer.JarTransformerTest.CapturingConsumer;
+import org.basepom.transformer.asm.InlineRemapper;
 import org.basepom.transformer.asm.RemappingClassTransformer;
 import org.basepom.transformer.processor.ClassTransformerJarProcessor;
 import org.basepom.transformer.processor.ManifestFilterProcessor;
@@ -64,6 +65,7 @@ public class JdbiRelocationTest {
         RemapperProcessor packageRemapperProcessor = new RemapperProcessor();
         builder.add(packageRemapperProcessor);
         builder.add(new ResourceRenamerJarProcessor(packageRemapperProcessor));
+
         builder.add(new ClassTransformerJarProcessor(new RemappingClassTransformer(packageRemapperProcessor)));
         builder.add(new ResourceRenamerJarProcessor(packageRemapperProcessor));
 

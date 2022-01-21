@@ -22,15 +22,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Consumer;
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
-import org.basepom.transformer.processor.AbstractFilterJarProcessor;
+import org.basepom.transformer.processor.DirectoryFilterProcessor;
+import org.basepom.transformer.processor.DirectoryScanProcessor;
+import org.basepom.transformer.processor.DuplicateDiscardProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,80 +91,5 @@ public class JarTransformer {
         }
     }
 
-    /**
-     * Strips out the existing directories from the classpath. Directories are then re-added when the new jar is written. This ensures that no remnants of the
-     * old class structure is present in the new jar.
-     *
-     * @author shevek
-     */
-    static class DirectoryFilterProcessor extends AbstractFilterJarProcessor {
 
-        DirectoryFilterProcessor() {
-        }
-
-        @Override
-        protected boolean isVerbose() {
-            return false;
-        }
-
-        @Override
-        protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
-            return classPathResource.getTags().contains(ClassPathTag.DIRECTORY);
-        }
-    }
-
-
-    /**
-     * Re-add the directory structure if a given class file is written.
-     */
-    static class DirectoryScanProcessor implements JarProcessor {
-
-        private final Set<String> directories = new TreeSet<>();
-
-        DirectoryScanProcessor() {
-        }
-
-        @CheckForNull
-        @Override
-        public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-            String name = classPathResource.getName();
-            List<String> elements = Splitter.on('/').splitToList(name);
-            if (elements.size() > 1) {
-                // any single level directories have been removed by the Directory Filter Processor.
-                for (int i = 1; i < elements.size(); i++) {
-                    String dirName = Joiner.on('/').join(elements.subList(0, i));
-                    directories.add(dirName);
-                }
-            }
-
-            return chain.next(classPathResource);
-        }
-
-        public Set<String> getDirectories() {
-            return directories;
-        }
-    }
-
-    static class DuplicateDiscardProcessor implements JarProcessor {
-
-        private final Set<String> files = new HashSet<>();
-
-        DuplicateDiscardProcessor() {
-        }
-
-        @CheckForNull
-        @Override
-        public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-            if (classPathResource.getTags().contains(ClassPathTag.FILE)) {
-                final String name = classPathResource.getName();
-
-                if (!files.add(name)) {
-                    LOG.warn(format("Entry '%s' is a duplicate, discarding!", name));
-                    return null;
-                }
-            }
-            // emit to jar
-            return chain.next(classPathResource);
-        }
-    }
 }

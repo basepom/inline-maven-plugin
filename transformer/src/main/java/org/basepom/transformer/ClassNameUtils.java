@@ -15,7 +15,6 @@ package org.basepom.transformer;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 import com.google.common.base.Joiner;
@@ -26,12 +25,11 @@ import com.google.common.base.Splitter;
  */
 public final class ClassNameUtils {
 
+    public static final String EXT_CLASS = ".class";
+
     private ClassNameUtils() {
         throw new AssertionError("ClassNameUtils can not be instantiated");
     }
-
-    private static final Pattern ARRAY_FOR_NAME_PATTERN
-            = Pattern.compile("\\[L[\\p{javaJavaIdentifierPart}\\.]+?;");
 
     /**
      * Returns true if the given string looks like a Java array name.
@@ -39,33 +37,38 @@ public final class ClassNameUtils {
      * @param value The name to inspect.
      * @return true if the given string looks like a Java array name.
      */
-    // also used by KeepProcessor
-    public static boolean isArrayForName(String value) {
-        return value.startsWith("[L");
+    public static boolean isObjectArray(String value) {
+        return value.startsWith("[L") && value.endsWith(";");
     }
 
-    // TODO: use this for package remapping too?
-
-    /**
-     * Returns true if the String looks like a Java type name.
-     *
-     * @param value The name to inspect.
-     * @return true if the String looks like a Java type name.
-     */
-    public static boolean isForName(@Nonnull String value) {
-        if (value.equals("")) {
+    // super-simple heuristics to determine whether a given string may
+    // represent a class name
+    //
+    // - can not be empty
+    // - must start with a valid java identifier
+    // - must not contain whitespace
+    // - at least 70% of all characters must be legal in a java identifier
+    //
+    public static boolean isClassNameHeuristic(String value) {
+        if (value == null || value.isEmpty()) {
             return false;
         }
-        for (int i = 0, len = value.length(); i < len; i++) {
-            char c = value.charAt(i);
-            if (c != '.' && !Character.isJavaIdentifierPart(c)) {
-                return false;
-            }
+
+        if (!Character.isJavaIdentifierStart(Character.codePointAt(value, 0))) {
+            return false;
         }
-        return true;
+
+        if (value.codePoints().filter(Character::isWhitespace).findFirst().isPresent()) {
+            return false;
+        }
+
+        double count = value.length();
+        double validChars = value.codePoints().filter(Character::isJavaIdentifierPart).count();
+
+        return validChars / count > 0.7;  // io.foo.Bar = 8 / 11 ~ 0.72
     }
 
-    public static final String EXT_CLASS = ".class";
+
 
     @Nonnull
     public static String javaNameToPath(@Nonnull String className) {
