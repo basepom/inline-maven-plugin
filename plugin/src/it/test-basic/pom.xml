@@ -74,8 +74,9 @@
                             <artifactId>guava</artifactId>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.google.**.*</pattern>
-                                    <location>org.basepom.relocated.google.@1.$@2</location>
+                                    <source>com.google</source>
+                                    <destination>org.basepom.relocated.google</destination>
+                                    <hideClasses>true</hideClasses>
                                 </relocation>
                             </relocations>
                         </inlineDependency>
@@ -84,8 +85,8 @@
                             <groupId>com.fasterxml.jackson.core</groupId>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.fasterxml.**.*</pattern>
-                                    <location>org.basepom.relocated.fasterxml.@1.$@2</location>
+                                    <source>com.fasterxml</source>
+                                    <destination>org.basepom.relocated.fasterxml</destination>
                                 </relocation>
                             </relocations>
                         </inlineDependency>

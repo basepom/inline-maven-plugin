@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.basepom.transformer.asm;
 
 import static java.lang.String.format;
@@ -12,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.basepom.transformer.ClassNameUtils;
 import org.basepom.transformer.ClassPathTag;
 import org.basepom.transformer.Rename;
@@ -28,6 +42,7 @@ public final class InlineRemapper extends Remapper {
 
     private final RemapperProcessor remapperProcessor;
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public InlineRemapper(RemapperProcessor remapperProcessor) {
         this.remapperProcessor = remapperProcessor;
     }
@@ -64,23 +79,24 @@ public final class InlineRemapper extends Remapper {
                 if (isClassNameHeuristic(key)) {
                     String classValue = computeNewName(classKey);
                     if (classValue != null) {
-                        List<String> classElements = pathToElements(classKey);
                         if (!classValue.equals(classKey)) {
                             return storeValue(key, toPackage(classValue));
-                        } else {
-                            // shortening the name to find a renamable terminal (e.g. foo.bar.Class.MySetting will be renamed if foo.bar.Class is renamed)
-                            for (int i = classElements.size(); i > 0; i--) {
-                                List<String> testElements = classElements.subList(0, i);
-                                Set<Rename> renamers = remapperProcessor.renamersForElement(testElements, ClassPathTag.CLASS);
-                                if (renamers.isEmpty()) {
-                                    renamers = remapperProcessor.packageNameRenamersForElement(testElements, ClassPathTag.CLASS);
-                                }
-                                if (!renamers.isEmpty()) {
-                                    classValue = renamePath(classKey, renamers, false);
+                        }
 
-                                    if (!classValue.equals(classKey)) {
-                                        return storeValue(key, toPackage(classValue));
-                                    }
+                        List<String> classElements = pathToElements(classKey);
+                        // shortening the name to find a renamable terminal (e.g. foo.bar.Class.MySetting will be renamed if foo.bar.Class is renamed)
+                        for (int i = classElements.size(); i > 0; i--) {
+                            List<String> testElements = classElements.subList(0, i);
+                            Set<Rename> renamers = remapperProcessor.renamersForElement(testElements, ClassPathTag.CLASS);
+
+                            if (renamers.isEmpty()) {
+                                renamers = remapperProcessor.packageNameRenamersForElement(testElements, ClassPathTag.CLASS);
+                            }
+
+                            if (!renamers.isEmpty()) {
+                                classValue = renamePath(classKey, renamers, false);
+                                if (classValue != null && !classValue.equals(classKey)) {
+                                    return storeValue(key, toPackage(classValue));
                                 }
                             }
                         }
@@ -91,12 +107,10 @@ public final class InlineRemapper extends Remapper {
                 // compute value directly (with slashes)
                 if (isClassNameHeuristic(toPackage(key))) {
                     String pathValue = computeNewName(key);
-                    if (pathValue != null) {
-                        if (!pathValue.equals(key)) {
-                            return storeValue(key, pathValue);
-                        }
-                        LOG.debug(format("%s passed heuristics but not rewriting", key));
+                    if (pathValue != null && !pathValue.equals(key)) {
+                        return storeValue(key, pathValue);
                     }
+                    LOG.debug(format("%s passed heuristics but not rewriting", key));
                 }
             }
         }
