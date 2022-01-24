@@ -39,6 +39,18 @@ abstract class AbstractFilterJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
+    public ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+        if (isFiltered(classPathResource)) {
+            if (isVerbose()) {
+                log.debug(format("pre-scan discarded '%s'", classPathResource.getName()));
+            }
+            return null;
+        }
+        return chain.next(classPathResource);
+    }
+
+    @Override
+    @CheckForNull
     public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
         if (isFiltered(classPathResource)) {
             if (isVerbose()) {

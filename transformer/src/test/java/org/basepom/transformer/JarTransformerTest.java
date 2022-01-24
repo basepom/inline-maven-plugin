@@ -44,17 +44,7 @@ public class JarTransformerTest {
     private final ClassPath classPath = new ClassPath(new File("/"));
 
     public JarTransformerTest() {
-        ImmutableList.Builder<JarProcessor> builder = ImmutableList.builder();
-
-        builder.add(new ManifestFilterProcessor());   // only keep tagged manifests
-        builder.add(new ModuleInfoFilterProcessor());
-
-        RemapperProcessor packageRemapperProcessor = new RemapperProcessor();
-        builder.add(packageRemapperProcessor);
-        builder.add(new ResourceRenamerJarProcessor(packageRemapperProcessor));
-        builder.add(new ClassTransformerJarProcessor(new RemappingClassTransformer(packageRemapperProcessor)));
-
-        transformer = new JarTransformer(consumer, builder.build());
+        transformer = new JarTransformer(consumer);
 
         Arrays.stream(JarTransformerUtil.JARS).forEach(jar -> classPath.addFile(jar, ImmutableSet.of()));
     }

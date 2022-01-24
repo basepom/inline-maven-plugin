@@ -19,13 +19,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.function.Supplier;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -34,6 +37,7 @@ public final class ClassPathResource {
 
     private static final String CLASS_SUFFIX = ".class";
 
+    private final String prefix;
     private final String name;
     private final long lastModifiedTime;
     private final String archiveName;
@@ -49,7 +53,7 @@ public final class ClassPathResource {
         builder.add(entry.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE);
         builder.add(entry.getName().endsWith(CLASS_SUFFIX) ? ClassPathTag.CLASS : ClassPathTag.RESOURCE);
 
-        return new ClassPathResource(entry.getName(), entry.getTime(), zipFile.getName(), supplierForZipEntry(zipFile, entry), null, builder.build());
+        return new ClassPathResource(null, entry.getName(), entry.getTime(), zipFile.getName(), supplierForZipEntry(zipFile, entry), null, builder.build());
     }
 
     public static ClassPathResource fromFile(File directory, File file, ImmutableSet<ClassPathTag> tags) {
@@ -58,31 +62,39 @@ public final class ClassPathResource {
         builder.add(file.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE);
         builder.add(file.getName().endsWith(CLASS_SUFFIX) ? ClassPathTag.CLASS : ClassPathTag.RESOURCE);
 
-        return new ClassPathResource(file.getName(), file.lastModified(), directory.getPath(), supplierForFile(file), null, builder.build());
+        return new ClassPathResource(null, file.getName(), file.lastModified(), directory.getPath(), supplierForFile(file), null, builder.build());
     }
 
     public static ClassPathResource forDirectory(String directory) {
-        return new ClassPathResource(directory, 0, "", InputStream::nullInputStream, null, ImmutableSet.of(ClassPathTag.DIRECTORY, ClassPathTag.RESOURCE));
+        return new ClassPathResource(null, directory, 0, "", InputStream::nullInputStream, null, ImmutableSet.of(ClassPathTag.DIRECTORY, ClassPathTag.RESOURCE));
     }
 
     @VisibleForTesting
     public static ClassPathResource forTesting(String path, ClassPathTag ... tags) {
-        return new ClassPathResource(path, 0, "", InputStream::nullInputStream, null, ImmutableSet.copyOf(tags));
+        return new ClassPathResource(null, path, 0, "", InputStream::nullInputStream, null, ImmutableSet.copyOf(tags));
+    }
+
+    public ClassPathResource withPrefix(String prefix, String name) {
+        if (Objects.equals(prefix, this.prefix) && name.equals(this.name)) {
+            return this;
+        }
+        return new ClassPathResource(prefix, name, this.lastModifiedTime, this.archiveName, this.inputStreamSupplier, this.content, this.tags);
     }
 
     public ClassPathResource withName(String name) {
         if (name.equals(this.name)) {
             return this;
         }
-        return new ClassPathResource(name, this.lastModifiedTime, this.archiveName, this.inputStreamSupplier, this.content, this.tags);
+        return new ClassPathResource(this.prefix, name, this.lastModifiedTime, this.archiveName, this.inputStreamSupplier, this.content, this.tags);
     }
 
     public ClassPathResource withContent(byte [] content) {
-        return new ClassPathResource(name, this.lastModifiedTime, this.archiveName, this.inputStreamSupplier, content, this.tags);
+        return new ClassPathResource(this.prefix, this.name, this.lastModifiedTime, this.archiveName, this.inputStreamSupplier, content, this.tags);
     }
 
-    private ClassPathResource(String name, long lastModifiedTime, String archiveName, Supplier<InputStream> inputStreamSupplier, byte [] content,
+    private ClassPathResource(String prefix, String name, long lastModifiedTime, String archiveName, Supplier<InputStream> inputStreamSupplier, byte [] content,
             ImmutableSet<ClassPathTag> tags) {
+        this.prefix = prefix;
         this.name = name;
         this.lastModifiedTime = lastModifiedTime;
         this.archiveName = archiveName;
@@ -96,9 +108,22 @@ public final class ClassPathResource {
         return archiveName;
     }
 
+    public boolean hasPrefix() {
+        return prefix != null;
+    }
+
     @Nonnull
     public String getName() {
         return name;
+    }
+
+    @Nonnull
+    public String getNameWithPrefix() {
+        if (prefix == null ) {
+            return name;
+        }
+
+        return Joiner.on('/').join(prefix, name);
     }
 
     public long getLastModifiedTime() {
@@ -127,6 +152,7 @@ public final class ClassPathResource {
     @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ", ClassPathResource.class.getSimpleName() + "[", "]")
+                .add("prefix='" + prefix + "'")
                 .add("name='" + name + "'")
                 .add("lastModifiedTime=" + lastModifiedTime)
                 .add("archiveName='" + archiveName + "'")

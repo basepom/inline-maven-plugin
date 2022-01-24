@@ -21,55 +21,39 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import de.softwareforge.testing.maven.MavenArtifactLoader;
 import org.basepom.transformer.JarTransformerTest.CapturingConsumer;
-import org.basepom.transformer.asm.InlineRemapper;
-import org.basepom.transformer.asm.RemappingClassTransformer;
-import org.basepom.transformer.processor.ClassTransformerJarProcessor;
-import org.basepom.transformer.processor.ManifestFilterProcessor;
-import org.basepom.transformer.processor.ModuleInfoFilterProcessor;
-import org.basepom.transformer.processor.RemapperProcessor;
-import org.basepom.transformer.processor.ResourceRenamerJarProcessor;
 import org.junit.jupiter.api.Test;
 
 public class JdbiRelocationTest {
+
     @Test
     public void testJdbiRelocation() throws Exception {
         MavenArtifactLoader loader = new MavenArtifactLoader("jar");
 
         File jdbi = loader.getArtifactFile("org.jdbi", "jdbi3-core", "3.25.0");
+        File h2 = loader.getArtifactFile("com.h2database", "h2", "2.0.202");
         File guava = loader.getArtifactFile("com.google.guava", "guava", "30.1.1-jre");
         File jackson = loader.getArtifactFile("com.fasterxml.jackson.core", "jackson-core", "2.10.5");
         File databind = loader.getArtifactFile("com.fasterxml.jackson.core", "jackson-databind", "2.10.5");
         File velocity = loader.getArtifactFile("org.apache.velocity", "velocity", "1.7");
 
+        Rename h2Rename = Rename.forClassName("org.h2", "org.jdbi.relocated.h2", true);
         Rename guavaRename = Rename.forClassName("com.google", "org.jdbi.relocated.com.google", true);
         Rename jacksonRename = Rename.forClassName("com.fasterxml", "org.jdbi.relocated.com.fasterxml", true);
         Rename velocityRename = Rename.forClassName("org.apache", "org.jdbi.relocated.org.apache", true);
 
         ClassPath classPath = new ClassPath(new File("/"));
+        classPath.addFile(jdbi, ImmutableSet.of(), ClassPathTag.ROOT_JAR);
+        classPath.addFile(h2, ImmutableSet.of(h2Rename));
         classPath.addFile(jackson, ImmutableSet.of(jacksonRename));
         classPath.addFile(databind, ImmutableSet.of(jacksonRename));
         classPath.addFile(guava, ImmutableSet.of(guavaRename));
-        classPath.addFile(jdbi, ImmutableSet.of(), ClassPathTag.KEEP_MANIFEST);
         classPath.addFile(velocity, ImmutableSet.of(velocityRename));
 
         CapturingConsumer consumer = new CapturingConsumer();
-        ImmutableList.Builder<JarProcessor> builder = ImmutableList.builder();
-
-        builder.add(new ManifestFilterProcessor());   // only keep tagged manifests
-        builder.add(new ModuleInfoFilterProcessor());
-
-        RemapperProcessor packageRemapperProcessor = new RemapperProcessor();
-        builder.add(packageRemapperProcessor);
-        builder.add(new ResourceRenamerJarProcessor(packageRemapperProcessor));
-
-        builder.add(new ClassTransformerJarProcessor(new RemappingClassTransformer(packageRemapperProcessor)));
-        builder.add(new ResourceRenamerJarProcessor(packageRemapperProcessor));
-
-        JarTransformer jarTransformer = new JarTransformer(consumer, builder.build());
+        JarTransformer jarTransformer = new JarTransformer(consumer);
 
         jarTransformer.transform(classPath);
 
@@ -92,5 +76,8 @@ public class JdbiRelocationTest {
         // velocity file relocation
         assertTrue(resources.containsKey("org/jdbi/relocated/org/apache/velocity/texen/defaults/texen.properties"));
 
+        // multi-release jar relocation
+        assertTrue(resources.containsKey("META-INF/versions/10/org/jdbi/relocated/h2/util/$Utils10.class"));
+        assertTrue(resources.containsKey("org/jdbi/relocated/h2/util/$Utils10.class"));
     }
 }

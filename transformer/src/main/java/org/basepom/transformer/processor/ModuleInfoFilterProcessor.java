@@ -21,6 +21,7 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import org.basepom.transformer.ClassPathResource;
+import org.basepom.transformer.ClassPathTag;
 
 public class ModuleInfoFilterProcessor extends AbstractFilterJarProcessor {
 
@@ -33,7 +34,7 @@ public class ModuleInfoFilterProcessor extends AbstractFilterJarProcessor {
     protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
         List<String> elements = pathToElements(classPathResource.getName());
 
-        return MODULE_INFO.equals(elements.get(elements.size() - 1));
+        return !classPathResource.getTags().contains(ClassPathTag.ROOT_JAR) && MODULE_INFO.equals(elements.get(elements.size() - 1));
     }
 
     @CheckForNull

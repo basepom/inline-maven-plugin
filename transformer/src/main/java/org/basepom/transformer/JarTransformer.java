@@ -18,17 +18,21 @@ import static java.lang.String.format;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.ImmutableSet;
+import org.basepom.transformer.asm.RemappingClassTransformer;
+import org.basepom.transformer.processor.ClassTransformerJarProcessor;
 import org.basepom.transformer.processor.DirectoryFilterProcessor;
 import org.basepom.transformer.processor.DirectoryScanProcessor;
 import org.basepom.transformer.processor.DuplicateDiscardProcessor;
+import org.basepom.transformer.processor.ManifestFilterProcessor;
+import org.basepom.transformer.processor.ModuleInfoFilterProcessor;
+import org.basepom.transformer.processor.MultiReleaseJarProcessor;
+import org.basepom.transformer.processor.RemapperProcessor;
+import org.basepom.transformer.processor.ResourceRenamerJarProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,19 +42,38 @@ public class JarTransformer {
 
     private final Consumer<ClassPathResource> outputSink;
     private final JarProcessor.Holder holder;
-    private final Set<String> files = new HashSet<>();
-    private final DirectoryScanProcessor directoryScanProcessor = new DirectoryScanProcessor();
+    private final DirectoryScanProcessor directoryScanProcessor;
+    private final RemapperProcessor packageRemapperProcessor = new RemapperProcessor();
 
-    public JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink, @Nonnull List<JarProcessor> jarProcessors) {
+    public JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink) {
         this.outputSink = checkNotNull(outputSink, "outputFile is null");
-        checkNotNull(jarProcessors, "jarProcessors is null");
+
+        this.directoryScanProcessor = new DirectoryScanProcessor();
 
         ImmutableSet.Builder<JarProcessor> builder = ImmutableSet.builder();
         // must come first
         builder.add(new DirectoryFilterProcessor());
-        builder.addAll(jarProcessors);
+
+        // must be early, all following processors see transformed MR names
+        builder.add(new MultiReleaseJarProcessor());
+
+        // only keep tagged manifests
+        builder.add(new ManifestFilterProcessor());
+
+        // TODO. This may be too simple. At least we should retain the module name of the main jar.
+        builder.add(new ModuleInfoFilterProcessor());
+
+        // scans for all the necessary information
+        builder.add(packageRemapperProcessor);
+
+        // rename classes and resources.
+        builder.add(new ClassTransformerJarProcessor(new RemappingClassTransformer(packageRemapperProcessor)));
+        builder.add(new ResourceRenamerJarProcessor(packageRemapperProcessor));
+
+        // create new directory structure for the jar
         builder.add(directoryScanProcessor);
-        // must come last
+
+        // must come last, removes all duplicates
         builder.add(new DuplicateDiscardProcessor());
 
         this.holder = new JarProcessor.Holder(builder.build());
@@ -61,6 +84,9 @@ public class JarTransformer {
         for (ClassPathElement inputArchive : inputPath) {
             LOG.debug(format("Pre-scanning archive %s", inputArchive));
             holder.preScan(inputArchive);
+                for (ClassPathResource inputResource : inputArchive) {
+                    holder.preScan(inputResource);
+            }
         }
 
         for (ClassPathElement inputArchive : inputPath) {

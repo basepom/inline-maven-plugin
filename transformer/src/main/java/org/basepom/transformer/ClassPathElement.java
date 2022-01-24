@@ -27,9 +27,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 
-/**
- * @author shevek
- */
 public abstract class ClassPathElement implements Iterable<ClassPathResource> {
 
     private final File archiveFile;

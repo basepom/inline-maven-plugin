@@ -21,9 +21,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 
-/**
- * @author shevek
- */
 public class RemappingClassTransformer implements ClassTransformer {
 
     private final Remapper remapper;

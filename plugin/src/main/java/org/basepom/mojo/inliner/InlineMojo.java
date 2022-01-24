@@ -38,14 +38,12 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
+import org.basepom.mojo.inliner.model.InlineDependency;
+import org.basepom.mojo.inliner.model.Relocation;
 import org.basepom.transformer.ClassPath;
 import org.basepom.transformer.ClassPathResource;
 import org.basepom.transformer.ClassPathTag;
 import org.basepom.transformer.JarTransformer;
-import org.basepom.transformer.JarProcessor;
-import org.basepom.transformer.processor.ManifestFilterProcessor;
-import org.basepom.mojo.inliner.model.InlineDependency;
-import org.basepom.mojo.inliner.model.Relocation;
 
 /**
  * InlineDependency one or more dependencies of a library into a new jar.
@@ -128,10 +126,6 @@ public final class InlineMojo extends AbstractMojo {
             throw new MojoExecutionException("Could not inline dependencies!");
         }
 
-        ImmutableList.Builder<JarProcessor> builder = ImmutableList.builder();
-
-        builder.add(new ManifestFilterProcessor());   // only keep tagged manifests
-
         File outputFile = new File(project.getBasedir(), "transformed.jar");
         try (JarOutputStream outputJarStream = new JarOutputStream(new FileOutputStream(outputFile))) {
 
@@ -149,12 +143,12 @@ public final class InlineMojo extends AbstractMojo {
                 }
             };
 
-            JarTransformer transformer = new JarTransformer(jarConsumer, builder.build());
+            JarTransformer transformer = new JarTransformer(jarConsumer);
 
             // Build the class path
             ClassPath classPath = new ClassPath(project.getBasedir());
             // maintain the manifest file for the main artifact
-            classPath.addFile(project.getArtifact().getFile(), ImmutableSet.of(), ClassPathTag.KEEP_MANIFEST);
+            classPath.addFile(project.getArtifact().getFile(), ImmutableSet.of(), ClassPathTag.ROOT_JAR);
 
             for (InlineDependency inlineDependency : inlineDependencies) {
                 for (Artifact dependencyArtifact : project.getArtifacts()) {

@@ -13,7 +13,10 @@
  */
 package org.basepom.transformer.processor;
 
+import static org.basepom.transformer.ClassNameUtils.pathToElements;
+
 import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nonnull;
 
 import org.basepom.transformer.ClassPathResource;
@@ -22,20 +25,15 @@ import org.basepom.transformer.ClassPathTag;
 /**
  * Excludes the manifest.
  */
-public class ManifestFilterProcessor extends PathFilterJarProcessor {
+public class ManifestFilterProcessor extends AbstractFilterJarProcessor {
 
     public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
 
     public ManifestFilterProcessor() {
-        super(Collections.singleton(MANIFEST_PATH));
     }
 
     @Override
     protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
-
-        if (classPathResource.getTags().contains(ClassPathTag.KEEP_MANIFEST)) {
-            return false;
-        }
-        return super.isFiltered(classPathResource);
+        return !classPathResource.getTags().contains(ClassPathTag.ROOT_JAR) && MANIFEST_PATH.equals(classPathResource.getName());
     }
 }

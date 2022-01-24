@@ -56,12 +56,14 @@ public final class RemapperProcessor implements JarProcessor {
 
         // find all the relevant classRenamers and add them to the package remapper
         classPathElement.getRenamers().forEach(renamer -> addRule(classPathElement.getArchiveName(), renamer));
-
-        for (ClassPathResource classPathResource : classPathElement) {
-            addResource(classPathResource);
-        }
-
         return chain.next(classPathElement);
+    }
+
+    @CheckForNull
+    @Override
+    public ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+        addResource(classPathResource);
+        return chain.next(classPathResource);
     }
 
     @VisibleForTesting

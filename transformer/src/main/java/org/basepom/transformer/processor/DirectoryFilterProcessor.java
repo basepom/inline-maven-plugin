@@ -21,8 +21,6 @@ import org.basepom.transformer.ClassPathTag;
 /**
  * Strips out the existing directories from the classpath. Directories are then re-added when the new jar is written. This ensures that no remnants of the old
  * class structure is present in the new jar.
- *
- * @author shevek
  */
 public class DirectoryFilterProcessor extends AbstractFilterJarProcessor {
 

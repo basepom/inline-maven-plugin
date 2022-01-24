@@ -33,6 +33,11 @@ public interface JarProcessor {
     }
 
     @CheckForNull
+    default ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain) throws IOException {
+        return chain.next(classPathResource);
+    }
+
+    @CheckForNull
     default ClassPathResource scan(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain) throws IOException {
         return chain.next(classPathResource);
     }
@@ -76,6 +81,12 @@ public interface JarProcessor {
         public Optional<ClassPathElement> preScan(@Nonnull ClassPathElement classPathElement) throws IOException {
             ChainInstance<ClassPathElement> instance = new ChainInstance<>(JarProcessor::preScan);
             return Optional.ofNullable(instance.next(classPathElement));
+        }
+
+        @Nonnull
+        public Optional<ClassPathResource> preScan(@Nonnull ClassPathResource classPathResource) throws IOException {
+            ChainInstance<ClassPathResource> instance = new ChainInstance<>(JarProcessor::preScan);
+            return Optional.ofNullable(instance.next(classPathResource));
         }
 
         @Nonnull

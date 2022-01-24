@@ -21,6 +21,8 @@ import java.util.Set;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import org.basepom.transformer.ClassPathResource;
 import org.basepom.transformer.ClassPathTag;
 import org.basepom.transformer.JarProcessor;
@@ -40,7 +42,7 @@ public class DuplicateDiscardProcessor implements JarProcessor {
     @Override
     public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
         if (classPathResource.getTags().contains(ClassPathTag.FILE)) {
-            final String name = classPathResource.getName();
+            String name = classPathResource.getNameWithPrefix();
 
             if (!files.add(name)) {
                 LOG.warn(format("Entry '%s' is a duplicate, discarding!", name));

@@ -19,5 +19,5 @@ public enum ClassPathTag {
     CLASS,         // is a class
     RESOURCE,      // is a resource
 
-    KEEP_MANIFEST  // maintain manifest for this archive
+    ROOT_JAR       // one or more root jars, should not contain relocations, files in META-INF/ are retained
 }
