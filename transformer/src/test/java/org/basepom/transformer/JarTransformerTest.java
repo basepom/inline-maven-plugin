@@ -14,6 +14,7 @@
 package org.basepom.transformer;
 
 
+import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -73,7 +74,7 @@ public class JarTransformerTest {
         @Override
         public void accept(ClassPathResource resource) {
             assertNotNull(resource.getContent());
-            assertNull(names.put(resource.getName(), resource), "Already seen '%s'" + resource.getName());
+            assertNull(names.put(resource.getName(), resource), format("Already seen '%s' ('%s')", resource.getName(), resource));
         }
 
         public Map<String, ClassPathResource> getContent() {

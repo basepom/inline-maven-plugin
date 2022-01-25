@@ -13,41 +13,29 @@
  */
 package org.basepom.transformer.processor;
 
-import static java.lang.String.format;
-
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.CheckForNull;
+import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import org.basepom.transformer.ClassPathResource;
-import org.basepom.transformer.ClassPathTag;
 import org.basepom.transformer.JarProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class DuplicateDiscardProcessor implements JarProcessor {
+public class JarWriterProcessor implements JarProcessor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DuplicateDiscardProcessor.class);
+    private final Consumer<ClassPathResource> outputSink;
 
-    private final Set<String> files = new HashSet<>();
-
-    public DuplicateDiscardProcessor() {
+    public JarWriterProcessor(Consumer<ClassPathResource> outputSink) {
+        this.outputSink = outputSink;
     }
 
     @CheckForNull
     @Override
     public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-        if (classPathResource.getTags().contains(ClassPathTag.FILE)) {
-            String name = classPathResource.getNameWithPrefix();
-
-            if (!files.add(name)) {
-                LOG.warn(format("Entry '%s' is a duplicate, discarding!", name));
-                return null;
-            }
+        classPathResource = chain.next(classPathResource);
+        if (classPathResource != null) {
+            outputSink.accept(classPathResource);
         }
-        // emit to jar
-        return chain.next(classPathResource);
+        return classPathResource;
     }
 }

@@ -15,11 +15,12 @@ package org.basepom.transformer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static org.basepom.transformer.util.ExceptionUtil.wrapIOException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Optional;
 import java.util.function.Consumer;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.ImmutableSet;
@@ -28,6 +29,7 @@ import org.basepom.transformer.processor.ClassTransformerJarProcessor;
 import org.basepom.transformer.processor.DirectoryFilterProcessor;
 import org.basepom.transformer.processor.DirectoryScanProcessor;
 import org.basepom.transformer.processor.DuplicateDiscardProcessor;
+import org.basepom.transformer.processor.JarWriterProcessor;
 import org.basepom.transformer.processor.ManifestFilterProcessor;
 import org.basepom.transformer.processor.ModuleInfoFilterProcessor;
 import org.basepom.transformer.processor.MultiReleaseJarProcessor;
@@ -40,27 +42,27 @@ public class JarTransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(JarTransformer.class);
 
-    private final Consumer<ClassPathResource> outputSink;
     private final JarProcessor.Holder holder;
-    private final DirectoryScanProcessor directoryScanProcessor;
     private final RemapperProcessor packageRemapperProcessor = new RemapperProcessor();
 
     public JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink) {
-        this.outputSink = checkNotNull(outputSink, "outputFile is null");
-
-        this.directoryScanProcessor = new DirectoryScanProcessor();
+        checkNotNull(outputSink, "outputFile is null");
 
         ImmutableSet.Builder<JarProcessor> builder = ImmutableSet.builder();
-        // must come first
+
+        // write the jar out. This comes first but actually writes after having gone down and up the chain
+        builder.add(new JarWriterProcessor(outputSink));
+
+        // must come first, strips out all the directories
         builder.add(new DirectoryFilterProcessor());
 
         // must be early, all following processors see transformed MR names
         builder.add(new MultiReleaseJarProcessor());
 
-        // only keep tagged manifests
+        // only keep the root jar manifest
         builder.add(new ManifestFilterProcessor());
 
-        // TODO. This may be too simple. At least we should retain the module name of the main jar.
+        // remove all module-info.class files that are not part of the root jar
         builder.add(new ModuleInfoFilterProcessor());
 
         // scans for all the necessary information
@@ -71,7 +73,7 @@ public class JarTransformer {
         builder.add(new ResourceRenamerJarProcessor(packageRemapperProcessor));
 
         // create new directory structure for the jar
-        builder.add(directoryScanProcessor);
+        builder.add(new DirectoryScanProcessor(outputSink));
 
         // must come last, removes all duplicates
         builder.add(new DuplicateDiscardProcessor());
@@ -98,24 +100,12 @@ public class JarTransformer {
 
         try {
             // write out directories for the new jar
-            for (String directory : directoryScanProcessor.getDirectories()) {
-                LOG.debug(format("Adding directory '%s' to jar", directory));
-                ClassPathResource directoryResource = ClassPathResource.forDirectory(directory);
-                outputSink.accept(directoryResource);
-            }
-
             for (ClassPathElement inputArchive : inputPath) {
                 LOG.info(format("Transforming archive %s", inputArchive));
-
-                for (ClassPathResource inputResource : inputArchive) {
-                    Optional<ClassPathResource> result = holder.process(inputResource);
-                    result.ifPresent(outputSink::accept);
-                }
+                inputArchive.forEach(inputElement -> wrapIOException(() -> holder.process(inputElement)));
             }
         } catch (UncheckedIOException e) {
             throw e.getCause();
         }
     }
-
-
 }

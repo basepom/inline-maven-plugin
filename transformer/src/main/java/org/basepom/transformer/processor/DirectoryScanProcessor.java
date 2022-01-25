@@ -13,25 +13,36 @@
  */
 package org.basepom.transformer.processor;
 
+import static java.lang.String.format;
+
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.function.Consumer;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import org.basepom.transformer.ClassPathResource;
 import org.basepom.transformer.JarProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Re-add the directory structure if a given class file is written.
  */
 public class DirectoryScanProcessor implements JarProcessor {
 
-    private final Set<String> directories = new TreeSet<>();
+    public static final Logger LOG = LoggerFactory.getLogger(DirectoryScanProcessor.class);
+
+    private final Consumer<ClassPathResource> outputSink;
+    private final ImmutableSortedSet.Builder<String> directories = ImmutableSortedSet.naturalOrder();
+    private boolean wroteDirectories = false;
+
+    public DirectoryScanProcessor(Consumer<ClassPathResource> outputSink) {
+        this.outputSink = outputSink;
+    }
 
     @CheckForNull
     @Override
@@ -39,7 +50,7 @@ public class DirectoryScanProcessor implements JarProcessor {
         String name = classPathResource.getName();
         List<String> elements = Splitter.on('/').splitToList(name);
         if (elements.size() > 1) {
-            // any single level directories have been removed by the Directory Filter Processor.
+            // any intermediate level directories have been removed by the Directory Filter Processor.
             for (int i = 1; i < elements.size(); i++) {
                 String dirName = Joiner.on('/').join(elements.subList(0, i));
                 directories.add(dirName);
@@ -49,7 +60,17 @@ public class DirectoryScanProcessor implements JarProcessor {
         return chain.next(classPathResource);
     }
 
-    public ImmutableSet<String> getDirectories() {
-        return ImmutableSet.copyOf(directories);
+    @CheckForNull
+    @Override
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+        if (!wroteDirectories) {
+            wroteDirectories = true;
+            for (String directory : directories.build()) {
+                LOG.debug(format("Adding directory '%s' to jar", directory));
+                ClassPathResource directoryResource = ClassPathResource.forDirectory(directory);
+                outputSink.accept(directoryResource);
+            }
+        }
+        return chain.next(classPathResource);
     }
 }

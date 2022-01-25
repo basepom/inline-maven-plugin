@@ -32,25 +32,14 @@ public class JdbiRelocationTest {
     public void testJdbiRelocation() throws Exception {
         MavenArtifactLoader loader = new MavenArtifactLoader("jar");
 
-        File jdbi = loader.getArtifactFile("org.jdbi", "jdbi3-core", "3.25.0");
-        File h2 = loader.getArtifactFile("com.h2database", "h2", "2.0.202");
-        File guava = loader.getArtifactFile("com.google.guava", "guava", "30.1.1-jre");
-        File jackson = loader.getArtifactFile("com.fasterxml.jackson.core", "jackson-core", "2.10.5");
-        File databind = loader.getArtifactFile("com.fasterxml.jackson.core", "jackson-databind", "2.10.5");
-        File velocity = loader.getArtifactFile("org.apache.velocity", "velocity", "1.7");
+        File jdbi = loader.getArtifactFile("org.jdbi", "jdbi3-core", "3.27.0");
+        File antlr = loader.getArtifactFile("org.antlr", "antlr4-runtime", "4.9.2");
 
-        Rename h2Rename = Rename.forClassName("org.h2", "org.jdbi.relocated.h2", true);
-        Rename guavaRename = Rename.forClassName("com.google", "org.jdbi.relocated.com.google", true);
-        Rename jacksonRename = Rename.forClassName("com.fasterxml", "org.jdbi.relocated.com.fasterxml", true);
-        Rename velocityRename = Rename.forClassName("org.apache", "org.jdbi.relocated.org.apache", true);
+        Rename antlrRename = Rename.forClassName("org.antlr.v4", "org.jdbi.relocated.antlr", false);
 
         ClassPath classPath = new ClassPath(new File("/"));
         classPath.addFile(jdbi, ImmutableSet.of(), ClassPathTag.ROOT_JAR);
-        classPath.addFile(h2, ImmutableSet.of(h2Rename));
-        classPath.addFile(jackson, ImmutableSet.of(jacksonRename));
-        classPath.addFile(databind, ImmutableSet.of(jacksonRename));
-        classPath.addFile(guava, ImmutableSet.of(guavaRename));
-        classPath.addFile(velocity, ImmutableSet.of(velocityRename));
+        classPath.addFile(antlr, ImmutableSet.of(antlrRename));
 
         CapturingConsumer consumer = new CapturingConsumer();
         JarTransformer jarTransformer = new JarTransformer(consumer);
@@ -67,17 +56,7 @@ public class JdbiRelocationTest {
         String manifestText = new String(manifest.getContent(), StandardCharsets.UTF_8);
         assertTrue(manifestText.contains("jdbi"));
 
-        // guava relocation
-        assertTrue(resources.containsKey("org/jdbi/relocated/com/google"));
-
-        // jackson relocation
-        assertTrue(resources.containsKey("org/jdbi/relocated/com/fasterxml"));
-
-        // velocity file relocation
-        assertTrue(resources.containsKey("org/jdbi/relocated/org/apache/velocity/texen/defaults/texen.properties"));
-
-        // multi-release jar relocation
-        assertTrue(resources.containsKey("META-INF/versions/10/org/jdbi/relocated/h2/util/$Utils10.class"));
-        assertTrue(resources.containsKey("org/jdbi/relocated/h2/util/$Utils10.class"));
+        // antlr relocation
+        assertTrue(resources.containsKey("org/jdbi/relocated/antlr"));
     }
 }

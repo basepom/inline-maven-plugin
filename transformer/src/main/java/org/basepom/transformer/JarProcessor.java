@@ -25,6 +25,14 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableSet;
 
+/**
+ * A jar processor can intercept the transformation process at four different steps:
+ *
+ * <ul>
+ *     <li>{@link JarProcessor#preScan(ClassPathElement, Chain)} is called once for each {@link ClassPathElement}.</li>
+ *     <li>{@link JarProcessor#preScan(ClassPathResource, Chain)} is called once for each {@link ClassPathResource}.</li>
+ * </ul>
+ */
 public interface JarProcessor {
 
     @CheckForNull
@@ -42,27 +50,20 @@ public interface JarProcessor {
         return chain.next(classPathResource);
     }
 
-    /**
-     * Process the entry (e.g. rename the file)
-     * <p>
-     * Returns <code>true</code> if the processor wants to retain the entry. In this case, the entry can be removed from the jar file in a future time. Return
-     * <code>false</code> for the entries which do not have been changed and there fore are not to be deleted
-     *
-     * @param classPathResource The archive entry to be transformed.
-     * @throws IOException if it all goes upside down
-     */
     @CheckForNull
     default ClassPathResource process(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain) throws IOException {
         return chain.next(classPathResource);
     }
 
     interface Chain<T> {
+
         @CheckForNull
         T next(@Nullable T source) throws IOException;
     }
 
     class Holder {
-        private final Set<JarProcessor> processors;
+
+        private final ImmutableSet<JarProcessor> processors;
 
         public Holder(Set<JarProcessor> processors) {
             this.processors = ImmutableSet.copyOf(checkNotNull(processors, "processors is null"));
@@ -102,6 +103,7 @@ public interface JarProcessor {
         }
 
         final class ChainInstance<T> implements JarProcessor.Chain<T> {
+
             private final Iterator<JarProcessor> iterator;
             private final ProcessorOperation<T> operation;
 
@@ -113,7 +115,7 @@ public interface JarProcessor {
             @Override
             @CheckForNull
             public T next(@Nullable T source) throws IOException {
-                if (source != null  && iterator.hasNext()) {
+                if (source != null && iterator.hasNext()) {
                     return operation.apply(iterator.next(), source, this);
                 }
                 return source;

@@ -131,7 +131,10 @@ public final class InlineMojo extends AbstractMojo {
 
             Consumer<ClassPathResource> jarConsumer = transformable -> {
                 try {
-                    final String name = transformable.getName();
+                    String name = transformable.getName();
+                    if (transformable.getTags().contains(ClassPathTag.DIRECTORY)) {
+                        name += "/";
+                    }
                     LOG.debug(format("Writing '%s' to jar", name));
                     JarEntry outputEntry = new JarEntry(name);
                     outputEntry.setTime(transformable.getLastModifiedTime());

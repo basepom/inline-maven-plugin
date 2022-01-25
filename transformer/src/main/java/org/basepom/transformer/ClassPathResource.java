@@ -13,18 +13,17 @@
  */
 package org.basepom.transformer;
 
+import static org.basepom.transformer.util.ExceptionUtil.wrapIOException;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.function.Supplier;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -66,11 +65,12 @@ public final class ClassPathResource {
     }
 
     public static ClassPathResource forDirectory(String directory) {
-        return new ClassPathResource(null, directory, 0, "", InputStream::nullInputStream, null, ImmutableSet.of(ClassPathTag.DIRECTORY, ClassPathTag.RESOURCE));
+        return new ClassPathResource(null, directory, 0, "", InputStream::nullInputStream, null,
+                ImmutableSet.of(ClassPathTag.DIRECTORY, ClassPathTag.RESOURCE));
     }
 
     @VisibleForTesting
-    public static ClassPathResource forTesting(String path, ClassPathTag ... tags) {
+    public static ClassPathResource forTesting(String path, ClassPathTag... tags) {
         return new ClassPathResource(null, path, 0, "", InputStream::nullInputStream, null, ImmutableSet.copyOf(tags));
     }
 
@@ -88,11 +88,11 @@ public final class ClassPathResource {
         return new ClassPathResource(this.prefix, name, this.lastModifiedTime, this.archiveName, this.inputStreamSupplier, this.content, this.tags);
     }
 
-    public ClassPathResource withContent(byte [] content) {
+    public ClassPathResource withContent(byte[] content) {
         return new ClassPathResource(this.prefix, this.name, this.lastModifiedTime, this.archiveName, this.inputStreamSupplier, content, this.tags);
     }
 
-    private ClassPathResource(String prefix, String name, long lastModifiedTime, String archiveName, Supplier<InputStream> inputStreamSupplier, byte [] content,
+    private ClassPathResource(String prefix, String name, long lastModifiedTime, String archiveName, Supplier<InputStream> inputStreamSupplier, byte[] content,
             ImmutableSet<ClassPathTag> tags) {
         this.prefix = prefix;
         this.name = name;
@@ -119,7 +119,7 @@ public final class ClassPathResource {
 
     @Nonnull
     public String getNameWithPrefix() {
-        if (prefix == null ) {
+        if (prefix == null) {
             return name;
         }
 
@@ -140,11 +140,11 @@ public final class ClassPathResource {
     public byte[] getContent() {
 
         if (content == null) {
-            try (InputStream in = inputStreamSupplier.get()) {
-                content = ByteStreams.toByteArray(in);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            content = wrapIOException(() -> {
+                try (InputStream in = inputStreamSupplier.get()) {
+                    return ByteStreams.toByteArray(in);
+                }
+            });
         }
         return content;
     }
@@ -167,22 +167,10 @@ public final class ClassPathResource {
     }
 
     private static Supplier<InputStream> supplierForZipEntry(ZipFile zipFile, ZipEntry zipEntry) {
-        return () -> {
-            try {
-                return zipFile.getInputStream(zipEntry);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        };
+        return () -> wrapIOException(() -> zipFile.getInputStream(zipEntry));
     }
 
     private static Supplier<InputStream> supplierForFile(File file) {
-        return () -> {
-            try {
-                return new BufferedInputStream(new FileInputStream(file));
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        };
+        return () -> wrapIOException(() -> new BufferedInputStream(new FileInputStream(file)));
     }
 }

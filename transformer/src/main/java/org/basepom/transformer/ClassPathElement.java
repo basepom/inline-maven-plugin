@@ -13,10 +13,11 @@
  */
 package org.basepom.transformer;
 
+import static org.basepom.transformer.util.ExceptionUtil.wrapIOException;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -46,11 +47,7 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
             return new ClassPathElement(file, renamers, tags) {
                 @Override
                 public Iterator<ClassPathResource> iterator() {
-                    try {
-                        return new ZipIterator(file);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
+                    return wrapIOException(() -> new ZipIterator(file));
                 }
             };
         }
