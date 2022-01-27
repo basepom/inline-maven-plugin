@@ -13,12 +13,15 @@
  */
 package org.basepom.transformer;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import javax.annotation.Nonnull;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Defines a class path.
@@ -32,11 +35,19 @@ public class ClassPath implements Iterable<ClassPathElement> {
         this.root = root;
     }
 
-    public void addFile(File file, Set<Rename> renamers, ClassPathTag... tags) {
+    public void addFile(File file, ClassPathTag... tags) {
         if (!file.isAbsolute()) {
             file = new File(root, file.getPath());
         }
-        entries.add(ClassPathElement.forFile(file, renamers, tags));
+        entries.add(ClassPathElement.forFile(file, null, false, tags));
+    }
+
+    public void addFile(File file, String prefix, boolean hideClasses, ClassPathTag... tags) {
+        checkNotNull(prefix, "prefix is null");
+        if (!file.isAbsolute()) {
+            file = new File(root, file.getPath());
+        }
+        entries.add(ClassPathElement.forFile(file, prefix, hideClasses, tags));
     }
 
     @Override

@@ -107,4 +107,8 @@ public final class ClassNameUtils {
     public static String elementsToPath(List<String> elements) {
         return Joiner.on('/').join(elements);
     }
+
+    public static List<String> packageForElement(List<String> elements) {
+        return elements.subList(0, elements.size() - 1);
+    }
 }

@@ -15,12 +15,10 @@ package org.basepom.transformer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static org.basepom.transformer.util.ExceptionUtil.wrapIOException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.function.Consumer;
-import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.ImmutableSet;
@@ -89,9 +87,8 @@ public class JarTransformer {
 
         for (ClassPathElement inputArchive : inputPath) {
             LOG.debug(format("Pre-scanning archive %s", inputArchive));
-            holder.preScan(inputArchive);
-                for (ClassPathResource inputResource : inputArchive) {
-                    holder.preScan(inputResource);
+            for (ClassPathResource inputResource : inputArchive) {
+                holder.preScan(inputResource);
             }
         }
 
@@ -106,7 +103,9 @@ public class JarTransformer {
             // write out directories for the new jar
             for (ClassPathElement inputArchive : inputPath) {
                 LOG.info(format("Transforming archive %s", inputArchive));
-                inputArchive.forEach(inputElement -> wrapIOException(() -> holder.process(inputElement)));
+                for (ClassPathResource inputResource : inputArchive) {
+                    holder.process(inputResource);
+                }
             }
         } catch (UncheckedIOException e) {
             throw e.getCause();

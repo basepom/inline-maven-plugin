@@ -47,7 +47,7 @@ public class JarTransformerTest {
     public JarTransformerTest() {
         transformer = new JarTransformer(consumer);
 
-        Arrays.stream(JarTransformerUtil.JARS).forEach(jar -> classPath.addFile(jar, ImmutableSet.of()));
+        Arrays.stream(JarTransformerUtil.JARS).forEach(jar -> classPath.addFile(jar));
     }
 
     @Test

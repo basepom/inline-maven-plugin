@@ -86,7 +86,7 @@ public class ClassTransformerJarProcessor implements JarProcessor {
                 final String newName = namer.getClassName();
                 classPathResource = classPathResource.withName(ClassNameUtils.javaNameToPath(newName)).withContent(writer.toByteArray());
                 if (!newName.equals(oldName)) {
-                    LOG.debug(format("Transformed '%s' to '%s' (in %s)", oldName, newName, classPathResource.getArchiveName()));
+                    LOG.debug(format("Transformed '%s' to '%s' (in %s)", oldName, newName, classPathResource.getClassPathElement()));
                 }
 
             } catch (UncheckedIOException e) {

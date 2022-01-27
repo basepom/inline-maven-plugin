@@ -22,8 +22,9 @@ import static org.basepom.transformer.ClassNameUtils.toPath;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 
+import com.google.common.collect.ImmutableSortedSet;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.basepom.transformer.ClassNameUtils;
@@ -87,7 +88,7 @@ public final class InlineRemapper extends Remapper {
                         // shortening the name to find a renamable terminal (e.g. foo.bar.Class.MySetting will be renamed if foo.bar.Class is renamed)
                         for (int i = classElements.size(); i > 0; i--) {
                             List<String> testElements = classElements.subList(0, i);
-                            Set<Rename> renamers = remapperProcessor.renamersForElement(testElements, ClassPathTag.CLASS);
+                            ImmutableSortedSet<Rename> renamers = remapperProcessor.renamersForElement(testElements, ClassPathTag.CLASS);
 
                             if (renamers.isEmpty()) {
                                 renamers = remapperProcessor.packageNameRenamersForElement(testElements, ClassPathTag.CLASS);
@@ -132,13 +133,13 @@ public final class InlineRemapper extends Remapper {
         List<String> elements = pathToElements(path);
 
         // try classes first.
-        Set<Rename> classRenamers = remapperProcessor.renamersForElement(elements, ClassPathTag.CLASS);
+        ImmutableSortedSet<Rename> classRenamers = remapperProcessor.renamersForElement(elements, ClassPathTag.CLASS);
         if (!classRenamers.isEmpty()) {
             return renamePath(path, classRenamers, true); // enable hide classes stuff
         }
 
         // try resource. Resource are never hidden
-        Set<Rename> resourceRenamers = remapperProcessor.renamersForElement(elements, ClassPathTag.RESOURCE);
+        ImmutableSortedSet<Rename> resourceRenamers = remapperProcessor.renamersForElement(elements, ClassPathTag.RESOURCE);
         if (!resourceRenamers.isEmpty()) {
             return renamePath(path, resourceRenamers, false); // resources are never hidden
         }
@@ -148,14 +149,11 @@ public final class InlineRemapper extends Remapper {
 
     // rename a path with a given set of renamers
     @CheckForNull
-    private String renamePath(String path, Set<Rename> renames, boolean hideClasses) {
-        for (Rename pattern : renames) {
-            String result = pattern.renameClassName(path, hideClasses);
+    private String renamePath(String path, ImmutableSortedSet<Rename> renames, boolean hideClasses) {
+        for (Rename rename : renames) {
+            String result = rename.renameClassName(path, hideClasses);
             if (result != null) {
-                if (renames.size() > 1) {
-                    LOG.error(format("Found multiple renamers for %s: (%s), results may be incorrect!", path, renames));
-                }
-
+                // first match takes the cake
                 return result;
             }
         }

@@ -25,20 +25,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableSet;
 
-/**
- * A jar processor can intercept the transformation process at four different steps:
- *
- * <ul>
- *     <li>{@link JarProcessor#preScan(ClassPathElement, Chain)} is called once for each {@link ClassPathElement}.</li>
- *     <li>{@link JarProcessor#preScan(ClassPathResource, Chain)} is called once for each {@link ClassPathResource}.</li>
- * </ul>
- */
 public interface JarProcessor {
-
-    @CheckForNull
-    default ClassPathElement preScan(@Nonnull ClassPathElement classPathElement, JarProcessor.Chain<ClassPathElement> chain) throws IOException {
-        return chain.next(classPathElement);
-    }
 
     @CheckForNull
     default ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain) throws IOException {
@@ -76,12 +63,6 @@ public interface JarProcessor {
         @FunctionalInterface
         interface ProcessorOperation<T> {
             T apply(JarProcessor jarProcessor, T element, JarProcessor.Chain<T> chain) throws IOException;
-        }
-
-        @Nonnull
-        public Optional<ClassPathElement> preScan(@Nonnull ClassPathElement classPathElement) throws IOException {
-            ChainInstance<ClassPathElement> instance = new ChainInstance<>(JarProcessor::preScan);
-            return Optional.ofNullable(instance.next(classPathElement));
         }
 
         @Nonnull

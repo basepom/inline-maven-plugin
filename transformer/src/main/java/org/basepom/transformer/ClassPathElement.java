@@ -13,13 +13,15 @@
  */
 package org.basepom.transformer;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.basepom.transformer.util.ExceptionUtil.wrapIOException;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.annotation.Nonnull;
@@ -27,24 +29,28 @@ import javax.annotation.Nonnull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public abstract class ClassPathElement implements Iterable<ClassPathResource> {
 
     private final File archiveFile;
-    private final ImmutableSet<Rename> renamers;
-    protected final ImmutableSet<ClassPathTag> tags;
+    private final boolean hideClasses;
+    private final String prefix;
+    private final ImmutableSet<ClassPathTag> tags;
 
-    public static ClassPathElement forFile(File file, Set<Rename> renamers, ClassPathTag... tags) {
+    public static ClassPathElement forFile(File file, @Nullable String prefix, boolean hideClasses, ClassPathTag... tags) {
 
         if (file.isDirectory()) {
-            return new ClassPathElement(file, renamers, tags) {
+            return new ClassPathElement(file, prefix, hideClasses, tags) {
                 @Override
                 public Iterator<ClassPathResource> iterator() {
                     return new DirectoryIterator(file);
                 }
             };
         } else {
-            return new ClassPathElement(file, renamers, tags) {
+            return new ClassPathElement(file, prefix, hideClasses, tags) {
                 @Override
                 public Iterator<ClassPathResource> iterator() {
                     return wrapIOException(() -> new ZipIterator(file));
@@ -53,9 +59,10 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
         }
     }
 
-    private ClassPathElement(@Nonnull File archiveFile, Set<Rename> renamers, ClassPathTag... tags) {
-        this.archiveFile = archiveFile;
-        this.renamers = ImmutableSet.copyOf(renamers);
+    private ClassPathElement(@Nonnull File archiveFile, @Nullable String prefix, boolean hideClasses, ClassPathTag... tags) {
+        this.archiveFile = checkNotNull(archiveFile, "archiveFile is null");
+        this.prefix = prefix;
+        this.hideClasses = hideClasses;
         this.tags = ImmutableSet.copyOf(tags);
     }
 
@@ -64,8 +71,13 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
         return archiveFile.getPath();
     }
 
-    public ImmutableSet<Rename> getRenamers() {
-        return renamers;
+    public boolean isHideClasses() {
+        return hideClasses;
+    }
+
+    @NonNull
+    public Optional<String> getPrefix() {
+        return Optional.ofNullable(prefix);
     }
 
     public ImmutableSet<ClassPathTag> getTags() {
@@ -95,7 +107,7 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
 
         @Override
         public ClassPathResource next() {
-            return ClassPathResource.fromZipEntry(zipFile, zipEntries.next(), tags);
+            return ClassPathResource.fromZipEntry(ClassPathElement.this, zipFile, zipEntries.next(), tags);
         }
 
         @Override
@@ -120,7 +132,7 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
                 if (file.isDirectory()) {
                     findClassFiles(out, file);
                 } else if (file.isFile()) {
-                    out.add(ClassPathResource.fromFile(dir, file, tags));
+                    out.add(ClassPathResource.fromFile(this, file, tags));
                 }
             }
         }
@@ -156,5 +168,25 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "(" + archiveFile + ")";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ClassPathElement that = (ClassPathElement) o;
+        return hideClasses == that.hideClasses
+                && Objects.equals(archiveFile, that.archiveFile)
+                && Objects.equals(prefix, that.prefix)
+                && Objects.equals(tags, that.tags);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(archiveFile, hideClasses, prefix, tags);
     }
 }

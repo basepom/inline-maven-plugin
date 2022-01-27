@@ -21,12 +21,13 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableSet;
 import de.softwareforge.testing.maven.MavenArtifactLoader;
 import org.basepom.transformer.JarTransformerTest.CapturingConsumer;
 import org.junit.jupiter.api.Test;
 
 public class GeneralRelocationTest {
+
+    public static final String JDBI_PREFIX = "org.jdbi.relocated";
 
     @Test
     public void testRelocations() throws Exception {
@@ -39,18 +40,13 @@ public class GeneralRelocationTest {
         File databind = loader.getArtifactFile("com.fasterxml.jackson.core", "jackson-databind", "2.10.5");
         File velocity = loader.getArtifactFile("org.apache.velocity", "velocity", "1.7");
 
-        Rename h2Rename = Rename.forClassName("org.h2", "org.jdbi.relocated.h2", true);
-        Rename guavaRename = Rename.forClassName("com.google", "org.jdbi.relocated.com.google", true);
-        Rename jacksonRename = Rename.forClassName("com.fasterxml", "org.jdbi.relocated.com.fasterxml", true);
-        Rename velocityRename = Rename.forClassName("org.apache", "org.jdbi.relocated.org.apache", true);
-
         ClassPath classPath = new ClassPath(new File("/"));
-        classPath.addFile(jdbi, ImmutableSet.of(), ClassPathTag.ROOT_JAR);
-        classPath.addFile(h2, ImmutableSet.of(h2Rename));
-        classPath.addFile(jackson, ImmutableSet.of(jacksonRename));
-        classPath.addFile(databind, ImmutableSet.of(jacksonRename));
-        classPath.addFile(guava, ImmutableSet.of(guavaRename));
-        classPath.addFile(velocity, ImmutableSet.of(velocityRename));
+        classPath.addFile(jdbi, ClassPathTag.ROOT_JAR);
+        classPath.addFile(velocity, JDBI_PREFIX, true);
+        classPath.addFile(h2, JDBI_PREFIX, true);
+        classPath.addFile(jackson, JDBI_PREFIX, true);
+        classPath.addFile(databind, JDBI_PREFIX, true);
+        classPath.addFile(guava, JDBI_PREFIX, true);
 
         CapturingConsumer consumer = new CapturingConsumer();
         JarTransformer jarTransformer = new JarTransformer(consumer);
@@ -77,7 +73,7 @@ public class GeneralRelocationTest {
         assertTrue(resources.containsKey("org/jdbi/relocated/org/apache/velocity/texen/defaults/texen.properties"));
 
         // multi-release jar relocation
-        assertTrue(resources.containsKey("META-INF/versions/10/org/jdbi/relocated/h2/util/$Utils10.class"));
-        assertTrue(resources.containsKey("org/jdbi/relocated/h2/util/$Utils10.class"));
+        assertTrue(resources.containsKey("META-INF/versions/10/org/jdbi/relocated/org/h2/util/$Utils10.class"));
+        assertTrue(resources.containsKey("org/jdbi/relocated/org/h2/util/$Utils10.class"));
     }
 }

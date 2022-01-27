@@ -241,15 +241,14 @@ public final class InlineMojo extends AbstractMojo {
             // Build the class path
             ClassPath classPath = new ClassPath(project.getBasedir());
             // maintain the manifest file for the main artifact
-            classPath.addFile(project.getArtifact().getFile(), ImmutableSet.of(), ClassPathTag.ROOT_JAR);
+            classPath.addFile(project.getArtifact().getFile(), ClassPathTag.ROOT_JAR);
 
             for (InlineDependency inlineDependency : inlineDependencies) {
                 for (Artifact dependencyArtifact : project.getArtifacts()) {
                     if (inlineDependency.matchArtifact(dependencyArtifact)) {
                         classPath.addFile(dependencyArtifact.getFile(),
-                                inlineDependency.getRelocations().stream()
-                                        .map(Relocation.toRename())
-                                        .collect(ImmutableSet.toImmutableSet()));
+                                prefix,
+                                inlineDependency.isHideClasses());
                         break; // for(Artifact ...
                     }
                 }

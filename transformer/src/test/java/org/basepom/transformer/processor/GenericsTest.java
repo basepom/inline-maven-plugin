@@ -15,6 +15,9 @@ package org.basepom.transformer.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.File;
+
+import org.basepom.transformer.ClassPathElement;
 import org.basepom.transformer.ClassPathResource;
 import org.basepom.transformer.ClassPathTag;
 import org.basepom.transformer.Rename;
@@ -26,13 +29,12 @@ public class GenericsTest {
 
     @Test
     public void testTransform() {
-        Rename rule = Rename.forClassName("java.lang", "org.basepom", false);
-
         RemapperProcessor processor = new RemapperProcessor();
-        processor.addRule("", rule);
-        processor.addResource(ClassPathResource.forTesting("java/lang/String.class", ClassPathTag.CLASS, ClassPathTag.FILE));
+        final ClassPathElement classPathElement = ClassPathElement.forFile(new File("testing.jar"), "org.basepom", false);
+        processor.addRule(classPathElement, "java.lang");
+        processor.addResource(ClassPathResource.forTesting("java/lang/String.class", classPathElement, ClassPathTag.CLASS, ClassPathTag.FILE));
 
         Remapper remapper = new InlineRemapper(processor);
-        assertEquals("org/basepom/String", remapper.map("java/lang/String"));
+        assertEquals("org/basepom/java/lang/String", remapper.map("java/lang/String"));
     }
 }

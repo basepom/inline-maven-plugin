@@ -14,20 +14,28 @@
 package org.basepom.transformer.processor;
 
 import static java.lang.String.format;
+import static org.basepom.transformer.ClassNameUtils.elementsToPath;
 import static org.basepom.transformer.ClassNameUtils.ifClass;
+import static org.basepom.transformer.ClassNameUtils.packageForElement;
 import static org.basepom.transformer.ClassNameUtils.pathToElements;
+import static org.basepom.transformer.ClassNameUtils.pathToJavaName;
 import static org.basepom.transformer.ClassNameUtils.stripClassExtension;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.stream.Collectors;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.SetMultimap;
 import org.basepom.transformer.ClassPathElement;
 import org.basepom.transformer.ClassPathResource;
@@ -45,31 +53,38 @@ public final class RemapperProcessor implements JarProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemapperProcessor.class);
 
-    private final SetMultimap<String, Rename> renamers = HashMultimap.create();
+    private final SetMultimap<ClassPathElement, Rename> renamers = HashMultimap.create();
 
     private final SetMultiTrie<String, ClassPathResource> elementMatches = new SetMultiTrie<>();
     private final SetMultiTrie<String, ClassPathResource> packageNameMatches = new SetMultiTrie<>();
 
     @CheckForNull
     @Override
-    public ClassPathElement preScan(@Nonnull ClassPathElement classPathElement, Chain<ClassPathElement> chain) throws IOException {
-
-        // find all the relevant classRenamers and add them to the package remapper
-        classPathElement.getRenamers().forEach(renamer -> addRule(classPathElement.getArchiveName(), renamer));
-        return chain.next(classPathElement);
-    }
-
-    @CheckForNull
-    @Override
     public ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+
+        ifClass(classPathResource.getName(), p -> {
+            List<String> elements = pathToElements(stripClassExtension(classPathResource.getName()));
+            classPathResource.getClassPathElement().ifPresent(c -> {
+                String packageName = pathToJavaName(elementsToPath(packageForElement(elements)));
+                addRule(c, packageName);
+            });
+            return p;
+        });
+
         addResource(classPathResource);
         return chain.next(classPathResource);
     }
 
     @VisibleForTesting
-    void addRule(@Nonnull String archiveName, @Nonnull Rename pattern) {
-        this.renamers.put(archiveName, pattern);
-        LOG.debug(format("Allowing %s in %s", pattern, archiveName));
+    void addRule(@Nonnull ClassPathElement classPathElement, String packageName) {
+        classPathElement.getPrefix().ifPresent(p -> {
+            Rename rename = Rename.forClassName(packageName,
+                    Joiner.on('.').join(p, packageName),
+                    classPathElement.isHideClasses());
+
+            renamers.put(classPathElement, rename);
+            LOG.debug(format("Allowing %s in %s", packageName, classPathElement.getArchiveName()));
+        });
     }
 
     @VisibleForTesting
@@ -78,42 +93,48 @@ public final class RemapperProcessor implements JarProcessor {
         elementMatches.add(elements, classPathResource); // add the element itself
 
         ifClass(classPathResource.getName(), p -> {
-            packageNameMatches.add(elements.subList(0, elements.size() - 1), classPathResource); // add the package as terminal as well
+            packageNameMatches.add(packageForElement(elements), classPathResource); // add the package as terminal as well
             return p;
         });
 
-        LOG.debug(format("Accepting %s from %s", classPathResource.getName(), classPathResource.getArchiveName()));
+        LOG.debug(format("Accepting %s from %s", classPathResource.getName(), classPathResource.getClassPathElement()));
     }
 
 
     // find all renamers for a specific class path resource
     public ImmutableSet<Rename> renamersForClassPathResource(ClassPathResource resource) {
-        Set<String> candidates = computeCandidates(elementMatches, pathToElements(resource.getName()), null);
+        Set<ClassPathElement> candidates = computeCandidates(elementMatches, pathToElements(resource.getName()), null);
 
         return candidates.stream()
-                .filter(c -> c.equals(resource.getArchiveName()))
+                .filter(c -> c.equals(resource.getClassPathElement().orElse(null)))
                 .flatMap(c -> renamers.get(c).stream())
                 .collect(ImmutableSet.toImmutableSet());
     }
 
     // locates a set of fully matching renamers for a given resource. Only considers specific classpath tags
-    public ImmutableSet<Rename> renamersForElement(List<String> elements, ClassPathTag type) {
-        Set<String> candidates = computeCandidates(elementMatches, elements, type);
-        return candidates.stream().flatMap(c -> renamers.get(c).stream()).collect(ImmutableSet.toImmutableSet());
+    public ImmutableSortedSet<Rename> renamersForElement(List<String> elements, ClassPathTag type) {
+        Set<ClassPathElement> candidates = computeCandidates(elementMatches, elements, type);
+        ImmutableSortedSet<Rename> renames = candidates.stream()
+                .flatMap(c -> renamers.get(c).stream())
+                .collect(ImmutableSortedSet.toImmutableSortedSet(Comparator.reverseOrder()));
+        return renames;
     }
 
     // locates a set of matching renamers for a given package name. Only considers specific classpath tags
-    public ImmutableSet<Rename> packageNameRenamersForElement(List<String> elements, ClassPathTag type) {
-        Set<String> candidates = computeCandidates(packageNameMatches, elements, type);
-        return candidates.stream().flatMap(c -> renamers.get(c).stream()).collect(ImmutableSet.toImmutableSet());
+    public ImmutableSortedSet<Rename> packageNameRenamersForElement(List<String> elements, ClassPathTag type) {
+        Set<ClassPathElement> candidates = computeCandidates(packageNameMatches, elements, type);
+        ImmutableSortedSet<Rename> renames = candidates.stream()
+                .flatMap(c -> renamers.get(c).stream())
+                .collect(ImmutableSortedSet.toImmutableSortedSet(Comparator.reverseOrder()));
+        return renames;
     }
 
-    private static Set<String> computeCandidates(SetMultiTrie<String, ClassPathResource> trie, List<String> elements, ClassPathTag type) {
+    private static Set<ClassPathElement> computeCandidates(SetMultiTrie<String, ClassPathResource> trie, List<String> elements, ClassPathTag type) {
         return trie.getValues(elements)
                 .stream()
                 .filter(c -> c.getTags().contains(ClassPathTag.FILE))
                 .filter(c -> type == null || c.getTags().contains(type))
-                .map(ClassPathResource::getArchiveName)
+                .flatMap(r -> r.getClassPathElement().stream())
                 .collect(Collectors.toUnmodifiableSet());
     }
 

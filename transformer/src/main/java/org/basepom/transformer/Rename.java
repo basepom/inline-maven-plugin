@@ -14,20 +14,23 @@
 package org.basepom.transformer;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.basepom.transformer.ClassNameUtils.elementsToPath;
 import static org.basepom.transformer.ClassNameUtils.pathToElements;
 import static org.basepom.transformer.ClassNameUtils.toPackage;
 import static org.basepom.transformer.ClassNameUtils.toPath;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.StringJoiner;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
-public final class Rename {
+public final class Rename implements Comparable<Rename> {
 
     private final List<String> sourceElements;
     private final List<String> destinationElements;
@@ -37,19 +40,6 @@ public final class Rename {
         this.sourceElements = pathToElements(source);
         this.destinationElements = pathToElements(destination);
         this.hideClasses = hideClasses;
-    }
-
-    private int matchPrefix(List<String> pathElements, List<String> elements) {
-        if (elements.size() > pathElements.size()) {
-            // source is longer than the whole path...
-            return -1;
-        }
-        for (int i = 0; i < elements.size(); i++) {
-            if (!pathElements.get(i).equals(elements.get(i))) {
-                return -1;
-            }
-        }
-        return elements.size();
     }
 
     public static Rename forClassName(String source, String destination, boolean hideClasses) {
@@ -84,17 +74,38 @@ public final class Rename {
         boolean needPathConversion = className.indexOf('/') < 0;
 
         List<String> pathElements = needPathConversion ? pathToElements(toPath(className)) : pathToElements(className);
+
+        // source path is longer than the path itself. bail out.
+        if (sourceElements.size() >= pathElements.size()) {
+            return null;
+        }
+
         int index = matchPrefix(pathElements, sourceElements);
         // no match or full length match (not a prefix)
         if (index < 0 || index == pathElements.size()) {
             return null;
         }
+
         String name = pathElements.get(pathElements.size() - 1);
         String result = Joiner.on('/').join(Iterables.concat(destinationElements,
                 pathElements.subList(index, pathElements.size() - 1),
                 ImmutableList.of(this.hideClasses && hideClasses ? "$" + name : name)));
         return needPathConversion ? toPackage(result) : result;
     }
+
+    private int matchPrefix(List<String> pathElements, List<String> elements) {
+        if (elements.size() > pathElements.size()) {
+            // source is longer than the whole path...
+            return -1;
+        }
+        for (int i = 0; i < elements.size(); i++) {
+            if (!pathElements.get(i).equals(elements.get(i))) {
+                return -1;
+            }
+        }
+        return elements.size();
+    }
+
 
     @Override
     public String toString() {
@@ -103,5 +114,32 @@ public final class Rename {
                 .add("destinationElements=" + destinationElements)
                 .add("hideClasses=" + hideClasses)
                 .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Rename rename = (Rename) o;
+        return hideClasses == rename.hideClasses
+                && Objects.equals(sourceElements, rename.sourceElements)
+                && Objects.equals(destinationElements, rename.destinationElements);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sourceElements, destinationElements, hideClasses);
+    }
+
+    @Override
+    public int compareTo(Rename other) {
+        return ComparisonChain.start()
+                .compare(this.sourceElements.size(), other.sourceElements.size())
+                .compare(elementsToPath(this.sourceElements), elementsToPath(other.sourceElements))
+                .result();
     }
 }

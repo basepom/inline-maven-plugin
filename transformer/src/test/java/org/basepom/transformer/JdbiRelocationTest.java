@@ -21,12 +21,13 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableSet;
 import de.softwareforge.testing.maven.MavenArtifactLoader;
 import org.basepom.transformer.JarTransformerTest.CapturingConsumer;
 import org.junit.jupiter.api.Test;
 
 public class JdbiRelocationTest {
+
+    public static final String JDBI_PREFIX = "org.jdbi.relocated";
 
     @Test
     public void testJdbiRelocation() throws Exception {
@@ -38,8 +39,8 @@ public class JdbiRelocationTest {
         Rename antlrRename = Rename.forClassName("org.antlr.v4", "org.jdbi.relocated.antlr", false);
 
         ClassPath classPath = new ClassPath(new File("/"));
-        classPath.addFile(jdbi, ImmutableSet.of(), ClassPathTag.ROOT_JAR);
-        classPath.addFile(antlr, ImmutableSet.of(antlrRename));
+        classPath.addFile(jdbi, ClassPathTag.ROOT_JAR);
+        classPath.addFile(antlr, JDBI_PREFIX, true);
 
         CapturingConsumer consumer = new CapturingConsumer();
         JarTransformer jarTransformer = new JarTransformer(consumer);
@@ -57,6 +58,6 @@ public class JdbiRelocationTest {
         assertTrue(manifestText.contains("jdbi"));
 
         // antlr relocation
-        assertTrue(resources.containsKey("org/jdbi/relocated/antlr"));
+        assertTrue(resources.containsKey("org/jdbi/relocated/org/antlr"));
     }
 }

@@ -16,9 +16,11 @@ package org.basepom.transformer.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.File;
+
+import org.basepom.transformer.ClassPathElement;
 import org.basepom.transformer.ClassPathResource;
 import org.basepom.transformer.ClassPathTag;
-import org.basepom.transformer.Rename;
 import org.basepom.transformer.asm.InlineRemapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,15 +33,16 @@ public class RemapperTest {
     @BeforeEach
     public void setUp() {
         RemapperProcessor processor = new RemapperProcessor();
-        Rename rule = Rename.forClassName("org", "foo", false);
-        processor.addRule("", rule);
-        processor.addResource(ClassPathResource.forTesting("org/example/Object.class", ClassPathTag.CLASS, ClassPathTag.FILE));
-        processor.addResource(ClassPathResource.forTesting("org/example/package-info.class", ClassPathTag.CLASS, ClassPathTag.FILE));
+        ClassPathElement classPathElement = ClassPathElement.forFile(new File("test.jar"), "foo", false);
+        processor.addRule(classPathElement, "org");
 
-        processor.addResource(ClassPathResource.forTesting("org.example.Object", ClassPathTag.RESOURCE, ClassPathTag.FILE));
-        processor.addResource(ClassPathResource.forTesting("org/example.Object", ClassPathTag.RESOURCE, ClassPathTag.FILE));
-        processor.addResource(ClassPathResource.forTesting("org.example.package-info", ClassPathTag.RESOURCE, ClassPathTag.FILE));
-        processor.addResource(ClassPathResource.forTesting("org/example.package-info", ClassPathTag.RESOURCE, ClassPathTag.FILE));
+        processor.addResource(ClassPathResource.forTesting("org/example/Object.class", classPathElement, ClassPathTag.CLASS, ClassPathTag.FILE));
+        processor.addResource(ClassPathResource.forTesting("org/example/package-info.class", classPathElement, ClassPathTag.CLASS, ClassPathTag.FILE));
+
+        processor.addResource(ClassPathResource.forTesting("org.example.Object", classPathElement, ClassPathTag.RESOURCE, ClassPathTag.FILE));
+        processor.addResource(ClassPathResource.forTesting("org/example.Object", classPathElement, ClassPathTag.RESOURCE, ClassPathTag.FILE));
+        processor.addResource(ClassPathResource.forTesting("org.example.package-info", classPathElement, ClassPathTag.RESOURCE, ClassPathTag.FILE));
+        processor.addResource(ClassPathResource.forTesting("org/example.package-info", classPathElement, ClassPathTag.RESOURCE, ClassPathTag.FILE));
         remapper = new InlineRemapper(processor);
     }
 
@@ -55,15 +58,15 @@ public class RemapperTest {
         assertUnchangedValue("[Lorg.example.Obj ct;");
         assertUnchangedValue("org.example/Object");
 
-        assertEquals("[Lfoo.example.Object;", remapper.mapValue("[Lorg.example.Object;"));
-        assertEquals("[Lfoo/example/Object;", remapper.mapValue("[Lorg/example/Object;"));
-        assertEquals("foo.example.Object", remapper.mapValue("org.example.Object"));
-        assertEquals("foo/example/Object", remapper.mapValue("org/example/Object"));
-        assertEquals("foo/example.Object", remapper.mapValue("org/example.Object")); // path match
+        assertEquals("[Lfoo.org.example.Object;", remapper.mapValue("[Lorg.example.Object;"));
+        assertEquals("[Lfoo/org/example/Object;", remapper.mapValue("[Lorg/example/Object;"));
+        assertEquals("foo.org.example.Object", remapper.mapValue("org.example.Object"));
+        assertEquals("foo/org/example/Object", remapper.mapValue("org/example/Object"));
+        assertEquals("foo/org/example.Object", remapper.mapValue("org/example.Object")); // path match
 
-        assertEquals("foo.example.package-info", remapper.mapValue("org.example.package-info"));
-        assertEquals("foo/example/package-info", remapper.mapValue("org/example/package-info"));
-        assertEquals("foo/example.package-info", remapper.mapValue("org/example.package-info"));
+        assertEquals("foo.org.example.package-info", remapper.mapValue("org.example.package-info"));
+        assertEquals("foo/org/example/package-info", remapper.mapValue("org/example/package-info"));
+        assertEquals("foo/org/example.package-info", remapper.mapValue("org/example.package-info"));
     }
 
     private void assertUnchangedValue(String value) {
