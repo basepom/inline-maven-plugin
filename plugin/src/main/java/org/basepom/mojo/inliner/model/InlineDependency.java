@@ -23,7 +23,8 @@ public final class InlineDependency {
 
     private String artifactId = null;
     private String groupId = null;
-    private ImmutableSet<Relocation> relocations = ImmutableSet.of();
+    private boolean hideClasses = false;
+    private boolean transitive = false;
 
     public InlineDependency() {
     }
@@ -44,12 +45,22 @@ public final class InlineDependency {
         this.groupId = groupId;
     }
 
-    public ImmutableSet<Relocation> getRelocations() {
-        return relocations;
+    public boolean isHideClasses() {
+        return hideClasses;
     }
 
-    public void setRelocations(Set<Relocation> relocations) {
-        this.relocations = ImmutableSet.copyOf(relocations);
+    public InlineDependency setHideClasses(boolean hideClasses) {
+        this.hideClasses = hideClasses;
+        return this;
+    }
+
+    public boolean isTransitive() {
+        return transitive;
+    }
+
+    public InlineDependency setTransitive(boolean transitive) {
+        this.transitive = transitive;
+        return this;
     }
 
     public boolean matchDependency(Dependency dependency) {

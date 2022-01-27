@@ -13,7 +13,7 @@
 ~   limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -27,7 +27,7 @@
 
     <properties>
         <dep.maven-api.version>3.8.4</dep.maven-api.version>
-        <!-- <dep.maven-resolver.version>1.4.2</dep.maven-resolver.version> -->
+        <dep.maven-resolver.version>1.6.3</dep.maven-resolver.version>
         <dep.plexus.version>2.1.1</dep.plexus.version>
         <dep.maven-shared-utils.version>3.3.4</dep.maven-shared-utils.version>
         <dep.plugin.plugin.version>3.6.2</dep.plugin.plugin.version>
@@ -92,12 +92,12 @@
             <scope>provided</scope>
         </dependency>
 
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.maven.resolver</groupId>-->
-        <!--            <artifactId>maven-resolver-api</artifactId>-->
-        <!--            <version>${dep.maven-resolver.version}</version>-->
-        <!--            <scope>provided</scope>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.apache.maven.resolver</groupId>
+            <artifactId>maven-resolver-api</artifactId>
+            <version>${dep.maven-resolver.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
@@ -114,11 +114,11 @@
 
         <!-- Maven APIs -->
 
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.maven.resolver</groupId>-->
-        <!--            <artifactId>maven-resolver-util</artifactId>-->
-        <!--            <version>${dep.maven-resolver.version}</version>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.apache.maven.resolver</groupId>
+            <artifactId>maven-resolver-util</artifactId>
+            <version>${dep.maven-resolver.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.maven.shared</groupId>

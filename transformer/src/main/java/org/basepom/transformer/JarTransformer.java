@@ -35,6 +35,7 @@ import org.basepom.transformer.processor.ModuleInfoFilterProcessor;
 import org.basepom.transformer.processor.MultiReleaseJarProcessor;
 import org.basepom.transformer.processor.RemapperProcessor;
 import org.basepom.transformer.processor.ResourceRenamerJarProcessor;
+import org.basepom.transformer.processor.SignatureFilterProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +59,9 @@ public class JarTransformer {
 
         // must be early, all following processors see transformed MR names
         builder.add(new MultiReleaseJarProcessor());
+
+        // remove all signature files
+        builder.add(new SignatureFilterProcessor());
 
         // only keep the root jar manifest
         builder.add(new ManifestFilterProcessor());
