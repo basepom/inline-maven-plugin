@@ -18,14 +18,20 @@
 
     <parent>
         <groupId>org.basepom.maven</groupId>
-        <artifactId>inliner-maven-plugin-root</artifactId>
+        <artifactId>inline-maven-plugin-root</artifactId>
         <version>0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>inliner-maven-plugin</artifactId>
+    <artifactId>inline-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
+    <url>https://basepom.github.io/inline-maven-plugin/</url>
 
     <properties>
+        <basepom.site.skip>false</basepom.site.skip>
+        <maven.site.deploy.skip>true</maven.site.deploy.skip>
+        <scm-publish.url>scm:git:https://github.com/basepom/basepom.github.io.git</scm-publish.url>
+        <site-path>inline-maven-plugin</site-path>
+
         <dep.maven-api.version>3.8.4</dep.maven-api.version>
         <dep.maven-resolver.version>1.6.3</dep.maven-resolver.version>
         <dep.plexus.version>2.1.1</dep.plexus.version>
@@ -34,21 +40,6 @@
         <dep.plugin.gmavenplus.plugin>1.13.1</dep.plugin.gmavenplus.plugin>
         <dep.groovy.version>3.0.9</dep.groovy.version>
     </properties>
-
-    <!-- <dependencyManagement> -->
-    <!--     <dependencies> -->
-    <!--         <dependency> -->
-    <!--             <groupId>com.google.errorprone</groupId> -->
-    <!--             <artifactId>error_prone_annotations</artifactId> -->
-    <!--             <version>2.4.0</version> -->
-    <!--         </dependency> -->
-    <!--         <dependency> -->
-    <!--             <groupId>org.sonatype.plexus</groupId> -->
-    <!--             <artifactId>plexus-cipher</artifactId> -->
-    <!--             <version>1.7</version> -->
-    <!--         </dependency> -->
-    <!--     </dependencies> -->
-    <!-- </dependencyManagement> -->
 
     <dependencies>
         <dependency>
@@ -127,7 +118,6 @@
         </dependency>
 
         <!-- other dependencies -->
-
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
@@ -147,7 +137,6 @@
         </dependency>
 
         <!-- Test code -->
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -188,6 +177,27 @@
         </pluginManagement>
 
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-scm-publish-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>publish-docs</id>
+                        <phase>site-deploy</phase>
+                        <goals>
+                            <goal>publish-scm</goal>
+                        </goals>
+                        <configuration>
+                            <serverId>github</serverId>
+                            <pubScmUrl>${scm-publish.url}</pubScmUrl>
+                            <scmBranch>main</scmBranch>
+                            <checkoutDirectory>${java.io.tmpdir}/gh-pages-publish/${project.name}</checkoutDirectory>
+                            <content>${project.build.directory}/site</content>
+                            <subDirectory>${site-path}</subDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
@@ -318,4 +328,79 @@
             </plugin>
         </plugins>
     </build>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.1.1</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>index</report>
+                            <report>summary</report>
+                            <report>team</report>
+                            <report>scm</report>
+                            <report>issue-management</report>
+                            <report>ci-management</report>
+                            <report>dependency-info</report>
+                            <report>dependencies</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>${dep.plugin.surefire.version}</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report-only</report>
+                            <report>failsafe-report-only</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>${dep.plugin.jxr.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>pmd</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>

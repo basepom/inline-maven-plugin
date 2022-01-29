@@ -70,7 +70,7 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 import org.jdom2.JDOMException;
 
 /**
- * InlineDependency one or more dependencies of a library into a new jar.
+ * Inlines one or more dependencies of the project, relocated the classes and writes a new artifact.
  */
 @Mojo(name = "inline", defaultPhase = LifecyclePhase.PACKAGE,
         requiresProject = true, threadSafe = true,
@@ -102,7 +102,7 @@ public final class InlineMojo extends AbstractMojo {
     public MavenProjectHelper projectHelper;
 
     /**
-     * The destination directory for the shaded artifact.
+     * The destination directory for the inlined artifact.
      */
     @Parameter(defaultValue = "${project.build.directory}")
     public File outputDirectory = null;
@@ -136,20 +136,34 @@ public final class InlineMojo extends AbstractMojo {
     @Parameter(defaultValue = "false", property = "inline.quiet")
     public boolean quiet = false;
 
+    /**
+     * Defines the package prefix for all relocated classes. This prefix must be a valid package name. All relocated classes are put under this prefix.
+     */
     @Parameter(required = true, property = "inline.prefix")
     public String prefix = null;
 
+    /**
+     * If true, requires the dependencies to inline to be defined in scope <pre>provided</pre>. This is good practice as it allows the unchanged pom to be used
+     * with the inlined artifact.
+     */
     @Parameter(defaultValue = "true", property = "inline.requireProvided")
     public boolean requireProvided = true;
 
+    /**
+     * If true, require the dependencies to inline to be defined as <pre>optional</pre>. This is good practice as it allows the unchanged pom to be used with the
+     * inlined artifact.
+     */
     @Parameter(defaultValue = "true", property = "inline.requireOptional")
     public boolean requireOptional = true;
 
+    /**
+     * Fail if an inline dependency is defined but the corresponding dependency is not actually found.
+     */
     @Parameter(defaultValue = "true", property = "inline.failOnNoMatch")
     public boolean failOnNoMatch = true;
 
     /**
-     * The path to the output file for the shaded artifact. When this parameter is set, the created archive will neither replace the project's main artifact nor
+     * The path to the output file for the inlined artifact. When this parameter is set, the created archive will neither replace the project's main artifact nor
      * will it be attached. Hence, this parameter causes the parameters {@link #inlinedArtifactAttached}, {@link #inlinedClassifierName} to be ignored when
      * used.
      */
@@ -171,7 +185,7 @@ public final class InlineMojo extends AbstractMojo {
     public boolean rewritePomFile = true;
 
     /**
-     * The name of the classifier used in case the shaded artifact is attached.
+     * The name of the classifier used in case the inlined artifact is attached.
      */
     @Parameter(defaultValue = "inlined")
     public String inlinedClassifierName = "inlined";
@@ -373,12 +387,12 @@ public final class InlineMojo extends AbstractMojo {
 
     private File inlinedArtifactFileWithClassifier() {
         final var artifact = project.getArtifact();
-        String shadedName = String.format("%s-%s-%s.%s",
+        String inlineName = String.format("%s-%s-%s.%s",
                 project.getArtifactId(),
                 artifact.getVersion(),
                 this.inlinedClassifierName,
                 artifact.getArtifactHandler().getExtension());
 
-        return new File(this.outputDirectory, shadedName);
+        return new File(this.outputDirectory, inlineName);
     }
 }

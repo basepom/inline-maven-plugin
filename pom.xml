@@ -13,7 +13,7 @@
 ~   limitations under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -23,7 +23,7 @@
     </parent>
 
     <groupId>org.basepom.maven</groupId>
-    <artifactId>inliner-maven-plugin-root</artifactId>
+    <artifactId>inline-maven-plugin-root</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -32,7 +32,7 @@
     </description>
     <inceptionYear>2021</inceptionYear>
 
-    <url>https://basepom.github.io/inliner-maven-plugin/</url>
+    <url>https://basepom.github.io/inline-maven-plugin/</url>
 
     <licenses>
         <license>
@@ -56,19 +56,23 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/basepom/inliner-maven-plugin.git</connection>
-        <developerConnection>scm:git:git://github.com/basepom/inliner-maven-plugin.git</developerConnection>
+        <connection>scm:git:git://github.com/basepom/inline-maven-plugin.git</connection>
+        <developerConnection>scm:git:git://github.com/basepom/inline-maven-plugin.git</developerConnection>
         <tag>HEAD</tag>
-        <url>https://github.com/basepom/inliner-maven-plugin</url>
+        <url>https://github.com/basepom/inline-maven-plugin</url>
     </scm>
 
     <issueManagement>
         <system>Github</system>
-        <url>https://github.com/basepom/inliner-maven-plugin/issues</url>
+        <url>https://github.com/basepom/inline-maven-plugin/issues</url>
     </issueManagement>
 
     <properties>
         <project.build.targetJdk>11</project.build.targetJdk>
+        <!-- site requires full javadoc generation -->
+        <basepom.javadoc.skip>false</basepom.javadoc.skip>
+        <basepom.release.profiles>basepom.oss-release,plugin-release</basepom.release.profiles>
+        <basepom.site.skip>true</basepom.site.skip>
 
         <dep.slf4j.version>1.7.32</dep.slf4j.version>
         <dep.guava.version>31.0.1-jre</dep.guava.version>
@@ -134,4 +138,63 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <dependencies>
+                    <!-- Fluido is listed here for version update checking only -->
+                    <dependency>
+                        <groupId>org.apache.maven.skins</groupId>
+                        <artifactId>maven-fluido-skin</artifactId>
+                        <version>1.9</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration combine.children="append">
+                    <author>false</author>
+                    <detectJavaApiLink>true</detectJavaApiLink>
+                    <linksource>true</linksource>
+                    <nodeprecated>false</nodeprecated>
+                    <nohelp>true</nohelp>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+    <profiles>
+        <profile>
+            <id>plugin-release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>enforce-java17</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireJavaVersion>
+                                            <version>[17,)</version>
+                                        </requireJavaVersion>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
