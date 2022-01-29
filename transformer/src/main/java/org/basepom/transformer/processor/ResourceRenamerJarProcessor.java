@@ -66,10 +66,10 @@ public class ResourceRenamerJarProcessor implements JarProcessor {
             return value;
         }
 
-        for (Rename pattern : renames) {
-            String result = pattern.renamePath(value);
+        for (Rename rename : renames) {
+            String result = rename.renamePath(value);
             if (result != null) {
-                LOG.info(format("Renamed %s to %s", value, result));
+                LOG.debug(format("Renamed %s to %s", value, result));
                 return result;
             }
         }

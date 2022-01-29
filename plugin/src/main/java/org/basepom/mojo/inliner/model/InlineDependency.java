@@ -13,11 +13,9 @@
  */
 package org.basepom.mojo.inliner.model;
 
-import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Joiner;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.Dependency;
+import org.eclipse.aether.graph.Dependency;
 
 public final class InlineDependency {
 
@@ -64,10 +62,18 @@ public final class InlineDependency {
     }
 
     public boolean matchDependency(Dependency dependency) {
-        return getArtifactId().equals(dependency.getArtifactId()) && getGroupId().equals(dependency.getGroupId());
+        return getArtifactId().equals(dependency.getArtifact().getArtifactId()) && getGroupId().equals(dependency.getArtifact().getGroupId());
     }
 
     public boolean matchArtifact(Artifact artifact) {
         return getArtifactId().equals(artifact.getArtifactId()) && getGroupId().equals(artifact.getGroupId());
+    }
+
+    @Override
+    public String toString() {
+        String flags = Joiner.on(", ").skipNulls().join(
+                hideClasses ? "hide classes" : null,
+                transitive ? "inline transitive" : null);
+        return String.format("%s:%s [%s]", groupId, artifactId, flags);
     }
 }

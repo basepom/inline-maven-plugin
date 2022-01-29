@@ -71,6 +71,8 @@ public final class ScopeLimitingFilter
         switch (scope) {
             case JavaScopes.COMPILE:
                 return EnumSet.of(compile, system, provided);
+            case JavaScopes.PROVIDED:
+                return EnumSet.of(provided);
             case JavaScopes.RUNTIME:
                 return EnumSet.of(compile, runtime);
             case COMPILE_PLUS_RUNTIME:

@@ -18,6 +18,7 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -39,7 +40,6 @@ import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
-import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.eclipse.aether.transfer.NoRepositoryLayoutException;
@@ -48,9 +48,9 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 /**
  * Builds a map of dependencies required by a specific project or another dependency.
  */
-public final class DependencyMapBuilder {
+public final class DependencyBuilder {
 
-    private static final PluginLog LOG = new PluginLog(DependencyMapBuilder.class);
+    private static final PluginLog LOG = new PluginLog(DependencyBuilder.class);
 
     private final MavenProject rootProject;
     private final MavenSession mavenSession;
@@ -58,7 +58,7 @@ public final class DependencyMapBuilder {
     private final ProjectDependenciesResolver projectDependenciesResolver;
     private final List<MavenProject> reactorProjects;
 
-    public DependencyMapBuilder(MavenProject rootProject, MavenSession mavenSession, ProjectBuilder projectBuilder,
+    public DependencyBuilder(MavenProject rootProject, MavenSession mavenSession, ProjectBuilder projectBuilder,
             ProjectDependenciesResolver projectDependenciesResolver, List<MavenProject> reactorProjects) {
         this.rootProject = rootProject;
         this.mavenSession = mavenSession;
@@ -76,7 +76,7 @@ public final class DependencyMapBuilder {
      * @throws DependencyResolutionException Dependency resolution failed.
      * @throws ProjectBuildingException      Maven project could not be built.
      */
-    public List<Dependency> mapDependency(final Dependency dependency,
+    public ImmutableList<Dependency> mapDependency(final Dependency dependency,
             final DependencyFilter projectScopeFilter)
             throws DependencyResolutionException, ProjectBuildingException {
         checkNotNull(dependency, "dependency is null");
@@ -97,7 +97,7 @@ public final class DependencyMapBuilder {
      * @return A map of dependencies for this given dependency node.
      * @throws DependencyResolutionException Dependency resolution failed.
      */
-    public List<Dependency> mapProject(final MavenProject project,
+    public ImmutableList<Dependency> mapProject(final MavenProject project,
             final DependencyFilter scopeFilter)
             throws DependencyResolutionException {
         checkNotNull(project, "project is null");
@@ -159,13 +159,11 @@ public final class DependencyMapBuilder {
             }
         }
 
-        return result.getResolvedDependencies();
+        return ImmutableList.copyOf(result.getResolvedDependencies());
     }
 
     static org.apache.maven.artifact.Artifact convertFromAetherDependency(final Dependency dependency) {
-        Artifact aetherArtifact = convertToPomArtifact(dependency.getArtifact());
-
-        final org.apache.maven.artifact.Artifact mavenArtifact = RepositoryUtils.toArtifact(aetherArtifact);
+        final var mavenArtifact = RepositoryUtils.toArtifact(convertToPomArtifact(dependency.getArtifact()));
         mavenArtifact.setScope(dependency.getScope());
         mavenArtifact.setOptional(dependency.isOptional());
 

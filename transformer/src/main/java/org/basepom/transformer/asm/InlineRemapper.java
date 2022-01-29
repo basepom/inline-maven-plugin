@@ -122,7 +122,7 @@ public final class InlineRemapper extends Remapper {
 
     private String storeValue(String key, String value) {
         typeCache.put(key, value);
-        LOG.info(format("Rewrote value '%s' to '%s'", key, value));
+        LOG.debug(format("Rewrote value '%s' to '%s'", key, value));
         return value;
     }
 

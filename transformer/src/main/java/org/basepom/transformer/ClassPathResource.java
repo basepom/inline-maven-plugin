@@ -118,7 +118,9 @@ public final class ClassPathResource {
 
     @Nonnull
     public String getName() {
-        return name;
+        return getTags().contains(ClassPathTag.DIRECTORY)
+                ? name + "/"
+                : name;
     }
 
     @Nonnull

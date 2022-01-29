@@ -102,7 +102,7 @@ public class JarTransformer {
         try {
             // write out directories for the new jar
             for (ClassPathElement inputArchive : inputPath) {
-                LOG.info(format("Transforming archive %s", inputArchive));
+                LOG.debug(format("Transforming archive %s", inputArchive));
                 for (ClassPathResource inputResource : inputArchive) {
                     holder.process(inputResource);
                 }
