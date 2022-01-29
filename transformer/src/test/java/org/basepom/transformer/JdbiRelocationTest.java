@@ -13,16 +13,19 @@
  */
 package org.basepom.transformer;
 
+import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import de.softwareforge.testing.maven.MavenArtifactLoader;
-import org.basepom.transformer.JarTransformerTest.CapturingConsumer;
 import org.junit.jupiter.api.Test;
 
 public class JdbiRelocationTest {
@@ -58,6 +61,21 @@ public class JdbiRelocationTest {
         assertTrue(manifestText.contains("jdbi"));
 
         // antlr relocation
-        assertTrue(resources.containsKey("org/jdbi/relocated/org/antlr"));
+        assertTrue(resources.containsKey("org/jdbi/relocated/org/antlr/"));
+    }
+
+    public static class CapturingConsumer implements Consumer<ClassPathResource> {
+
+        private final Map<String, ClassPathResource> names = new LinkedHashMap<>();
+
+        @Override
+        public void accept(ClassPathResource resource) {
+            assertNotNull(resource.getContent());
+            assertNull(names.put(resource.getName(), resource), format("Already seen '%s' ('%s')", resource.getName(), resource));
+        }
+
+        public Map<String, ClassPathResource> getContent() {
+            return names;
+        }
     }
 }

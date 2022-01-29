@@ -19,7 +19,7 @@
     <parent>
         <groupId>org.basepom</groupId>
         <artifactId>basepom-oss</artifactId>
-        <version>43-SNAPSHOT</version>
+        <version>43</version>
     </parent>
 
     <groupId>org.basepom.maven</groupId>
@@ -134,18 +134,4 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                        <systemPropertyVariables combine.children="append">
-                            <jarTestPath>${project.basedir}/src/test/resources/testjar</jarTestPath>
-                        </systemPropertyVariables>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>

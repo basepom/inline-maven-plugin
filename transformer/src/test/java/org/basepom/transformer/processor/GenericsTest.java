@@ -20,7 +20,6 @@ import java.io.File;
 import org.basepom.transformer.ClassPathElement;
 import org.basepom.transformer.ClassPathResource;
 import org.basepom.transformer.ClassPathTag;
-import org.basepom.transformer.Rename;
 import org.basepom.transformer.asm.InlineRemapper;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.commons.Remapper;

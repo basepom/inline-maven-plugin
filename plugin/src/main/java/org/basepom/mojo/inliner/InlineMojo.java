@@ -102,6 +102,12 @@ public final class InlineMojo extends AbstractMojo {
     public MavenProjectHelper projectHelper;
 
     /**
+     * The destination directory for the shaded artifact.
+     */
+    @Parameter(defaultValue = "${project.build.directory}")
+    public File outputDirectory = null;
+
+    /**
      * The POM file to use.
      */
     @Parameter(property = "inline.pomFile", defaultValue = "${project.file}")
@@ -133,11 +139,11 @@ public final class InlineMojo extends AbstractMojo {
     @Parameter(required = true, property = "inline.prefix")
     public String prefix = null;
 
-    @Parameter(defaultValue = "false", property = "inline.allowProvided")
-    public boolean allowProvided = false;
+    @Parameter(defaultValue = "true", property = "inline.requireProvided")
+    public boolean requireProvided = true;
 
-    @Parameter(defaultValue = "false", property = "inline.allowOptional")
-    public boolean allowOptional = false;
+    @Parameter(defaultValue = "true", property = "inline.requireOptional")
+    public boolean requireOptional = true;
 
     @Parameter(defaultValue = "true", property = "inline.failOnNoMatch")
     public boolean failOnNoMatch = true;
@@ -149,12 +155,6 @@ public final class InlineMojo extends AbstractMojo {
      */
     @Parameter
     public File outputFile = null;
-
-    /**
-     * The destination directory for the shaded artifact.
-     */
-    @Parameter(defaultValue = "${project.build.directory}")
-    public File outputDirectory = null;
 
     /**
      * If true, attach the inlined artifact, if false replace the original artifact.
@@ -229,7 +229,7 @@ public final class InlineMojo extends AbstractMojo {
 
         ImmutableSetMultimap.Builder<InlineDependency, Dependency> builder = ImmutableSetMultimap.builder();
 
-        boolean error = true;
+        boolean error = false;
 
         BiConsumer<InlineDependency, Dependency> dependencyConsumer = (inlineDependency, dependency) -> {
             LOG.debug("%s matches %s for inlining.", inlineDependency, dependency);
@@ -258,7 +258,7 @@ public final class InlineMojo extends AbstractMojo {
             }
             if (!foundMatch) {
                 LOG.error("No matches for '%s' found!", inlineDependency);
-                error = !this.failOnNoMatch;
+                error = this.failOnNoMatch;
             }
         }
 
@@ -282,13 +282,13 @@ public final class InlineMojo extends AbstractMojo {
         Predicate<Dependency> predicate = dependency -> !JavaScopes.SYSTEM.equals(dependency.getScope());
 
         // filter all provided unless allowed by the flag
-        if (!this.allowProvided) {
-            predicate = predicate.and(dependency -> !JavaScopes.PROVIDED.equals(dependency.getScope()));
+        if (this.requireProvided) {
+            predicate = predicate.and(dependency -> JavaScopes.PROVIDED.equals(dependency.getScope()));
         }
 
         // filter all optional unless allowed by the flag
-        if (!this.allowOptional) {
-            predicate = predicate.and(dependency -> !dependency.isOptional());
+        if (this.requireOptional) {
+            predicate = predicate.and(Dependency::isOptional);
         }
 
         return predicate;
@@ -306,12 +306,12 @@ public final class InlineMojo extends AbstractMojo {
             } else {
                 LOG.info("Replacing original artifact with inlined artifact.");
                 File originalArtifact = project.getArtifact().getFile();
+
                 if (originalArtifact != null) {
                     File backupFile = new File(originalArtifact.getParentFile(), "original-" + originalArtifact.getName());
                     Files.move(originalArtifact.toPath(), backupFile.toPath(), ATOMIC_MOVE, REPLACE_EXISTING);
+                    Files.move(outputJar.toPath(), originalArtifact.toPath(), ATOMIC_MOVE, REPLACE_EXISTING);
                 }
-
-                Files.move(outputJar.toPath(), originalArtifact.toPath(), ATOMIC_MOVE, REPLACE_EXISTING);
             }
         }
     }

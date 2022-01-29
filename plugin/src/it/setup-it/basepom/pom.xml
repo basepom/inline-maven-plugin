@@ -60,6 +60,12 @@
                     <artifactId>@project.artifactId@</artifactId>
                     <version>@project.version@</version>
                     <configuration>
+                        <prefix>relocated</prefix>
+                        <failOnNoMatch>true</failOnNoMatch>
+                        <rewritePomFile>true</rewritePomFile>
+                        <inlineArtifactAttached>true</inlineArtifactAttached>
+                        <requireProvided>true</requireProvided>
+                        <requireOptional>true</requireOptional>
                     </configuration>
                 </plugin>
             </plugins>

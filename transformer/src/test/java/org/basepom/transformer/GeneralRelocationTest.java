@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import de.softwareforge.testing.maven.MavenArtifactLoader;
-import org.basepom.transformer.JarTransformerTest.CapturingConsumer;
+import org.basepom.transformer.JdbiRelocationTest.CapturingConsumer;
 import org.junit.jupiter.api.Test;
 
 public class GeneralRelocationTest {
@@ -64,10 +64,10 @@ public class GeneralRelocationTest {
         assertTrue(manifestText.contains("jdbi"));
 
         // guava relocation
-        assertTrue(resources.containsKey("org/jdbi/relocated/com/google"));
+        assertTrue(resources.containsKey("org/jdbi/relocated/com/google/"));
 
         // jackson relocation
-        assertTrue(resources.containsKey("org/jdbi/relocated/com/fasterxml"));
+        assertTrue(resources.containsKey("org/jdbi/relocated/com/fasterxml/"));
 
         // velocity file relocation
         assertTrue(resources.containsKey("org/jdbi/relocated/org/apache/velocity/texen/defaults/texen.properties"));
