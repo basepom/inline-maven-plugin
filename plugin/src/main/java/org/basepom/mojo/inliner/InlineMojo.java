@@ -21,8 +21,13 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
@@ -31,12 +36,15 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import javax.xml.stream.XMLStreamException;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.io.CharStreams;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -51,7 +59,6 @@ import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectDependenciesResolver;
-import org.basepom.mojo.inliner.model.InlineDependency;
 import org.basepom.transformer.ClassPath;
 import org.basepom.transformer.ClassPathResource;
 import org.basepom.transformer.ClassPathTag;
@@ -60,6 +67,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.util.artifact.JavaScopes;
+import org.jdom2.JDOMException;
 
 /**
  * InlineDependency one or more dependencies of a library into a new jar.
@@ -182,86 +190,83 @@ public final class InlineMojo extends AbstractMojo {
             return;
         }
 
-        DependencyBuilder dependencyBuilder = new DependencyBuilder(project, mavenSession, mavenProjectBuilder, projectDependenciesResolver, reactorProjects);
-
         try {
-            // build the full set of dependencies with all scopes and everything.
-            ImmutableList<Dependency> projectDependencies = dependencyBuilder.mapProject(project,
-                    ScopeLimitingFilter.computeDependencyScope(ScopeLimitingFilter.COMPILE_PLUS_RUNTIME));
-
-            Map<String, Dependency> dependencyScopes = projectDependencies.stream()
-                    .filter(dependency -> dependency.getArtifact() != null)
-                    .collect(ImmutableMap.toImmutableMap(this::getId, Functions.identity()));
-
-            // reduce project dependencies by the configured filter set.
-            projectDependencies = projectDependencies.stream()
-                    .filter(createFilterSet())
-                    .collect(toImmutableList());
-
-            ImmutableSetMultimap.Builder<InlineDependency, Dependency> builder = ImmutableSetMultimap.builder();
-
-            boolean error = false;
-
-            BiConsumer<InlineDependency, Dependency> dependencyConsumer = (inlineDependency, dependency) -> {
-                LOG.debug("%s matches %s for inlining.", inlineDependency, dependency);
-                LOG.report(quiet, "Inlining %s:%s.", dependency.getArtifact().getGroupId(), dependency.getArtifact().getArtifactId());
-                builder.put(inlineDependency, dependency);
-            };
-
-            for (InlineDependency inlineDependency : inlineDependencies) {
-                boolean foundMatch = false;
-                for (Dependency projectDependency : projectDependencies) {
-                    if (inlineDependency.matchDependency(projectDependency)) {
-                        foundMatch = true;
-                        dependencyConsumer.accept(inlineDependency, projectDependency);
-
-                        if (inlineDependency.isTransitive()) {
-                            dependencyBuilder.mapDependency(projectDependency, ScopeLimitingFilter.computeTransitiveScope(projectDependency.getScope()))
-                                    .stream()
-                                    // replace deps in the transitive set with deps in the root set if present (will
-                                    // override the scope here with the root scope)
-                                    .map(dependency -> dependencyScopes.getOrDefault(getId(dependency), dependency))
-                                    // remove everything that is excluded by the filter set
-                                    .filter(createFilterSet())
-                                    .forEach(dependency -> dependencyConsumer.accept(inlineDependency, dependency));
-                        }
-                    }
-                }
-                if (!foundMatch) {
-                    LOG.error("No matches for '%s' found!", inlineDependency);
-                    error = failOnNoMatch;
-                }
-            }
-
-            if (error) {
+            final ImmutableSetMultimap<InlineDependency, Dependency> dependencies = computeDependencyMap();
+            if (dependencies == null) {
                 throw new MojoExecutionException("Could not inline dependencies!");
             }
 
-            File outputJar = (this.outputFile != null) ? outputFile : inlinedArtifactFileWithClassifier();
+            rewriteJarFile(dependencies);
 
-            doJarTransformation(outputJar, builder.build());
-
-            if (this.outputFile == null) {
-                if (this.inlinedArtifactAttached) {
-                    LOG.info("Attaching inlined artifact.");
-                    projectHelper.attachArtifact(project, project.getArtifact().getType(), inlinedClassifierName, outputJar);
-                } else {
-                    LOG.info("Replacing original artifact with inlined artifact.");
-                    File originalArtifact = project.getArtifact().getFile();
-                    if (originalArtifact != null) {
-                        File backupFile = new File(originalArtifact.getParentFile(), "original-" + originalArtifact.getName());
-                        Files.move(originalArtifact.toPath(), backupFile.toPath(), ATOMIC_MOVE, REPLACE_EXISTING);
-                    }
-
-                    Files.move(outputJar.toPath(), originalArtifact.toPath(), ATOMIC_MOVE, REPLACE_EXISTING);
-                }
+            if (this.rewritePomFile) {
+                rewritePomFile(dependencies);
             }
+
         } catch (UncheckedIOException e) {
             throw new MojoExecutionException(e.getCause());
-        } catch (IOException | DependencyResolutionException | ProjectBuildingException e) {
+        } catch (IOException | DependencyResolutionException | ProjectBuildingException | XMLStreamException | JDOMException e) {
             throw new MojoExecutionException(e);
         }
+    }
 
+    private ImmutableSetMultimap<InlineDependency, Dependency> computeDependencyMap()
+            throws DependencyResolutionException, ProjectBuildingException {
+
+        DependencyBuilder dependencyBuilder = new DependencyBuilder(project, mavenSession, mavenProjectBuilder, projectDependenciesResolver, reactorProjects);
+
+        // build the full set of dependencies with all scopes and everything.
+        ImmutableList<Dependency> projectDependencies = dependencyBuilder.mapProject(project,
+                ScopeLimitingFilter.computeDependencyScope(ScopeLimitingFilter.COMPILE_PLUS_RUNTIME));
+
+        Map<String, Dependency> dependencyScopes = projectDependencies.stream()
+                .filter(dependency -> dependency.getArtifact() != null)
+                .collect(ImmutableMap.toImmutableMap(this::getId, Functions.identity()));
+
+        // reduce project dependencies by the configured filter set.
+        projectDependencies = projectDependencies.stream()
+                .filter(createFilterSet())
+                .collect(toImmutableList());
+
+        ImmutableSetMultimap.Builder<InlineDependency, Dependency> builder = ImmutableSetMultimap.builder();
+
+        boolean error = true;
+
+        BiConsumer<InlineDependency, Dependency> dependencyConsumer = (inlineDependency, dependency) -> {
+            LOG.debug("%s matches %s for inlining.", inlineDependency, dependency);
+            LOG.report(quiet, "Inlining %s:%s.", dependency.getArtifact().getGroupId(), dependency.getArtifact().getArtifactId());
+            builder.put(inlineDependency, dependency);
+        };
+
+        for (InlineDependency inlineDependency : inlineDependencies) {
+            boolean foundMatch = false;
+            for (Dependency projectDependency : projectDependencies) {
+                if (inlineDependency.matchDependency(projectDependency)) {
+                    foundMatch = true;
+                    dependencyConsumer.accept(inlineDependency, projectDependency);
+
+                    if (inlineDependency.isTransitive()) {
+                        dependencyBuilder.mapDependency(projectDependency, ScopeLimitingFilter.computeTransitiveScope(projectDependency.getScope()))
+                                .stream()
+                                // replace deps in the transitive set with deps in the root set if present (will
+                                // override the scope here with the root scope)
+                                .map(dependency -> dependencyScopes.getOrDefault(getId(dependency), dependency))
+                                // remove everything that is excluded by the filter set
+                                .filter(createFilterSet())
+                                .forEach(dependency -> dependencyConsumer.accept(inlineDependency, dependency));
+                    }
+                }
+            }
+            if (!foundMatch) {
+                LOG.error("No matches for '%s' found!", inlineDependency);
+                error = !this.failOnNoMatch;
+            }
+        }
+
+        if (error) {
+            return null;
+        } else {
+            return builder.build();
+        }
     }
 
     private String getId(Dependency dependency) {
@@ -289,41 +294,47 @@ public final class InlineMojo extends AbstractMojo {
         return predicate;
     }
 
-    // try {
-    //     String pomContents;
-    //     try (Reader r = new FileReader(pomFile, StandardCharsets.UTF_8)) {
-    //         pomContents = CharStreams.toString(r);
-    //     }
+    private void rewriteJarFile(ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws IOException {
+        File outputJar = (this.outputFile != null) ? outputFile : inlinedArtifactFileWithClassifier();
 
-    //     PomUtil pomUtil = new PomUtil(pomContents);
+        doJarTransformation(outputJar, dependencies);
 
-    //     File outputFile = new File(pomFile.getName() + ".transformed");
+        if (this.outputFile == null) {
+            if (this.inlinedArtifactAttached) {
+                LOG.info("Attaching inlined artifact.");
+                projectHelper.attachArtifact(project, project.getArtifact().getType(), inlinedClassifierName, outputJar);
+            } else {
+                LOG.info("Replacing original artifact with inlined artifact.");
+                File originalArtifact = project.getArtifact().getFile();
+                if (originalArtifact != null) {
+                    File backupFile = new File(originalArtifact.getParentFile(), "original-" + originalArtifact.getName());
+                    Files.move(originalArtifact.toPath(), backupFile.toPath(), ATOMIC_MOVE, REPLACE_EXISTING);
+                }
 
-    //     try (FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
-    //             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);) {
-
-    //         pomUtil.writePom(bufferedOutputStream);
-    //         bufferedOutputStream.flush();
-    //     }
-
-    // } catch (Exception e) {
-    //     throw new MojoExecutionException(e);
-    // }
-
-    private Consumer<ClassPathResource> getJarWriter(JarOutputStream jarOutputStream) {
-        return classPathResource -> {
-            try {
-                String name = classPathResource.getName();
-                LOG.debug(format("Writing '%s' to jar", name));
-                JarEntry outputEntry = new JarEntry(name);
-                outputEntry.setTime(classPathResource.getLastModifiedTime());
-                outputEntry.setCompressedSize(-1);
-                jarOutputStream.putNextEntry(outputEntry);
-                jarOutputStream.write(classPathResource.getContent());
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
+                Files.move(outputJar.toPath(), originalArtifact.toPath(), ATOMIC_MOVE, REPLACE_EXISTING);
             }
-        };
+        }
+    }
+
+    private void rewritePomFile(ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws IOException, XMLStreamException, JDOMException {
+        File pomFile = project.getFile();
+        String pomContents;
+
+        try (InputStreamReader reader = new FileReader(project.getFile(), StandardCharsets.UTF_8)) {
+            pomContents = CharStreams.toString(reader);
+        }
+
+        PomUtil pomUtil = new PomUtil(pomContents);
+        for (Dependency dependency : ImmutableSet.copyOf(dependencies.values())) {
+            pomUtil.removeDependency(dependency);
+        }
+
+        File newPomFile = new File(this.outputDirectory, "new-" + pomFile.getName());
+        try (OutputStreamWriter writer = new FileWriter(newPomFile, StandardCharsets.UTF_8)) {
+            pomUtil.writePom(writer);
+        }
+
+        project.setPomFile(newPomFile);
     }
 
     private void doJarTransformation(File outputJar, ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws IOException {
@@ -344,6 +355,22 @@ public final class InlineMojo extends AbstractMojo {
         }
     }
 
+    private Consumer<ClassPathResource> getJarWriter(JarOutputStream jarOutputStream) {
+        return classPathResource -> {
+            try {
+                String name = classPathResource.getName();
+                LOG.debug(format("Writing '%s' to jar", name));
+                JarEntry outputEntry = new JarEntry(name);
+                outputEntry.setTime(classPathResource.getLastModifiedTime());
+                outputEntry.setCompressedSize(-1);
+                jarOutputStream.putNextEntry(outputEntry);
+                jarOutputStream.write(classPathResource.getContent());
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        };
+    }
+
     private File inlinedArtifactFileWithClassifier() {
         final var artifact = project.getArtifact();
         String shadedName = String.format("%s-%s-%s.%s",
@@ -354,22 +381,4 @@ public final class InlineMojo extends AbstractMojo {
 
         return new File(this.outputDirectory, shadedName);
     }
-
-//    private void doPomTransformation() throws MojoExecutionException {
-//        DependencyBuilder dependencyBuilder = new DependencyBuilder(project, mavenSession, mavenProjectBuilder, projectDependenciesResolver, reactorProjects);
-//
-//        try {
-//            List<Dependency> dependencies = dependencyBuilder.mapProject(project,
-//                    ScopeLimitingFilter.computeDependencyScope(ScopeLimitingFilter.COMPILE_PLUS_RUNTIME));
-//            LOG.info("Total Deps: %s", dependencies);
-//
-//            for (Dependency d : dependencies) {
-//                List<Dependency> transitiveDeps = dependencyBuilder.mapDependency(d, ScopeLimitingFilter.computeTransitiveScope(d.getScope()));
-//                LOG.info("Transitive deps for %s: %s", d, transitiveDeps);
-//            }
-//
-//        } catch (DependencyResolutionException | ProjectBuildingException e) {
-//            throw new MojoExecutionException(e);
-//        }
-//    }
 }

@@ -14,13 +14,22 @@
 package org.basepom.mojo.inliner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import com.google.common.io.CharStreams;
-import org.basepom.mojo.inliner.model.InlineDependency;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.graph.Dependency;
 import org.junit.jupiter.api.Test;
 
 public class TestPomUtil {
@@ -31,8 +40,9 @@ public class TestPomUtil {
 
         PomUtil pomUtil = new PomUtil(pomContents);
 
-        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(pomContents.length() + 20)) {
-            pomUtil.writePom(byteArrayOutputStream);
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(pomContents.length() + 20);
+                OutputStreamWriter writer = new OutputStreamWriter(byteArrayOutputStream)) {
+            pomUtil.writePom(writer);
             String result = new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
 
             assertEquals(pomContents.replace("\n", ""),
@@ -46,9 +56,74 @@ public class TestPomUtil {
 
         PomUtil pomUtil = new PomUtil(pomContents);
 
-        InlineDependency inlineDependency = new InlineDependency();
-        inlineDependency.setGroupId("com.google.guava");
-        inlineDependency.setArtifactId("guava");
-        pomUtil.removeDependency(inlineDependency);
+        Dependency dependency = new Dependency(new DefaultArtifact("org.jdbi", "jdbi3-core", null, null), null);
+        pomUtil.removeDependency(dependency);
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(pomContents.length() + 20);
+                OutputStreamWriter writer = new OutputStreamWriter(byteArrayOutputStream)) {
+            pomUtil.writePom(writer);
+
+            MavenXpp3Reader reader = new MavenXpp3Reader();
+            Model model = reader.read(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+            assertNotNull(model);
+
+            var dependencies = model.getDependencies();
+            var coreDependency = new org.apache.maven.model.Dependency();
+            coreDependency.setArtifactId("jdbi3-core");
+            coreDependency.setGroupId("org.jdbi");
+            coreDependency.setVersion("3.24.0");
+            var testDependency = new org.apache.maven.model.Dependency();
+            testDependency.setArtifactId("jdbi3-core");
+            testDependency.setGroupId("org.jdbi");
+            testDependency.setVersion("3.24.0");
+            testDependency.setClassifier("tests");
+
+            assertTrue(containsDependency(dependencies, testDependency));
+            assertFalse(containsDependency(dependencies, coreDependency));
+        }
+    }
+
+    @Test
+    public void testRemoveWithClassifier() throws Exception {
+        String pomContents = CharStreams.toString(new InputStreamReader(TestPomUtil.class.getResourceAsStream("/testPom.xml")));
+
+        PomUtil pomUtil = new PomUtil(pomContents);
+
+        Dependency dependency = new Dependency(new DefaultArtifact("org.jdbi", "jdbi3-core", "tests", null, null), null);
+        pomUtil.removeDependency(dependency);
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(pomContents.length() + 20);
+                OutputStreamWriter writer = new OutputStreamWriter(byteArrayOutputStream)) {
+            pomUtil.writePom(writer);
+
+            MavenXpp3Reader reader = new MavenXpp3Reader();
+            Model model = reader.read(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+            assertNotNull(model);
+
+            var dependencies = model.getDependencies();
+            var coreDependency = new org.apache.maven.model.Dependency();
+            coreDependency.setArtifactId("jdbi3-core");
+            coreDependency.setGroupId("org.jdbi");
+            coreDependency.setVersion("3.24.0");
+            var testDependency = new org.apache.maven.model.Dependency();
+            testDependency.setArtifactId("jdbi3-core");
+            testDependency.setGroupId("org.jdbi");
+            testDependency.setVersion("3.24.0");
+            testDependency.setClassifier("tests");
+
+            assertFalse(containsDependency(dependencies, testDependency));
+            assertTrue(containsDependency(dependencies, coreDependency));
+        }
+    }
+
+    boolean containsDependency(Iterable<org.apache.maven.model.Dependency> dependencies, org.apache.maven.model.Dependency dependency) {
+        for (org.apache.maven.model.Dependency d : dependencies) {
+            if (Objects.equals(d.getArtifactId(), dependency.getArtifactId())
+                    && Objects.equals(d.getGroupId(), dependency.getGroupId())
+                    && Objects.equals(d.getVersion(), dependency.getVersion())
+                    && Objects.equals(d.getClassifier(), dependency.getClassifier())
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 }

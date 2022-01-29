@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.basepom.mojo.inliner.model;
+package org.basepom.mojo.inliner;
 
 import com.google.common.base.Joiner;
 import org.apache.maven.artifact.Artifact;

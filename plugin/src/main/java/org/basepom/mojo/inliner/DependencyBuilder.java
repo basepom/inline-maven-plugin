@@ -18,7 +18,6 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -48,7 +47,7 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 /**
  * Builds a map of dependencies required by a specific project or another dependency.
  */
-public final class DependencyBuilder {
+final class DependencyBuilder {
 
     private static final PluginLog LOG = new PluginLog(DependencyBuilder.class);
 
@@ -58,7 +57,7 @@ public final class DependencyBuilder {
     private final ProjectDependenciesResolver projectDependenciesResolver;
     private final List<MavenProject> reactorProjects;
 
-    public DependencyBuilder(MavenProject rootProject, MavenSession mavenSession, ProjectBuilder projectBuilder,
+    DependencyBuilder(MavenProject rootProject, MavenSession mavenSession, ProjectBuilder projectBuilder,
             ProjectDependenciesResolver projectDependenciesResolver, List<MavenProject> reactorProjects) {
         this.rootProject = rootProject;
         this.mavenSession = mavenSession;
@@ -70,13 +69,13 @@ public final class DependencyBuilder {
     /**
      * Create a map of dependencies for a given dependency node (representing an element on the dependency tree).
      *
-     * @param dependency     The dependency node to use.
+     * @param dependency         The dependency node to use.
      * @param projectScopeFilter A scope limiting filter to mask out dependencies out of scope.
      * @return A map of dependencies for this given dependency node.
      * @throws DependencyResolutionException Dependency resolution failed.
      * @throws ProjectBuildingException      Maven project could not be built.
      */
-    public ImmutableList<Dependency> mapDependency(final Dependency dependency,
+    ImmutableList<Dependency> mapDependency(final Dependency dependency,
             final DependencyFilter projectScopeFilter)
             throws DependencyResolutionException, ProjectBuildingException {
         checkNotNull(dependency, "dependency is null");
@@ -97,7 +96,7 @@ public final class DependencyBuilder {
      * @return A map of dependencies for this given dependency node.
      * @throws DependencyResolutionException Dependency resolution failed.
      */
-    public ImmutableList<Dependency> mapProject(final MavenProject project,
+    ImmutableList<Dependency> mapProject(final MavenProject project,
             final DependencyFilter scopeFilter)
             throws DependencyResolutionException {
         checkNotNull(project, "project is null");

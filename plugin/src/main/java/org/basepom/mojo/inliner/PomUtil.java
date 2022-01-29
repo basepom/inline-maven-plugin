@@ -16,14 +16,15 @@ package org.basepom.mojo.inliner;
 import static java.lang.String.format;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.util.List;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.basepom.mojo.inliner.model.InlineDependency;
+import com.google.common.base.Strings;
+import org.eclipse.aether.graph.Dependency;
 import org.jdom2.Content;
 import org.jdom2.Content.CType;
 import org.jdom2.Document;
@@ -38,12 +39,12 @@ import org.jdom2.output.XMLOutputter;
 import org.jdom2.xpath.XPathExpression;
 import org.jdom2.xpath.XPathFactory;
 
-public class PomUtil {
+final class PomUtil {
 
     private final String pomText;
     private final Document pomDocument;
 
-    public PomUtil(String pomText) throws XMLStreamException, JDOMException {
+    PomUtil(String pomText) throws XMLStreamException, JDOMException {
         this.pomText = pomText;
 
         final XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
@@ -52,7 +53,7 @@ public class PomUtil {
         this.pomDocument = builder.build(reader);
     }
 
-    public void writePom(OutputStream stream) throws IOException {
+    void writePom(OutputStreamWriter writer) throws IOException {
         // this is a hack because jdom2 has the annoying habit of removing a newline between
         // a leading comment and the root element.
         if (pomDocument.getContentSize() > 1
@@ -64,14 +65,25 @@ public class PomUtil {
         XMLOutputter xml = new XMLOutputter();
         xml.setFormat(Format.getRawFormat()
                 .setLineSeparator(LineSeparator.SYSTEM));
-        xml.output(pomDocument, stream);
+        xml.output(pomDocument, writer);
     }
 
-    public void removeDependency(InlineDependency inlineDependency) {
+    void removeDependency(Dependency dependency) {
         Namespace pomNs = Namespace.getNamespace("pom", pomDocument.getRootElement().getNamespaceURI());
         XPathFactory xpathFactory = XPathFactory.instance();
-        String xpathExpression = format("//pom:dependencies/pom:dependency[pom:artifactId[text() = '%s'] and pom:groupId[text() = '%s']]",
-                inlineDependency.getArtifactId(), inlineDependency.getGroupId());
+        final var artifact = dependency.getArtifact();
+        String xpathExpression;
+
+        if (Strings.emptyToNull(artifact.getClassifier()) == null) {
+            xpathExpression =
+                    format("//pom:dependencies/pom:dependency[pom:artifactId[text() = '%s'] and pom:groupId[text() = '%s'] and not(pom:classifier) ]",
+                            artifact.getArtifactId(), artifact.getGroupId());
+        } else {
+            xpathExpression =
+                    format("//pom:dependencies/pom:dependency[pom:artifactId[text() = '%s'] and pom:groupId[text() = '%s'] and pom:classifier[text() = '%s']]",
+                            artifact.getArtifactId(), artifact.getGroupId(), artifact.getClassifier());
+        }
+
         XPathExpression<Content> dependencies = xpathFactory.compile(xpathExpression, Filters.content(), null, pomNs);
         List<Content> contents = dependencies.evaluate(pomDocument.getRootElement());
         for (Content content : contents) {
