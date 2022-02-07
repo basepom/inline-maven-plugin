@@ -22,7 +22,9 @@ import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.ImmutableSet;
+import org.basepom.inline.transformer.asm.InlineRemapper;
 import org.basepom.inline.transformer.asm.RemappingClassTransformer;
+import org.basepom.inline.transformer.processor.AnnotationProcessorRewritingProcessor;
 import org.basepom.inline.transformer.processor.ClassTransformerJarProcessor;
 import org.basepom.inline.transformer.processor.DirectoryFilterProcessor;
 import org.basepom.inline.transformer.processor.DirectoryScanProcessor;
@@ -43,6 +45,7 @@ public class JarTransformer {
 
     private final JarProcessor.Holder holder;
     private final RemapperProcessor packageRemapperProcessor = new RemapperProcessor();
+    private final InlineRemapper remapper = new InlineRemapper(packageRemapperProcessor);
 
     public JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink) {
         checkNotNull(outputSink, "outputFile is null");
@@ -58,6 +61,9 @@ public class JarTransformer {
         // must be early, all following processors see transformed MR names
         builder.add(new MultiReleaseJarProcessor());
 
+        // remap the Annotation Processors if necessary
+        builder.add(new AnnotationProcessorRewritingProcessor(remapper));
+
         // remove all signature files
         builder.add(new SignatureFilterProcessor());
 
@@ -71,7 +77,7 @@ public class JarTransformer {
         builder.add(packageRemapperProcessor);
 
         // rename classes and resources.
-        builder.add(new ClassTransformerJarProcessor(new RemappingClassTransformer(packageRemapperProcessor)));
+        builder.add(new ClassTransformerJarProcessor(new RemappingClassTransformer(remapper)));
         builder.add(new ResourceRenamerJarProcessor(packageRemapperProcessor));
 
         // create new directory structure for the jar

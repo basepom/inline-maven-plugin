@@ -13,6 +13,8 @@
  */
 package org.basepom.inline.transformer.asm;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import javax.annotation.Nonnull;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -26,8 +28,8 @@ public class RemappingClassTransformer implements ClassTransformer {
     private final Remapper remapper;
 
     @SuppressFBWarnings("EI_EXPOSE_REP2")
-    public RemappingClassTransformer(@Nonnull RemapperProcessor remapperProcessor) {
-        this.remapper = new InlineRemapper(remapperProcessor);
+    public RemappingClassTransformer(Remapper remapper) {
+        this.remapper = checkNotNull(remapper, "remapper is null");
     }
 
     @Nonnull
