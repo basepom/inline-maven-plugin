@@ -29,6 +29,7 @@ import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +38,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Collectors;
 import javax.xml.stream.XMLStreamException;
 
 import com.google.common.base.Functions;
@@ -45,7 +47,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.ImmutableSetMultimap.Builder;
+import com.google.common.collect.Iterables;
 import com.google.common.io.CharStreams;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -68,6 +70,8 @@ import org.basepom.inline.transformer.JarTransformer;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyFilter;
+import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.util.artifact.JavaScopes;
 import org.jdom2.JDOMException;
 
@@ -125,6 +129,34 @@ public final class InlineMojo extends AbstractMojo {
     public void setInlineDependencies(List<InlineDependency> inlineDependencies) {
         this.inlineDependencies = ImmutableList.copyOf(inlineDependencies);
     }
+
+    /**
+     * List of things to include.
+     */
+    @Parameter
+    private List<ArtifactIdentifier> includes = ImmutableList.of();
+
+    // called by maven
+    public void setIncludes(List<ArtifactIdentifier> includes) {
+        this.includes = ImmutableList.copyOf(includes);
+    }
+
+    /**
+     * List of things to exclude.
+     */
+    @Parameter
+    private List<ArtifactIdentifier> excludes = ImmutableList.of();
+
+    // called by maven
+    public void setExcludes(List<ArtifactIdentifier> excludes) {
+        this.excludes = ImmutableList.copyOf(excludes);
+    }
+
+    /**
+     * Hide inlined classes from IDE autocompletion.
+     */
+    @Parameter(defaultValue = "true", property = "inline.hide-classes")
+    public boolean hideClasses = true;
 
     /**
      * Skip the execution.
@@ -214,14 +246,16 @@ public final class InlineMojo extends AbstractMojo {
             return;
         }
 
+        if (project.getArtifact().getFile() == null) {
+            throw new MojoExecutionException("No project artifact found!");
+        }
+
         try {
 
             ImmutableSetMultimap.Builder<InlineDependency, Dependency> dependencyBuilder = ImmutableSetMultimap.builder();
             ImmutableSet.Builder<Dependency> pomDependenciesToAdd = ImmutableSet.builder();
 
-            if (computeDependencyMap(dependencyBuilder, pomDependenciesToAdd)) {
-                throw new MojoExecutionException("Could not inline dependencies!");
-            }
+            computeDependencyMap(dependencyBuilder, pomDependenciesToAdd);
 
             ImmutableSetMultimap<InlineDependency, Dependency> dependencyMap = dependencyBuilder.build();
 
@@ -235,12 +269,20 @@ public final class InlineMojo extends AbstractMojo {
         }
     }
 
-    private boolean computeDependencyMap(
-            Builder<InlineDependency, Dependency> builder,
+    private void computeDependencyMap(
+            ImmutableSetMultimap.Builder<InlineDependency, Dependency> dependencyMapBuilder,
             ImmutableSet.Builder<Dependency> pomBuilder)
             throws DependencyResolutionException, ProjectBuildingException {
 
         DependencyBuilder dependencyBuilder = new DependencyBuilder(project, mavenSession, mavenProjectBuilder, projectDependenciesResolver, reactorProjects);
+
+        ImmutableSet<ArtifactIdentifier> directArtifacts = project.getDependencyArtifacts().stream()
+                .map(ArtifactIdentifier::new)
+                .collect(ImmutableSet.toImmutableSet());
+
+
+        ImmutableList<Dependency> directDependencies = dependencyBuilder.mapProject(project,
+                (node, parents) -> directArtifacts.contains(new ArtifactIdentifier(node)));
 
         // build the full set of dependencies with all scopes and everything.
         ImmutableList<Dependency> projectDependencies = dependencyBuilder.mapProject(project,
@@ -255,48 +297,70 @@ public final class InlineMojo extends AbstractMojo {
                 .filter(createFilterSet())
                 .collect(toImmutableList());
 
-        boolean error = false;
-
         BiConsumer<InlineDependency, Dependency> dependencyConsumer = (inlineDependency, dependency) -> {
             LOG.debug("%s matches %s for inlining.", inlineDependency, dependency);
-            LOG.report(quiet, "Inlining %s.", getId(dependency));
-            builder.put(inlineDependency, dependency);
+            dependencyMapBuilder.put(inlineDependency, dependency);
         };
 
-        for (InlineDependency inlineDependency : inlineDependencies) {
-            boolean foundMatch = false;
-            for (Dependency projectDependency : projectDependencies) {
-                if (inlineDependency.matchDependency(projectDependency)) {
-                    foundMatch = true;
-                    dependencyConsumer.accept(inlineDependency, projectDependency);
+        ImmutableSet.Builder<Dependency> directExcludes = ImmutableSet.builder();
 
-                    Consumer<Dependency> consumer;
-
-                    if (inlineDependency.isTransitive()) {
-                        // transitive deps are added to the jar
-                        consumer = dependency -> dependencyConsumer.accept(inlineDependency, dependency);
-                    } else {
-                        // non-transitive deps need to be written into the POM.
-                        consumer = pomBuilder::add;
-                    }
-
-                    dependencyBuilder.mapDependency(projectDependency, ScopeLimitingFilter.computeTransitiveScope(projectDependency.getScope()))
-                            .stream()
-                            // replace deps in the transitive set with deps in the root set if present (will
-                            // override the scope here with the root scope)
-                            .map(dependency -> dependencyScopes.getOrDefault(getId(dependency), dependency))
-                            // remove everything that is excluded by the filter set
-                            .filter(createFilterSet())
-                            .forEach(consumer);
+        // first find all the direct dependencies. Add anything that is not hit to the additional exclude list
+        directLoop:
+        for (Dependency dependencyArtifact : directDependencies) {
+            for (InlineDependency inlineDependency : inlineDependencies) {
+                if (inlineDependency.matchDependency(dependencyArtifact)) {
+                    dependencyConsumer.accept(inlineDependency, dependencyArtifact);
+                    LOG.report(quiet, "Inlining direct dependency %s (matched %s)", dependencyArtifact, inlineDependency);
+                    continue directLoop;
                 }
             }
-            if (!foundMatch) {
-                LOG.error("No matches for '%s' found!", inlineDependency);
-                error = this.failOnNoMatch;
-            }
+            directExcludes.add(dependencyArtifact);
         }
 
-        return error;
+        Set<ArtifactIdentifier> excludes = directExcludes.build().stream()
+                .map(ArtifactIdentifier::new)
+                .collect(Collectors.toUnmodifiableSet());
+
+        this.excludes = ImmutableList.copyOf(Iterables.concat(this.excludes, excludes));
+
+        LOG.debug("Excludes after creating includes: %s", this.excludes);
+
+        var directDependencyMap = dependencyMapBuilder.build().asMap();
+
+        for (var dependencyEntry : directDependencyMap.entrySet()) {
+            InlineDependency inlineDependency = dependencyEntry.getKey();
+            for (Dependency projectDependency : dependencyEntry.getValue()) {
+
+                Consumer<Dependency> consumer;
+                if (inlineDependency.isInlineTransitive()) {
+                    // transitive deps are added to the jar
+                    consumer = dependency -> {
+                        // runtime dependencies end up being dependencies of the jar with inlines.
+                        if (JavaScopes.RUNTIME.equals(dependency.getScope())) {
+                            pomBuilder.add(dependency);
+                        } else {
+                            dependencyConsumer.accept(inlineDependency, dependency);
+                            LOG.report(quiet, "Inlining transitive dependency %s (matched %s)", dependency, inlineDependency);
+                        }
+                    };
+                } else {
+                    // non-transitive deps need to be written into the POM.
+                    consumer = pomBuilder::add;
+                }
+
+                dependencyBuilder.mapDependency(projectDependency, ScopeLimitingFilter.computeTransitiveScope(projectDependency.getScope()))
+                        .stream()
+                        // replace deps in the transitive set with deps in the root set if present (will
+                        // override the scope here with the root scope)
+                        .map(dependency -> dependencyScopes.getOrDefault(getId(dependency), dependency))
+                        // remove everything that is excluded by the filter set
+                        .filter(createFilterSet())
+                        // make sure that the inline dependency actually pulls the dep in.
+                        .filter(dependency -> isIncluded(inlineDependency, dependency))
+                        .forEach(consumer);
+            }
+        }
+        LOG.debug("Done!");
     }
 
     private String getId(Dependency dependency) {
@@ -357,7 +421,11 @@ public final class InlineMojo extends AbstractMojo {
         dependenciesToRemove.forEach(pomUtil::removeDependency);
         dependenciesToAdd.forEach(pomUtil::addDependency);
 
-        File newPomFile = this.outputPomFile != null ? outputPomFile : new File(this.outputDirectory, "new-" + this.pomFile.getName());
+        // some rewriters (maven flatten plugin) rewrites the new pom name as a hidden file.
+        String pomName = this.pomFile.getName();
+        pomName = "new-" + (pomName.startsWith(".") ? pomName.substring(1) : pomName);
+
+        File newPomFile = this.outputPomFile != null ? outputPomFile : new File(this.outputDirectory, pomName);
         try (OutputStreamWriter writer = new FileWriter(newPomFile, StandardCharsets.UTF_8)) {
             pomUtil.writePom(writer);
         }
@@ -379,7 +447,7 @@ public final class InlineMojo extends AbstractMojo {
             classPath.addFile(project.getArtifact().getFile(), ClassPathTag.ROOT_JAR);
 
             dependencies.forEach(
-                    (inlineDependency, dependency) -> classPath.addFile(dependency.getArtifact().getFile(), prefix, inlineDependency.isHideClasses()));
+                    (inlineDependency, dependency) -> classPath.addFile(dependency.getArtifact().getFile(), prefix, hideClasses));
 
             transformer.transform(classPath);
         }
@@ -410,5 +478,25 @@ public final class InlineMojo extends AbstractMojo {
                 artifact.getArtifactHandler().getExtension());
 
         return new File(this.outputDirectory, inlineName);
+    }
+
+    public boolean isIncluded(InlineDependency inlineDependency, Dependency dependency) {
+
+        // exclude optional dependencies unless explicitly included.
+        if (dependency.isOptional() && !inlineDependency.isInlineOptionals()) {
+            return false;
+        }
+
+        boolean included = this.includes.stream()
+                .map(artifactIdentifier -> artifactIdentifier.matchDependency(dependency))
+                .findFirst()
+                .orElse(this.includes.isEmpty());
+
+        boolean excluded = this.excludes.stream()
+                .map(artifactIdentifier -> artifactIdentifier.matchDependency(dependency))
+                .findFirst()
+                .orElse(false);
+
+        return included && !excluded;
     }
 }

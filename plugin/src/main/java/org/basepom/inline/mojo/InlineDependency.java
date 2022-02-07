@@ -13,67 +13,63 @@
  */
 package org.basepom.inline.mojo;
 
-import com.google.common.base.Joiner;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
 import org.apache.maven.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
 
 public final class InlineDependency {
 
-    private String artifactId = null;
-    private String groupId = null;
-    private boolean hideClasses = false;
-    private boolean transitive = false;
+    private ArtifactIdentifier artifactIdentifier = null;
+
+    private boolean transitive = true;
+    private boolean optionals = false;
+
 
     public InlineDependency() {
     }
 
-    public String getArtifactId() {
-        return artifactId;
+    public void setArtifact(String artifact) {
+        this.artifactIdentifier = new ArtifactIdentifier(artifact);
     }
 
-    public void setArtifactId(String artifactId) {
-        this.artifactId = artifactId;
+    public ArtifactIdentifier getArtifactIdentifier() {
+        checkState(artifactIdentifier != null, "no artifact has been set!");
+        return artifactIdentifier;
     }
 
-    public String getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
-    }
-
-    public boolean isHideClasses() {
-        return hideClasses;
-    }
-
-    public InlineDependency setHideClasses(boolean hideClasses) {
-        this.hideClasses = hideClasses;
-        return this;
-    }
-
-    public boolean isTransitive() {
+    public boolean isInlineTransitive() {
         return transitive;
     }
 
-    public InlineDependency setTransitive(boolean transitive) {
+    public InlineDependency setInlineTransitive(boolean transitive) {
         this.transitive = transitive;
         return this;
     }
 
+    public boolean isInlineOptionals() {
+        return optionals;
+    }
+
+    public InlineDependency setInlineOptionals(boolean optionals) {
+        this.optionals = optionals;
+        return this;
+    }
+
     public boolean matchDependency(Dependency dependency) {
-        return getArtifactId().equals(dependency.getArtifact().getArtifactId()) && getGroupId().equals(dependency.getArtifact().getGroupId());
+        return getArtifactIdentifier().matchDependency(dependency);
     }
 
     public boolean matchArtifact(Artifact artifact) {
-        return getArtifactId().equals(artifact.getArtifactId()) && getGroupId().equals(artifact.getGroupId());
+        return getArtifactIdentifier().matchArtifact(artifact);
     }
 
     @Override
     public String toString() {
-        String flags = Joiner.on(", ").skipNulls().join(
-                hideClasses ? "hide classes" : null,
-                transitive ? "inline transitive" : null);
-        return String.format("%s:%s [%s]", groupId, artifactId, flags);
+        String flags = transitive ? "inline transitive" : "";
+        return String.format("%s [%s]", artifactIdentifier, flags);
     }
 }

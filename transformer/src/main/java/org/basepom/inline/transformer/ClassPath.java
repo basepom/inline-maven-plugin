@@ -18,19 +18,25 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 import javax.annotation.Nonnull;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Defines a class path.
  */
 public class ClassPath implements Iterable<ClassPathElement> {
 
-    private final List<ClassPathElement> entries = new ArrayList<>();
+    private final ImmutableSet.Builder<ClassPathElement> entries = ImmutableSet.builder();
     private final File root;
 
-    public ClassPath(@Nonnull File root) {
-        this.root = root;
+    public ClassPath(File root) {
+        this.root = checkNotNull(root, "root is null");
     }
 
     public void addFile(File file, ClassPathTag... tags) {
@@ -50,6 +56,14 @@ public class ClassPath implements Iterable<ClassPathElement> {
 
     @Override
     public Iterator<ClassPathElement> iterator() {
-        return entries.iterator();
+        return entries.build().iterator();
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", ClassPath.class.getSimpleName() + "[", "]")
+                .add("entries=" + entries.build())
+                .add("root=" + root)
+                .toString();
     }
 }

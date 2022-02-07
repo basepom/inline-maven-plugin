@@ -90,15 +90,20 @@ public final class ScopeLimitingFilter
         checkNotNull(scope, "scope is null");
 
         switch (scope) {
-            case JavaScopes.COMPILE:
+            //  runtime dependencies pull in just runtime deps
             case JavaScopes.RUNTIME:
+            // compile and runtime pull in compile and runtime
             case COMPILE_PLUS_RUNTIME:
+            // runtime and system pull in runtime and system
             case RUNTIME_PLUS_SYSTEM:
                 return scope;
+            // test dependencies pull in compile and runtime.
             case JavaScopes.TEST:
-                return COMPILE_PLUS_RUNTIME;
+            // compile dependencies pull in compile and runtime
+            case JavaScopes.COMPILE:
+            // provided dependencies pull in just compile and runtime (remove test and provided)
             case JavaScopes.PROVIDED:
-                return COMPILE_PLUS_RUNTIME; // remove test and provided
+                return COMPILE_PLUS_RUNTIME;
             default:
                 throw new IllegalStateException("Scope '" + scope + "' is unknown!");
         }

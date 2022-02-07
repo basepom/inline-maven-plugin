@@ -178,14 +178,11 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
             return false;
         }
         ClassPathElement that = (ClassPathElement) o;
-        return hideClasses == that.hideClasses
-                && Objects.equals(archiveFile, that.archiveFile)
-                && Objects.equals(prefix, that.prefix)
-                && Objects.equals(tags, that.tags);
+        return Objects.equals(archiveFile, that.archiveFile);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(archiveFile, hideClasses, prefix, tags);
+        return Objects.hash(archiveFile);
     }
 }
