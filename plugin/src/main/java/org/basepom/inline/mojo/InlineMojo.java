@@ -14,7 +14,6 @@
 package org.basepom.inline.mojo;
 
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.lang.String.format;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -29,7 +28,6 @@ import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,8 +68,6 @@ import org.basepom.inline.transformer.JarTransformer;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.graph.DependencyFilter;
-import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.util.artifact.JavaScopes;
 import org.jdom2.JDOMException;
 
@@ -291,11 +287,6 @@ public final class InlineMojo extends AbstractMojo {
         Map<String, Dependency> dependencyScopes = projectDependencies.stream()
                 .filter(dependency -> dependency.getArtifact() != null)
                 .collect(ImmutableMap.toImmutableMap(this::getId, Functions.identity()));
-
-        // reduce project dependencies by the configured filter set.
-        projectDependencies = projectDependencies.stream()
-                .filter(createFilterSet())
-                .collect(toImmutableList());
 
         BiConsumer<InlineDependency, Dependency> dependencyConsumer = (inlineDependency, dependency) -> {
             LOG.debug("%s matches %s for inlining.", inlineDependency, dependency);

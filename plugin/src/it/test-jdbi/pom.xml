@@ -43,8 +43,8 @@
                 <configuration>
                     <inlineDependencies>
                         <inlineDependency>
-                            <groupId>org.jdbi</groupId>
-                            <artifactId>jdbi3-core</artifactId>
+                            <artifact>org.jdbi:jdbi3-core</artifact>
+                            <transitive>false</transitive>
                         </inlineDependency>
                     </inlineDependencies>
                 </configuration>

@@ -72,17 +72,13 @@
                 <artifactId>@project.artifactId@</artifactId>
                 <version>@project.version@</version>
                 <configuration>
+                    <hideClasses>true</hideClasses>
                     <inlineDependencies>
                         <inlineDependency>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                            <hideClasses>true</hideClasses>
-                            <transitive>true</transitive>
+                            <artifact>com.google.guava:guava</artifact>
                         </inlineDependency>
                         <inlineDependency>
-                            <artifactId>jackson-core</artifactId>
-                            <groupId>com.fasterxml.jackson.core</groupId>
-                            <hideClasses>false</hideClasses>
+                            <artifact>com.fasterxml.jackson.core:jackson-core</artifact>
                         </inlineDependency>
                     </inlineDependencies>
                 </configuration>
