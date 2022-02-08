@@ -89,6 +89,11 @@ public class JarTransformer {
         // create new directory structure for the jar
         builder.add(new DirectoryScanProcessor(outputSink));
 
+        builder.add(new ServiceLoaderCollectingProcessor());
+
+        // deal with sisu files (TODO: factor out)
+        builder.add(new SisuCollectingProcessor());
+
         // must come last, removes all duplicates
         builder.add(new DuplicateDiscardProcessor());
 
