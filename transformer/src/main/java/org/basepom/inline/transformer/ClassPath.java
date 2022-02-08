@@ -40,7 +40,7 @@ public class ClassPath implements Iterable<ClassPathElement> {
         entries.add(ClassPathElement.forFile(file, null, groupId, artifactId, false, tags));
     }
 
-    public void addFile(File file, String groupId, String artifactId, String prefix, boolean hideClasses, ClassPathTag... tags) {
+    public void addFile(File file, String prefix, String groupId, String artifactId, boolean hideClasses, ClassPathTag... tags) {
         checkNotNull(prefix, "prefix is null");
         if (!file.isAbsolute()) {
             file = new File(root, file.getPath());
