@@ -29,7 +29,7 @@ import org.basepom.inline.transformer.processor.DirectoryFilterProcessor;
 import org.basepom.inline.transformer.processor.DirectoryScanProcessor;
 import org.basepom.inline.transformer.processor.DuplicateDiscardProcessor;
 import org.basepom.inline.transformer.processor.JarWriterProcessor;
-import org.basepom.inline.transformer.processor.ManifestFilterProcessor;
+import org.basepom.inline.transformer.processor.MetaInfFileProcessor;
 import org.basepom.inline.transformer.processor.ModuleInfoFilterProcessor;
 import org.basepom.inline.transformer.processor.MultiReleaseJarProcessor;
 import org.basepom.inline.transformer.processor.RemapperProcessor;
@@ -74,7 +74,7 @@ public class JarTransformer {
         builder.add(new SignatureFilterProcessor());
 
         // only keep the root jar manifest
-        builder.add(new ManifestFilterProcessor());
+        builder.add(new MetaInfFileProcessor());
 
         // remove all module-info.class files that are not part of the root jar
         builder.add(new ModuleInfoFilterProcessor());
