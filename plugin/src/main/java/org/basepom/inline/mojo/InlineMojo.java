@@ -442,7 +442,7 @@ public final class InlineMojo extends AbstractMojo {
                     (inlineDependency, dependency) -> {
                         var dependencyArtifact = dependency.getArtifact();
                         checkState(dependencyArtifact.getFile() != null, "Could not locate artifact file for %s", dependencyArtifact);
-                        classPath.addFile(dependencyArtifact.getFile(), dependencyArtifact.getGroupId(), dependencyArtifact.getArtifactId(), prefix, hideClasses);});
+                        classPath.addFile(dependencyArtifact.getFile(), prefix, dependencyArtifact.getGroupId(), dependencyArtifact.getArtifactId(), hideClasses);});
 
             transformer.transform(classPath);
         }
