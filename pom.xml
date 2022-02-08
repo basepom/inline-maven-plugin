@@ -23,7 +23,7 @@
 
     <groupId>org.basepom.maven</groupId>
     <artifactId>inline-maven-plugin-root</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.3</version>
     <packaging>pom</packaging>
 
     <description>
@@ -57,7 +57,7 @@
     <scm>
         <connection>scm:git:git://github.com/basepom/inline-maven-plugin.git</connection>
         <developerConnection>scm:git:git://github.com/basepom/inline-maven-plugin.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>inline-maven-plugin-root-0.3</tag>
         <url>https://github.com/basepom/inline-maven-plugin</url>
     </scm>
 
