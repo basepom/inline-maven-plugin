@@ -14,7 +14,7 @@
 package org.basepom.inline.transformer.processor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static org.basepom.inline.transformer.ClassNameUtils.pathToElements;
 import static org.basepom.inline.transformer.ClassNameUtils.pathToJavaName;
 import static org.basepom.inline.transformer.ClassNameUtils.toPath;
 
@@ -23,9 +23,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.io.CharStreams;
 import com.google.common.io.LineProcessor;
 import org.basepom.inline.transformer.ClassPathResource;
@@ -36,38 +39,55 @@ import org.basepom.inline.transformer.asm.InlineRemapper;
 /**
  * Deals with annotation processors being inlined. Rewrites the annotation files to allow locating rewritten annotation processors.
  */
-public class AnnotationProcessorRewritingProcessor implements JarProcessor {
+public abstract class AbstractServiceFileRewritingProcessor implements JarProcessor {
 
     private final InlineRemapper inlineRemapper;
+    private final String prefix;
 
-    public AnnotationProcessorRewritingProcessor(InlineRemapper inlineRemapper) {
+    protected AbstractServiceFileRewritingProcessor(InlineRemapper inlineRemapper, String prefix) {
         this.inlineRemapper = checkNotNull(inlineRemapper, "inlineRemapper is null");
+        this.prefix = prefix;
+    }
+
+    @CheckForNull
+    @Override
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+        return rewriteServiceLoaderJarEntry(classPathResource, chain);
     }
 
     @CheckForNull
     @Override
     public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-        return convertAnnotationProcessorJarEntry(classPathResource, chain);
+        return rewriteServiceLoaderJarEntry(classPathResource, chain);
     }
 
     @CheckForNull
-    ClassPathResource convertAnnotationProcessorJarEntry(ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    ClassPathResource rewriteServiceLoaderJarEntry(ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
         if (classPathResource.getTags().contains(ClassPathTag.RESOURCE)
-                && classPathResource.getName().equals("META-INF/services/javax.annotation.processing.Processor")) {
+                && classPathResource.getName().startsWith(prefix)) {
 
             try (ByteArrayInputStream byteStream = new ByteArrayInputStream(classPathResource.getContent());
                     InputStreamReader reader = new InputStreamReader(byteStream, StandardCharsets.UTF_8)) {
 
-                String result = CharStreams.readLines(reader, new LineProcessor<>() {
+                String content = CharStreams.readLines(reader, new LineProcessor<>() {
                     private final StringWriter stringWriter = new StringWriter();
 
                     @Override
                     public boolean processLine(@Nonnull String line) {
-                        String path = toPath(line.strip());
+                        List<String> elements = Splitter.on('#').trimResults().splitToList(line);
+                        String path = toPath(elements.get(0));
                         String result = inlineRemapper.map(path);
-                        checkState(result != null, "Could not remap annotation processor %s, please report a bug!", path);
-
-                        stringWriter.append(pathToJavaName(result)).append('\n');
+                        if (result != null) {
+                            stringWriter.append(pathToJavaName(result));
+                            if (elements.size() > 1) {
+                                stringWriter.append(" # ");
+                                stringWriter.append(Joiner.on('#').join(elements.subList(1, elements.size())));
+                            }
+                        } else {
+                            // no renaming happened, use the old line
+                            stringWriter.append(line);
+                        }
+                        stringWriter.append('\n');
                         return true;
                     }
 
@@ -76,7 +96,14 @@ public class AnnotationProcessorRewritingProcessor implements JarProcessor {
                         return stringWriter.toString();
                     }
                 });
-                classPathResource = classPathResource.withContent(result.getBytes(StandardCharsets.UTF_8));
+                classPathResource = classPathResource.withContent(content.getBytes(StandardCharsets.UTF_8));
+
+                List<String> elements = pathToElements(classPathResource.getName());
+                // remap the element name
+                String result = inlineRemapper.map(toPath(elements.get(2)));
+                if (result != null) {
+                    classPathResource = classPathResource.withName(prefix + pathToJavaName(result));
+                }
             }
         }
 

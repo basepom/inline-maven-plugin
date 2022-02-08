@@ -24,7 +24,6 @@ import javax.annotation.Nonnull;
 import com.google.common.collect.ImmutableSet;
 import org.basepom.inline.transformer.asm.InlineRemapper;
 import org.basepom.inline.transformer.asm.RemappingClassTransformer;
-import org.basepom.inline.transformer.processor.AnnotationProcessorRewritingProcessor;
 import org.basepom.inline.transformer.processor.ClassTransformerJarProcessor;
 import org.basepom.inline.transformer.processor.DirectoryFilterProcessor;
 import org.basepom.inline.transformer.processor.DirectoryScanProcessor;
@@ -35,7 +34,11 @@ import org.basepom.inline.transformer.processor.ModuleInfoFilterProcessor;
 import org.basepom.inline.transformer.processor.MultiReleaseJarProcessor;
 import org.basepom.inline.transformer.processor.RemapperProcessor;
 import org.basepom.inline.transformer.processor.ResourceRenamerJarProcessor;
+import org.basepom.inline.transformer.processor.ServiceLoaderCollectingProcessor;
+import org.basepom.inline.transformer.processor.ServiceLoaderRewritingProcessor;
 import org.basepom.inline.transformer.processor.SignatureFilterProcessor;
+import org.basepom.inline.transformer.processor.SisuCollectingProcessor;
+import org.basepom.inline.transformer.processor.SisuRewritingProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +64,11 @@ public class JarTransformer {
         // must be early, all following processors see transformed MR names
         builder.add(new MultiReleaseJarProcessor());
 
-        // remap the Annotation Processors if necessary
-        builder.add(new AnnotationProcessorRewritingProcessor(remapper));
+        // remap the Service loaders if necessary
+        builder.add(new ServiceLoaderRewritingProcessor(remapper));
+
+        // deal with sisu files (TODO: factor out)
+        builder.add(new SisuRewritingProcessor(remapper));
 
         // remove all signature files
         builder.add(new SignatureFilterProcessor());
