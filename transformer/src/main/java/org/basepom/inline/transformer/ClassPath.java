@@ -16,15 +16,9 @@ package org.basepom.inline.transformer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.StringJoiner;
-import javax.annotation.Nonnull;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -39,19 +33,19 @@ public class ClassPath implements Iterable<ClassPathElement> {
         this.root = checkNotNull(root, "root is null");
     }
 
-    public void addFile(File file, ClassPathTag... tags) {
+    public void addFile(File file, String groupId, String artifactId, ClassPathTag... tags) {
         if (!file.isAbsolute()) {
             file = new File(root, file.getPath());
         }
-        entries.add(ClassPathElement.forFile(file, null, false, tags));
+        entries.add(ClassPathElement.forFile(file, null, groupId, artifactId, false, tags));
     }
 
-    public void addFile(File file, String prefix, boolean hideClasses, ClassPathTag... tags) {
+    public void addFile(File file, String groupId, String artifactId, String prefix, boolean hideClasses, ClassPathTag... tags) {
         checkNotNull(prefix, "prefix is null");
         if (!file.isAbsolute()) {
             file = new File(root, file.getPath());
         }
-        entries.add(ClassPathElement.forFile(file, prefix, hideClasses, tags));
+        entries.add(ClassPathElement.forFile(file, prefix, groupId, artifactId, hideClasses, tags));
     }
 
     @Override

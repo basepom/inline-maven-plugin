@@ -42,8 +42,8 @@ public class JdbiRelocationTest {
         Rename antlrRename = Rename.forClassName("org.antlr.v4", "org.jdbi.relocated.antlr", false);
 
         ClassPath classPath = new ClassPath(new File("/"));
-        classPath.addFile(jdbi, ClassPathTag.ROOT_JAR);
-        classPath.addFile(antlr, JDBI_PREFIX, true);
+        classPath.addFile(jdbi, "org.jdbi", "jdbi3-core", ClassPathTag.ROOT_JAR);
+        classPath.addFile(antlr, JDBI_PREFIX, "org.antlr", "antlr4-runtime", true);
 
         CapturingConsumer consumer = new CapturingConsumer();
         JarTransformer jarTransformer = new JarTransformer(consumer);

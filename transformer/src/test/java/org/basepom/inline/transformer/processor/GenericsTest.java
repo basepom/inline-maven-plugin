@@ -29,7 +29,7 @@ public class GenericsTest {
     @Test
     public void testTransform() {
         RemapperProcessor processor = new RemapperProcessor();
-        final ClassPathElement classPathElement = ClassPathElement.forFile(new File("testing.jar"), "org.basepom", false);
+        final ClassPathElement classPathElement = ClassPathElement.forFile(new File("testing.jar"), "org.basepom", "test-jar", "test-jar", false);
         processor.addRule(classPathElement, "java.lang");
         processor.addResource(ClassPathResource.forTesting("java/lang/String.class", classPathElement, ClassPathTag.CLASS, ClassPathTag.FILE));
 

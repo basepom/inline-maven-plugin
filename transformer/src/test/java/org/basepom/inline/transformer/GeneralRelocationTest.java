@@ -41,12 +41,12 @@ public class GeneralRelocationTest {
         File velocity = loader.getArtifactFile("org.apache.velocity", "velocity", "1.7");
 
         ClassPath classPath = new ClassPath(new File("/"));
-        classPath.addFile(jdbi, ClassPathTag.ROOT_JAR);
-        classPath.addFile(velocity, JDBI_PREFIX, true);
-        classPath.addFile(h2, JDBI_PREFIX, true);
-        classPath.addFile(jackson, JDBI_PREFIX, true);
-        classPath.addFile(databind, JDBI_PREFIX, true);
-        classPath.addFile(guava, JDBI_PREFIX, true);
+        classPath.addFile(jdbi, "org.jdbi", "jdbi3-core", ClassPathTag.ROOT_JAR);
+        classPath.addFile(velocity, JDBI_PREFIX, "org.apache.velocity", "velocity", true);
+        classPath.addFile(h2, JDBI_PREFIX, "com.h2database", "h2", true);
+        classPath.addFile(jackson, JDBI_PREFIX, "com.fasterxml.jackson.core", "jackson-core", true);
+        classPath.addFile(databind, JDBI_PREFIX, "com.fasterxml.jackson.core", "jackson-databind", true);
+        classPath.addFile(guava, JDBI_PREFIX, "com.google.guava", "guava", true);
 
         CapturingConsumer consumer = new CapturingConsumer();
         JarTransformer jarTransformer = new JarTransformer(consumer);

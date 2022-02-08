@@ -38,18 +38,20 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
     private final boolean hideClasses;
     private final String prefix;
     private final ImmutableSet<ClassPathTag> tags;
+    private final String groupId;
+    private final String artifactId;
 
-    public static ClassPathElement forFile(File file, @Nullable String prefix, boolean hideClasses, ClassPathTag... tags) {
+    public static ClassPathElement forFile(File file, @Nullable String prefix, String groupId, String artifactId, boolean hideClasses, ClassPathTag... tags) {
 
         if (file.isDirectory()) {
-            return new ClassPathElement(file, prefix, hideClasses, tags) {
+            return new ClassPathElement(file, prefix, groupId, artifactId, hideClasses, tags) {
                 @Override
                 public Iterator<ClassPathResource> iterator() {
                     return new DirectoryIterator(file);
                 }
             };
         } else {
-            return new ClassPathElement(file, prefix, hideClasses, tags) {
+            return new ClassPathElement(file, prefix, groupId, artifactId, hideClasses, tags) {
                 @Override
                 public Iterator<ClassPathResource> iterator() {
                     return wrapIOException(() -> new ZipIterator(file));
@@ -58,9 +60,11 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
         }
     }
 
-    private ClassPathElement(@Nonnull File archiveFile, @Nullable String prefix, boolean hideClasses, ClassPathTag... tags) {
+    private ClassPathElement(@Nonnull File archiveFile, @Nullable String prefix, String groupId, String artifactId, boolean hideClasses, ClassPathTag... tags) {
         this.archiveFile = checkNotNull(archiveFile, "archiveFile is null");
         this.prefix = prefix;
+        this.groupId = groupId;
+        this.artifactId = artifactId;
         this.hideClasses = hideClasses;
         this.tags = ImmutableSet.copyOf(tags);
     }
@@ -81,6 +85,14 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
 
     public ImmutableSet<ClassPathTag> getTags() {
         return tags;
+    }
+
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public String getArtifactId() {
+        return artifactId;
     }
 
     public abstract Iterator<ClassPathResource> iterator();

@@ -33,7 +33,7 @@ public class RemapperTest {
     @BeforeEach
     public void setUp() {
         RemapperProcessor processor = new RemapperProcessor();
-        ClassPathElement classPathElement = ClassPathElement.forFile(new File("test.jar"), "foo", false);
+        ClassPathElement classPathElement = ClassPathElement.forFile(new File("test.jar"), "foo", "test", "test", false);
         processor.addRule(classPathElement, "org");
 
         processor.addResource(ClassPathResource.forTesting("org/example/Object.class", classPathElement, ClassPathTag.CLASS, ClassPathTag.FILE));
