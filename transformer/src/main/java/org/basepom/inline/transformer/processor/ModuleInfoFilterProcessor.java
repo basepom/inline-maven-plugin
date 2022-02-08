@@ -33,7 +33,8 @@ public class ModuleInfoFilterProcessor extends AbstractFilterJarProcessor {
     protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
         List<String> elements = ClassNameUtils.pathToElements(classPathResource.getName());
 
-        return !classPathResource.getTags().contains(ClassPathTag.ROOT_JAR) && MODULE_INFO.equals(elements.get(elements.size() - 1));
+        return !classPathResource.getTags().contains(ClassPathTag.ROOT_JAR)
+                && MODULE_INFO.equals(elements.get(elements.size() - 1));
     }
 
     @CheckForNull

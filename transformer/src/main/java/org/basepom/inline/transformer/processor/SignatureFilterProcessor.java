@@ -19,6 +19,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 import org.basepom.inline.transformer.ClassPathResource;
+import org.basepom.inline.transformer.ClassPathTag;
 
 /**
  * Filter out all signature files as the code modifies the jar.
@@ -30,6 +31,10 @@ public class SignatureFilterProcessor extends AbstractFilterJarProcessor {
 
     @Override
     protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
+        if (!classPathResource.getTags().contains(ClassPathTag.RESOURCE)) {
+            return false;
+        }
+
         List<String> elements = pathToElements(classPathResource.getName());
         if (elements.isEmpty() || !elements.get(0).equals("META-INF")) {
             return false;

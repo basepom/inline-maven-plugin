@@ -51,8 +51,8 @@ public class MultiReleaseJarProcessor implements JarProcessor {
     }
 
     @CheckForNull
-    ClassPathResource convertMultiReleaseJarEntry(ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-        if (classPathResource != null && classPathResource.getName().startsWith("META-INF/versions/")) {
+    ClassPathResource convertMultiReleaseJarEntry(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+        if (classPathResource.getName().startsWith("META-INF/versions/")) {
             List<String> elements = pathToElements(classPathResource.getName());
             int version = -1;
             try {
