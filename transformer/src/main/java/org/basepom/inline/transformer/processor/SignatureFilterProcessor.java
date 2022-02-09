@@ -30,8 +30,13 @@ public class SignatureFilterProcessor extends AbstractFilterJarProcessor {
     }
 
     @Override
+    public int getPriority() {
+        return 40;
+    }
+
+    @Override
     protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
-        if (!classPathResource.getTags().contains(ClassPathTag.RESOURCE)) {
+        if (!classPathResource.containsTags(ClassPathTag.RESOURCE)) {
             return false;
         }
 

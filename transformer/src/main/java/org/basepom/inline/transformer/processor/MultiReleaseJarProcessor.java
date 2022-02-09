@@ -23,35 +23,41 @@ import javax.annotation.Nonnull;
 
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 
 /**
  * Deals with multi-release entries.
  */
 public class MultiReleaseJarProcessor implements JarProcessor {
 
+    @Override
+    public int getPriority() {
+        return 20;
+    }
+
     @CheckForNull
     @Override
-    public ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
 
         return convertMultiReleaseJarEntry(classPathResource, chain);
     }
 
     @CheckForNull
     @Override
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
 
         return convertMultiReleaseJarEntry(classPathResource, chain);
     }
 
     @CheckForNull
     @Override
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
 
         return convertMultiReleaseJarEntry(classPathResource, chain);
     }
 
     @CheckForNull
-    ClassPathResource convertMultiReleaseJarEntry(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    ClassPathResource convertMultiReleaseJarEntry(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         if (classPathResource.getName().startsWith("META-INF/versions/")) {
             List<String> elements = pathToElements(classPathResource.getName());
             int version = -1;

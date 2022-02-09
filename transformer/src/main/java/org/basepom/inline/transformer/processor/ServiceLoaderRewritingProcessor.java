@@ -20,7 +20,7 @@ import org.basepom.inline.transformer.asm.InlineRemapper;
  */
 public final class ServiceLoaderRewritingProcessor extends AbstractServiceFileRewritingProcessor {
 
-    public ServiceLoaderRewritingProcessor(InlineRemapper inlineRemapper) {
-        super(inlineRemapper, "META-INF/services/");
+    public ServiceLoaderRewritingProcessor(ProcessorContext processorContext) {
+        super(processorContext, "META-INF/services/");
     }
 }

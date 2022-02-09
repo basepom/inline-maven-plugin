@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.google.common.collect.ImmutableSet;
 import de.softwareforge.testing.maven.MavenArtifactLoader;
 import org.junit.jupiter.api.Test;
 

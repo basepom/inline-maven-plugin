@@ -21,25 +21,28 @@ import javax.annotation.Nonnull;
 import org.basepom.inline.transformer.ClassNameUtils;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
+import org.basepom.inline.transformer.TransformerException;
 
 public class ModuleInfoFilterProcessor extends AbstractFilterJarProcessor {
 
     public static final String MODULE_INFO = "module-info.class";
 
-    public ModuleInfoFilterProcessor() {
+    @Override
+    public int getPriority() {
+        return 60;
     }
 
     @Override
     protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
         List<String> elements = ClassNameUtils.pathToElements(classPathResource.getName());
 
-        return !classPathResource.getTags().contains(ClassPathTag.ROOT_JAR)
+        return !classPathResource.containsTags(ClassPathTag.ROOT_JAR)
                 && MODULE_INFO.equals(elements.get(elements.size() - 1));
     }
 
     @CheckForNull
     @Override
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         return super.process(classPathResource, chain);
     }
 }

@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +39,8 @@ public class DuplicateDiscardProcessor implements JarProcessor {
 
     @CheckForNull
     @Override
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-        if (classPathResource.getTags().contains(ClassPathTag.FILE)) {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException, TransformerException {
+        if (classPathResource.containsTags(ClassPathTag.FILE)) {
             String name = classPathResource.getNameWithPrefix();
 
             if (!files.add(name)) {

@@ -25,6 +25,7 @@ import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.JarProcessor;
 import org.basepom.inline.transformer.Rename;
+import org.basepom.inline.transformer.TransformerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,17 +43,23 @@ public class ResourceRenamerJarProcessor implements JarProcessor {
         this.remapperProcessor = remapperProcessor;
     }
 
+
+    @Override
+    public int getPriority() {
+        return 90;
+    }
+
     @Override
     @CheckForNull
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         return process(classPathResource, chain);
     }
 
     @Override
     @CheckForNull
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
 
-        if (classPathResource.getTags().contains(ClassPathTag.RESOURCE)) {
+        if (classPathResource.containsTags(ClassPathTag.RESOURCE)) {
             Set<Rename> eligibleRenames = remapperProcessor.renamersForClassPathResource(classPathResource);
 
             classPathResource = classPathResource.withName(mapResourceName(classPathResource.getName(), eligibleRenames));

@@ -21,6 +21,7 @@ import javax.annotation.Nonnull;
 
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,7 @@ abstract class AbstractFilterJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
-    public ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         if (isFiltered(classPathResource)) {
             if (isVerbose()) {
                 log.debug(format("pre-scan discarded '%s'", classPathResource.getName()));
@@ -51,7 +52,7 @@ abstract class AbstractFilterJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         if (isFiltered(classPathResource)) {
             if (isVerbose()) {
                 log.debug(format("scan discarded '%s'", classPathResource.getName()));
@@ -63,7 +64,7 @@ abstract class AbstractFilterJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         if (isFiltered(classPathResource)) {
             if (isVerbose()) {
                 log.debug(format("process discarded %s", classPathResource.getName()));

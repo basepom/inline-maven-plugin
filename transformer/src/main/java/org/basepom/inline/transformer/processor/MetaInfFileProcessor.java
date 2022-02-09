@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 
 /**
  * Deal with all files in META-INF that have no special treatment (like services etc.)
@@ -36,13 +37,13 @@ public class MetaInfFileProcessor implements JarProcessor {
 
     @CheckForNull
     @Override
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         return chain.next(processMetaInfFile(classPathResource));
     }
 
     @CheckForNull
     @Override
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         return chain.next(processMetaInfFile(classPathResource));
     }
 

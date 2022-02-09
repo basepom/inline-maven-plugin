@@ -31,6 +31,12 @@ public class DirectoryFilterProcessor extends AbstractFilterJarProcessor {
 
     @Override
     protected boolean isFiltered(@Nonnull ClassPathResource classPathResource) {
-        return classPathResource.getTags().contains(ClassPathTag.DIRECTORY);
+        return classPathResource.containsTags(ClassPathTag.DIRECTORY);
     }
+
+    @Override
+    public int getPriority() {
+        return 10;
+    }
+
 }

@@ -73,6 +73,11 @@ public final class ClassPathResource {
                 ImmutableSet.of(ClassPathTag.DIRECTORY, ClassPathTag.RESOURCE));
     }
 
+    public static ClassPathResource forContent(String name, byte [] content) {
+        return new ClassPathResource(null, name, 0, null, InputStream::nullInputStream, content,
+                ImmutableSet.of(ClassPathTag.FILE, ClassPathTag.RESOURCE));
+    }
+
     @VisibleForTesting
     public static ClassPathResource forTesting(String path, ClassPathElement classPathElement, ClassPathTag... tags) {
         return new ClassPathResource(null, path, 0, classPathElement, InputStream::nullInputStream, null, ImmutableSet.copyOf(tags));
@@ -118,7 +123,7 @@ public final class ClassPathResource {
 
     @Nonnull
     public String getName() {
-        return getTags().contains(ClassPathTag.DIRECTORY)
+        return containsTags(ClassPathTag.DIRECTORY)
                 ? name + "/"
                 : name;
     }
@@ -139,6 +144,16 @@ public final class ClassPathResource {
     @Nonnull
     public ImmutableSet<ClassPathTag> getTags() {
         return tags;
+    }
+
+    public boolean containsTags(ClassPathTag ... tags) {
+        for (ClassPathTag tag : tags) {
+            if (!this.tags.contains(tag)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Nonnull

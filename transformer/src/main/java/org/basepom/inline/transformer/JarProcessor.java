@@ -23,29 +23,43 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableSet;
 
-public interface JarProcessor {
+public interface JarProcessor extends Comparable<JarProcessor> {
 
     @CheckForNull
-    default ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain) throws IOException {
+    default ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain)
+            throws TransformerException, IOException {
         return chain.next(classPathResource);
     }
 
     @CheckForNull
-    default ClassPathResource scan(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain) throws IOException {
+    default ClassPathResource scan(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain)
+            throws TransformerException, IOException {
         return chain.next(classPathResource);
     }
 
     @CheckForNull
-    default ClassPathResource process(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain) throws IOException {
+    default ClassPathResource process(@Nonnull ClassPathResource classPathResource, JarProcessor.Chain<ClassPathResource> chain)
+            throws TransformerException, IOException {
         return chain.next(classPathResource);
+    }
+
+    int getPriority();
+
+    @Override
+    default int compareTo(JarProcessor other) {
+        return ComparisonChain.start()
+                .compare(this.getPriority(), other.getPriority())
+                .compare(this.getClass().getSimpleName(), other.getClass().getSimpleName())
+                .result();
     }
 
     interface Chain<T> {
 
         @CheckForNull
-        T next(@Nullable T source) throws IOException;
+        T next(@Nullable T source) throws TransformerException, IOException;
     }
 
     class Holder {
@@ -62,23 +76,24 @@ public interface JarProcessor {
 
         @FunctionalInterface
         interface ProcessorOperation<T> {
-            T apply(JarProcessor jarProcessor, T element, JarProcessor.Chain<T> chain) throws IOException;
+
+            T apply(JarProcessor jarProcessor, T element, JarProcessor.Chain<T> chain) throws TransformerException, IOException;
         }
 
         @Nonnull
-        public Optional<ClassPathResource> preScan(@Nonnull ClassPathResource classPathResource) throws IOException {
+        public Optional<ClassPathResource> preScan(@Nonnull ClassPathResource classPathResource) throws TransformerException, IOException {
             ChainInstance<ClassPathResource> instance = new ChainInstance<>(JarProcessor::preScan);
             return Optional.ofNullable(instance.next(classPathResource));
         }
 
         @Nonnull
-        public Optional<ClassPathResource> scan(@Nonnull ClassPathResource classPathResource) throws IOException {
+        public Optional<ClassPathResource> scan(@Nonnull ClassPathResource classPathResource) throws TransformerException, IOException {
             ChainInstance<ClassPathResource> instance = new ChainInstance<>(JarProcessor::scan);
             return Optional.ofNullable(instance.next(classPathResource));
         }
 
         @Nonnull
-        public Optional<ClassPathResource> process(@Nonnull ClassPathResource classPathResource) throws IOException {
+        public Optional<ClassPathResource> process(@Nonnull ClassPathResource classPathResource) throws TransformerException, IOException {
             ChainInstance<ClassPathResource> instance = new ChainInstance<>(JarProcessor::process);
             return Optional.ofNullable(instance.next(classPathResource));
         }
@@ -95,7 +110,7 @@ public interface JarProcessor {
 
             @Override
             @CheckForNull
-            public T next(@Nullable T source) throws IOException {
+            public T next(@Nullable T source) throws TransformerException, IOException {
                 if (source != null && iterator.hasNext()) {
                     return operation.apply(iterator.next(), source, this);
                 }

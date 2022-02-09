@@ -13,30 +13,28 @@
  */
 package org.basepom.inline.transformer.processor;
 
-import java.io.IOException;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.function.Consumer;
-import javax.annotation.Nonnull;
 
-import edu.umd.cs.findbugs.annotations.CheckForNull;
 import org.basepom.inline.transformer.ClassPathResource;
-import org.basepom.inline.transformer.JarProcessor;
-import org.basepom.inline.transformer.TransformerException;
+import org.basepom.inline.transformer.asm.InlineRemapper;
 
-public class JarWriterProcessor implements JarProcessor {
+public final class ProcessorContext {
 
+    private final InlineRemapper inlineRemapper;
     private final Consumer<ClassPathResource> outputSink;
 
-    public JarWriterProcessor(Consumer<ClassPathResource> outputSink) {
-        this.outputSink = outputSink;
+    public ProcessorContext(InlineRemapper inlineRemapper, Consumer<ClassPathResource> outputSink) {
+        this.inlineRemapper = checkNotNull(inlineRemapper, "inlineRemapper is null");
+        this.outputSink = checkNotNull(outputSink, "outputSink is null");
     }
 
-    @CheckForNull
-    @Override
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
-        classPathResource = chain.next(classPathResource);
-        if (classPathResource != null) {
-            outputSink.accept(classPathResource);
-        }
-        return classPathResource;
+    public InlineRemapper getInlineRemapper() {
+        return inlineRemapper;
+    }
+
+    public Consumer<ClassPathResource> getOutputSink() {
+        return outputSink;
     }
 }

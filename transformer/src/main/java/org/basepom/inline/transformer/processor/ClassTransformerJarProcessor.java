@@ -27,6 +27,7 @@ import org.basepom.inline.transformer.ClassNameUtils;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 import org.basepom.inline.transformer.asm.ClassTransformer;
 import org.basepom.inline.transformer.asm.GetNameClassWriter;
 import org.objectweb.asm.ClassReader;
@@ -55,8 +56,8 @@ public class ClassTransformerJarProcessor implements JarProcessor {
 
     @CheckForNull
     @Override
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-        if (classPathResource.getTags().contains(ClassPathTag.CLASS)) {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
+        if (classPathResource.containsTags(ClassPathTag.CLASS)) {
             ClassReader reader = new ClassReader(classPathResource.getContent());
             GetNameClassWriter namer = new GetNameClassWriter(new ClassVisitor(Opcodes.ASM9) {});
             ClassVisitor cv = namer;
@@ -71,8 +72,8 @@ public class ClassTransformerJarProcessor implements JarProcessor {
 
     @Override
     @CheckForNull
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-        if (classPathResource.getTags().contains(ClassPathTag.CLASS)) {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
+        if (classPathResource.containsTags(ClassPathTag.CLASS)) {
             try {
                 ClassReader reader = new ClassReader(classPathResource.getContent());
                 String oldName = reader.getClassName();

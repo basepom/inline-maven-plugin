@@ -13,12 +13,15 @@
  */
 package org.basepom.inline.transformer.processor;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
@@ -29,20 +32,30 @@ import com.google.common.io.CharStreams;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 
 public abstract class AbstractServiceFileCollectingProcessor implements JarProcessor {
 
+    private final Consumer<ClassPathResource> outputSink;
     private final String prefix;
-    private final Map<String, ImmutableList.Builder<String>> resourceMap = new HashMap<>();
 
-    protected AbstractServiceFileCollectingProcessor(String prefix) {
+    private final Map<String, ImmutableList.Builder<String>> resourceMap = new HashMap<>();
+    private boolean wroteFiles = false;
+
+    protected AbstractServiceFileCollectingProcessor(ProcessorContext processorContext, String prefix) {
+        this.outputSink = checkNotNull(processorContext, "processorContext is null").getOutputSink();
         this.prefix = prefix;
+    }
+
+    @Override
+    public int getPriority() {
+        return 110;
     }
 
     @CheckForNull
     @Override
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-        if (classPathResource.getTags().contains(ClassPathTag.RESOURCE)
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
+        if (classPathResource.containsTags(ClassPathTag.RESOURCE)
                 && classPathResource.getName().startsWith(prefix)) {
 
             ImmutableList.Builder<String> builder = resourceMap.computeIfAbsent(classPathResource.getName(), n -> ImmutableList.builder());
@@ -62,15 +75,20 @@ public abstract class AbstractServiceFileCollectingProcessor implements JarProce
 
     @CheckForNull
     @Override
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-        if (classPathResource.getTags().contains(ClassPathTag.RESOURCE)
-                && classPathResource.getName().startsWith(prefix)) {
-            if (!resourceMap.containsKey(classPathResource.getName())) {
-                return null;
-            }
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
+        if (!wroteFiles) {
+            wroteFiles = true;
+            for (var entry : resourceMap.entrySet()) {
+                var builder = entry.getValue();
+                var content = (Joiner.on('\n').join(builder.build()) + "\n").getBytes(StandardCharsets.UTF_8);
+                ClassPathResource fileClassPathResource = ClassPathResource.forContent(entry.getKey(), content);
+                outputSink.accept(fileClassPathResource);
 
-            ImmutableList.Builder<String> builder = resourceMap.remove(classPathResource.getName());
-            classPathResource = classPathResource.withContent((Joiner.on('\n').join(builder.build()) + "\n").getBytes(StandardCharsets.UTF_8));
+            }
+        }
+
+        if (resourceMap.containsKey(classPathResource.getName())) {
+            return null; // aggregate has already been written
         }
 
         return chain.next(classPathResource);

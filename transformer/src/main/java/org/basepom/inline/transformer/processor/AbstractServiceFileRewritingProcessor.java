@@ -34,6 +34,7 @@ import com.google.common.io.LineProcessor;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 import org.basepom.inline.transformer.asm.InlineRemapper;
 
 /**
@@ -44,26 +45,32 @@ public abstract class AbstractServiceFileRewritingProcessor implements JarProces
     private final InlineRemapper inlineRemapper;
     private final String prefix;
 
-    protected AbstractServiceFileRewritingProcessor(InlineRemapper inlineRemapper, String prefix) {
-        this.inlineRemapper = checkNotNull(inlineRemapper, "inlineRemapper is null");
+    protected AbstractServiceFileRewritingProcessor(ProcessorContext processorContext, String prefix) {
+        checkNotNull(processorContext, "processorContext is null");
+        this.inlineRemapper = processorContext.getInlineRemapper();
         this.prefix = prefix;
     }
 
+    @Override
+    public int getPriority() {
+        return 30;
+    }
+
     @CheckForNull
     @Override
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         return rewriteServiceLoaderJarEntry(classPathResource, chain);
     }
 
     @CheckForNull
     @Override
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         return rewriteServiceLoaderJarEntry(classPathResource, chain);
     }
 
     @CheckForNull
-    ClassPathResource rewriteServiceLoaderJarEntry(ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
-        if (classPathResource.getTags().contains(ClassPathTag.RESOURCE)
+    ClassPathResource rewriteServiceLoaderJarEntry(ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
+        if (classPathResource.containsTags(ClassPathTag.RESOURCE)
                 && classPathResource.getName().startsWith(prefix)) {
 
             try (ByteArrayInputStream byteStream = new ByteArrayInputStream(classPathResource.getContent());

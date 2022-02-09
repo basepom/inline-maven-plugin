@@ -18,10 +18,18 @@ import static java.lang.String.format;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.reflect.TypeToken;
 import org.basepom.inline.transformer.asm.InlineRemapper;
 import org.basepom.inline.transformer.asm.RemappingClassTransformer;
 import org.basepom.inline.transformer.processor.ClassTransformerJarProcessor;
@@ -32,28 +40,37 @@ import org.basepom.inline.transformer.processor.JarWriterProcessor;
 import org.basepom.inline.transformer.processor.MetaInfFileProcessor;
 import org.basepom.inline.transformer.processor.ModuleInfoFilterProcessor;
 import org.basepom.inline.transformer.processor.MultiReleaseJarProcessor;
+import org.basepom.inline.transformer.processor.ProcessorContext;
 import org.basepom.inline.transformer.processor.RemapperProcessor;
 import org.basepom.inline.transformer.processor.ResourceRenamerJarProcessor;
 import org.basepom.inline.transformer.processor.ServiceLoaderCollectingProcessor;
 import org.basepom.inline.transformer.processor.ServiceLoaderRewritingProcessor;
 import org.basepom.inline.transformer.processor.SignatureFilterProcessor;
-import org.basepom.inline.transformer.processor.SisuCollectingProcessor;
-import org.basepom.inline.transformer.processor.SisuRewritingProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JarTransformer {
+public final class JarTransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(JarTransformer.class);
 
     private final JarProcessor.Holder holder;
-    private final RemapperProcessor packageRemapperProcessor = new RemapperProcessor();
-    private final InlineRemapper remapper = new InlineRemapper(packageRemapperProcessor);
 
-    public JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink) {
+    @VisibleForTesting
+    JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink) {
+        this(outputSink, false, ImmutableSet.of());
+    }
+
+    public JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink, boolean failOnDuplicates, ImmutableSet<String> additionalProcessors) {
         checkNotNull(outputSink, "outputFile is null");
 
-        ImmutableSet.Builder<JarProcessor> builder = ImmutableSet.builder();
+        RemapperProcessor packageRemapperProcessor = new RemapperProcessor();
+        InlineRemapper remapper = new InlineRemapper(packageRemapperProcessor);
+
+        ProcessorContext processorContext = new ProcessorContext(remapper, outputSink);
+
+        ImmutableSortedSet.Builder<JarProcessor> builder = ImmutableSortedSet.naturalOrder();
+
+        createAdditionalProcessors(builder, processorContext, additionalProcessors);
 
         // write the jar out. This comes first but actually writes after having gone down and up the chain
         builder.add(new JarWriterProcessor(outputSink));
@@ -65,10 +82,7 @@ public class JarTransformer {
         builder.add(new MultiReleaseJarProcessor());
 
         // remap the Service loaders if necessary
-        builder.add(new ServiceLoaderRewritingProcessor(remapper));
-
-        // deal with sisu files (TODO: factor out)
-        builder.add(new SisuRewritingProcessor(remapper));
+        builder.add(new ServiceLoaderRewritingProcessor(processorContext));
 
         // remove all signature files
         builder.add(new SignatureFilterProcessor());
@@ -89,18 +103,41 @@ public class JarTransformer {
         // create new directory structure for the jar
         builder.add(new DirectoryScanProcessor(outputSink));
 
-        builder.add(new ServiceLoaderCollectingProcessor());
-
-        // deal with sisu files (TODO: factor out)
-        builder.add(new SisuCollectingProcessor());
+        builder.add(new ServiceLoaderCollectingProcessor(processorContext));
 
         // must come last, removes all duplicates
-        builder.add(new DuplicateDiscardProcessor());
+        builder.add(new DuplicateDiscardProcessor(failOnDuplicates));
 
         this.holder = new JarProcessor.Holder(builder.build());
     }
 
-    public void transform(@Nonnull ClassPath inputPath) throws IOException {
+    private void createAdditionalProcessors(ImmutableSortedSet.Builder<JarProcessor> builder, ProcessorContext processorContext,
+            Set<String> additionalProcessors) {
+        for (String additionalProcessor: additionalProcessors) {
+            try {
+                Class<?> processorClass = Class.forName(additionalProcessor);
+
+                Constructor<JarProcessor> ctor;
+                try {
+                    ctor = (Constructor<JarProcessor>) processorClass.getDeclaredConstructor();
+                    JarProcessor processor = ctor.newInstance();
+                    builder.add(processor);
+                    LOG.debug(format("Added '%s' processor with empty constructor", additionalProcessor));
+                } catch (NoSuchMethodException e) {
+                        ctor = (Constructor<JarProcessor>) processorClass.getDeclaredConstructor(ProcessorContext.class);
+                        JarProcessor processor = ctor.newInstance(processorContext);
+                        builder.add(processor);
+                    LOG.debug(format("Added '%s' processor with ProcessorContext constructor", additionalProcessor));
+                }
+            } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                LOG.warn(format("Could not instantiate processor'%s'", additionalProcessor), e);
+            } catch (ClassCastException e) {
+                LOG.warn(format("Could not instantiate processor'%s', not a JarProcessor", additionalProcessor));
+            }
+        }
+    }
+
+    public void transform(@Nonnull ClassPath inputPath) throws TransformerException, IOException {
 
         for (ClassPathElement inputArchive : inputPath) {
             LOG.debug(format("Pre-scanning archive %s", inputArchive));

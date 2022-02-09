@@ -65,6 +65,7 @@ import org.basepom.inline.transformer.ClassPath;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.JarTransformer;
+import org.basepom.inline.transformer.TransformerException;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
@@ -247,7 +248,6 @@ public final class InlineMojo extends AbstractMojo {
         }
 
         try {
-
             ImmutableSetMultimap.Builder<InlineDependency, Dependency> dependencyBuilder = ImmutableSetMultimap.builder();
             ImmutableSet.Builder<Dependency> pomDependenciesToAdd = ImmutableSet.builder();
 
@@ -260,7 +260,7 @@ public final class InlineMojo extends AbstractMojo {
 
         } catch (UncheckedIOException e) {
             throw new MojoExecutionException(e.getCause());
-        } catch (IOException | DependencyResolutionException | ProjectBuildingException | XMLStreamException | JDOMException e) {
+        } catch (TransformerException | IOException | DependencyResolutionException | ProjectBuildingException | XMLStreamException | JDOMException e) {
             throw new MojoExecutionException(e);
         }
     }
@@ -275,7 +275,6 @@ public final class InlineMojo extends AbstractMojo {
         ImmutableSet<ArtifactIdentifier> directArtifacts = project.getDependencyArtifacts().stream()
                 .map(ArtifactIdentifier::new)
                 .collect(ImmutableSet.toImmutableSet());
-
 
         ImmutableList<Dependency> directDependencies = dependencyBuilder.mapProject(project,
                 (node, parents) -> directArtifacts.contains(new ArtifactIdentifier(node)));
@@ -379,7 +378,7 @@ public final class InlineMojo extends AbstractMojo {
         return predicate;
     }
 
-    private void rewriteJarFile(ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws IOException {
+    private void rewriteJarFile(ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws TransformerException, IOException {
         File outputJar = (this.outputJarFile != null) ? outputJarFile : inlinedArtifactFileWithClassifier();
 
         doJarTransformation(outputJar, dependencies);
@@ -426,7 +425,7 @@ public final class InlineMojo extends AbstractMojo {
         }
     }
 
-    private void doJarTransformation(File outputJar, ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws IOException {
+    private void doJarTransformation(File outputJar, ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws TransformerException, IOException {
 
         try (JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(outputJar))) {
             Consumer<ClassPathResource> jarConsumer = getJarWriter(jarOutputStream);

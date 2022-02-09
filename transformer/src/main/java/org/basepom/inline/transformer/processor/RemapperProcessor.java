@@ -35,6 +35,7 @@ import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.JarProcessor;
 import org.basepom.inline.transformer.Rename;
+import org.basepom.inline.transformer.TransformerException;
 import org.basepom.inline.transformer.util.SetMultiTrie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,9 +52,15 @@ public final class RemapperProcessor implements JarProcessor {
     private final SetMultiTrie<String, ClassPathResource> elementMatches = new SetMultiTrie<>();
     private final SetMultiTrie<String, ClassPathResource> packageNameMatches = new SetMultiTrie<>();
 
+
+    @Override
+    public int getPriority() {
+        return 70;
+    }
+
     @CheckForNull
     @Override
-    public ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource preScan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
 
         ClassNameUtils.ifClass(classPathResource.getName(), p -> {
             List<String> elements = ClassNameUtils.pathToElements(ClassNameUtils.stripClassExtension(classPathResource.getName()));
@@ -125,8 +132,8 @@ public final class RemapperProcessor implements JarProcessor {
     private static Set<ClassPathElement> computeCandidates(SetMultiTrie<String, ClassPathResource> trie, List<String> elements, ClassPathTag type) {
         return trie.getValues(elements)
                 .stream()
-                .filter(c -> c.getTags().contains(ClassPathTag.FILE))
-                .filter(c -> type == null || c.getTags().contains(type))
+                .filter(c -> c.containsTags(ClassPathTag.FILE))
+                .filter(c -> type == null || c.containsTags(type))
                 .flatMap(r -> r.getClassPathElement().stream())
                 .collect(Collectors.toUnmodifiableSet());
     }

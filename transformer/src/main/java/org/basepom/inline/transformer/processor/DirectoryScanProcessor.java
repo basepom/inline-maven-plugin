@@ -26,6 +26,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSortedSet;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +45,15 @@ public class DirectoryScanProcessor implements JarProcessor {
         this.outputSink = outputSink;
     }
 
+
+    @Override
+    public int getPriority() {
+        return 100;
+    }
+
     @CheckForNull
     @Override
-    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         String name = classPathResource.getName();
         List<String> elements = Splitter.on('/').splitToList(name);
         if (elements.size() > 1) {
@@ -62,7 +69,7 @@ public class DirectoryScanProcessor implements JarProcessor {
 
     @CheckForNull
     @Override
-    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws IOException {
+    public ClassPathResource process(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
         if (!wroteDirectories) {
             wroteDirectories = true;
             for (String directory : directories.build()) {

@@ -11,14 +11,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.basepom.inline.transformer.processor;
+package org.basepom.inline.transformer;
 
-/**
- * Deals with multiple service loaders files for the same loader.
- */
-public final class ServiceLoaderCollectingProcessor extends AbstractServiceFileCollectingProcessor {
+import static java.lang.String.format;
 
-    public ServiceLoaderCollectingProcessor(ProcessorContext processorContext) {
-        super(processorContext, "META-INF/services/");
+public class TransformerException extends Exception {
+
+    public TransformerException(String message, Object... args) {
+        super(format(message, args));
+    }
+
+    public TransformerException(String message, Throwable cause, Object... args) {
+        super(format(message, args), cause);
     }
 }
