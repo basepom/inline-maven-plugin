@@ -16,12 +16,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.basepom.maven</groupId>
-        <artifactId>inline-maven-plugin-root</artifactId>
+        <groupId>org.basepom.inline</groupId>
+        <artifactId>inline-root</artifactId>
         <version>0.4-SNAPSHOT</version>
     </parent>
 
-    <groupId>org.basepom</groupId>
     <artifactId>transformer</artifactId>
     <packaging>jar</packaging>
 

@@ -11,14 +11,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.basepom.inline.transformer.processor;
+package org.basepom.inline.transformer.optional;
+
+import org.basepom.inline.transformer.processor.AbstractServiceFileRewritingProcessor;
+import org.basepom.inline.transformer.processor.ProcessorContext;
 
 /**
- * Deals with multiple service loaders files for the same loader.
+ * Deals with sisu config files being inlined.
  */
-public final class SisuCollectingProcessor extends AbstractServiceFileCollectingProcessor {
+public final class SisuRewritingProcessor extends AbstractServiceFileRewritingProcessor {
 
-    public SisuCollectingProcessor() {
-        super("META-INF/sisu/");
+    public SisuRewritingProcessor(ProcessorContext processorContext) {
+        super(processorContext, "META-INF/sisu/");
     }
 }

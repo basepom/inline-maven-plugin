@@ -21,8 +21,8 @@
         <version>43</version>
     </parent>
 
-    <groupId>org.basepom.maven</groupId>
-    <artifactId>inline-maven-plugin-root</artifactId>
+    <groupId>org.basepom.inline</groupId>
+    <artifactId>inline-root</artifactId>
     <version>0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -82,13 +82,20 @@
     <modules>
         <module>transformer</module>
         <module>plugin</module>
+        <module>optional</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.basepom</groupId>
+                <groupId>org.basepom.inline</groupId>
                 <artifactId>transformer</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.basepom.inline</groupId>
+                <artifactId>transformer-optional</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
