@@ -54,6 +54,12 @@ public class ClassTransformerJarProcessor implements JarProcessor {
         this(Arrays.asList(classTransformers));
     }
 
+
+    @Override
+    public int getPriority() {
+        return 80;
+    }
+
     @CheckForNull
     @Override
     public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {

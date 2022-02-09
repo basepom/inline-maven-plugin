@@ -32,7 +32,9 @@ import org.basepom.inline.transformer.TransformerException;
  */
 public class MetaInfFileProcessor implements JarProcessor {
 
-    public MetaInfFileProcessor() {
+    @Override
+    public int getPriority() {
+        return 50;
     }
 
     @CheckForNull
@@ -48,10 +50,8 @@ public class MetaInfFileProcessor implements JarProcessor {
     }
 
     private ClassPathResource processMetaInfFile(@Nonnull ClassPathResource classPathResource) {
-        final ImmutableSet<ClassPathTag> tags = classPathResource.getTags();
-
         // anything in the root jar or anything that is a not resource stays.
-        if (tags.contains(ClassPathTag.ROOT_JAR) || !tags.contains(ClassPathTag.RESOURCE)) {
+        if (classPathResource.containsTags(ClassPathTag.ROOT_JAR) || !classPathResource.containsTags(ClassPathTag.RESOURCE)) {
             return classPathResource;
         }
 

@@ -33,8 +33,15 @@ public class DuplicateDiscardProcessor implements JarProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(DuplicateDiscardProcessor.class);
 
     private final Set<String> files = new HashSet<>();
+    private final boolean failOnDuplicates;
 
-    public DuplicateDiscardProcessor() {
+    public DuplicateDiscardProcessor(boolean failOnDuplicates) {
+        this.failOnDuplicates = failOnDuplicates;
+    }
+
+    @Override
+    public int getPriority() {
+        return 1000;
     }
 
     @CheckForNull
@@ -44,8 +51,12 @@ public class DuplicateDiscardProcessor implements JarProcessor {
             String name = classPathResource.getNameWithPrefix();
 
             if (!files.add(name)) {
-                LOG.warn(format("Entry '%s' is a duplicate, discarding!", name));
-                return null;
+                if (failOnDuplicates) {
+                    throw new TransformerException(format("Duplicate found: %s", name));
+                } else {
+                    LOG.warn(format("Entry '%s' is a duplicate, discarding!", name));
+                    return null;
+                }
             }
         }
         // emit to jar

@@ -22,12 +22,17 @@ import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.JarProcessor;
 import org.basepom.inline.transformer.TransformerException;
 
-public class JarWriterProcessor implements JarProcessor {
+public final class JarWriterProcessor implements JarProcessor {
 
     private final Consumer<ClassPathResource> outputSink;
 
     public JarWriterProcessor(Consumer<ClassPathResource> outputSink) {
         this.outputSink = outputSink;
+    }
+
+    @Override
+    public int getPriority() {
+        return 0;
     }
 
     @CheckForNull

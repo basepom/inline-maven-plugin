@@ -45,7 +45,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -150,6 +152,17 @@ public final class InlineMojo extends AbstractMojo {
     }
 
     /**
+     * Additional processors.
+     */
+    @Parameter
+    private List<String> additionalProcessors = ImmutableList.of();
+
+    // called by maven
+    public void setAdditionalProcessors(List<String> processors) {
+        this.additionalProcessors = ImmutableList.copyOf(processors);
+    }
+
+    /**
      * Hide inlined classes from IDE autocompletion.
      */
     @Parameter(defaultValue = "true", property = "inline.hide-classes")
@@ -192,6 +205,12 @@ public final class InlineMojo extends AbstractMojo {
      */
     @Parameter(defaultValue = "true", property = "inline.failOnNoMatch")
     public boolean failOnNoMatch = true;
+
+    /**
+     * Fail if any duplicate exists after processing the contents.
+     */
+    @Parameter(defaultValue = "true", property = "inline.failOnDuplicate")
+    public boolean failOnDuplicate = true;
 
     /**
      * The path to the output file for the inlined artifact. When this parameter is set, the created archive will neither replace the project's main artifact
@@ -295,16 +314,31 @@ public final class InlineMojo extends AbstractMojo {
         ImmutableSet.Builder<Dependency> directExcludes = ImmutableSet.builder();
 
         // first find all the direct dependencies. Add anything that is not hit to the additional exclude list
+
+        ImmutableSortedSet.Builder<String> directLogBuilder = ImmutableSortedSet.naturalOrder();
+
         directLoop:
         for (Dependency dependencyArtifact : directDependencies) {
             for (InlineDependency inlineDependency : inlineDependencies) {
                 if (inlineDependency.matchDependency(dependencyArtifact)) {
                     dependencyConsumer.accept(inlineDependency, dependencyArtifact);
-                    LOG.report(quiet, "Inlining direct dependency %s (matched %s)", dependencyArtifact, inlineDependency);
+                    directLogBuilder.add(dependencyArtifact.toString());
                     continue directLoop;
                 }
             }
             directExcludes.add(dependencyArtifact);
+        }
+
+        ImmutableSortedSet<String> directLog = directLogBuilder.build();
+
+        if (!quiet) {
+            LOG.info("Inlined dependencies");
+            LOG.info("====================");
+
+            for (String dependency : directLog) {
+                LOG.info("    %s", dependency);
+            }
+            LOG.info("");
         }
 
         Set<ArtifactIdentifier> excludes = directExcludes.build().stream()
@@ -316,6 +350,8 @@ public final class InlineMojo extends AbstractMojo {
         LOG.debug("Excludes after creating includes: %s", this.excludes);
 
         var directDependencyMap = dependencyMapBuilder.build().asMap();
+
+        ImmutableSortedSet.Builder<String> transitiveLogBuilder = ImmutableSortedSet.naturalOrder();
 
         for (var dependencyEntry : directDependencyMap.entrySet()) {
             InlineDependency inlineDependency = dependencyEntry.getKey();
@@ -330,7 +366,7 @@ public final class InlineMojo extends AbstractMojo {
                             pomBuilder.add(dependency);
                         } else {
                             dependencyConsumer.accept(inlineDependency, dependency);
-                            LOG.report(quiet, "Inlining transitive dependency %s (matched %s)", dependency, inlineDependency);
+                            transitiveLogBuilder.add(dependency.toString());
                         }
                     };
                 } else {
@@ -350,7 +386,16 @@ public final class InlineMojo extends AbstractMojo {
                         .forEach(consumer);
             }
         }
-        LOG.debug("Done!");
+
+        if (!quiet) {
+            LOG.info("");
+            LOG.info("Transitive dependencies");
+            LOG.info("=======================");
+            for (String dependency : Sets.difference(transitiveLogBuilder.build(), directLog)) {
+                LOG.info("    %s", dependency);
+            }
+            LOG.info("");
+        }
     }
 
     private String getId(Dependency dependency) {
@@ -429,7 +474,7 @@ public final class InlineMojo extends AbstractMojo {
 
         try (JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(outputJar))) {
             Consumer<ClassPathResource> jarConsumer = getJarWriter(jarOutputStream);
-            JarTransformer transformer = new JarTransformer(jarConsumer);
+            JarTransformer transformer = new JarTransformer(jarConsumer, true, ImmutableSet.copyOf(additionalProcessors));
 
             // Build the class path
             ClassPath classPath = new ClassPath(project.getBasedir());
@@ -441,7 +486,9 @@ public final class InlineMojo extends AbstractMojo {
                     (inlineDependency, dependency) -> {
                         var dependencyArtifact = dependency.getArtifact();
                         checkState(dependencyArtifact.getFile() != null, "Could not locate artifact file for %s", dependencyArtifact);
-                        classPath.addFile(dependencyArtifact.getFile(), prefix, dependencyArtifact.getGroupId(), dependencyArtifact.getArtifactId(), hideClasses);});
+                        classPath.addFile(dependencyArtifact.getFile(), prefix, dependencyArtifact.getGroupId(), dependencyArtifact.getArtifactId(),
+                                hideClasses);
+                    });
 
             transformer.transform(classPath);
         }
