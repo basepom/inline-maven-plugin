@@ -119,7 +119,7 @@ public final class InlineMojo extends AbstractMojo {
     public File pomFile = null;
 
     /**
-     * List of dependencies to inline.
+     * Direct dependencies to inline. Each dependency here must be listed in the project POM.
      */
     @Parameter
     private List<InlineDependency> inlineDependencies = ImmutableList.of();
@@ -130,7 +130,7 @@ public final class InlineMojo extends AbstractMojo {
     }
 
     /**
-     * List of things to include.
+     * Include dependencies. A dependency is given as <tt>groupId:artifactId</tt>. The wildcard character '*' is supported for group id and artifact id.
      */
     @Parameter
     private List<ArtifactIdentifier> includes = ImmutableList.of();
@@ -141,7 +141,7 @@ public final class InlineMojo extends AbstractMojo {
     }
 
     /**
-     * List of things to exclude.
+     * Exclude dependencies from inclusion. A dependency is given as <tt>groupId:artifactId</tt>. Any transitive dependency that has been pulled in can be excluded here. The wildcard character '*' is supported for group id and artifact id.
      */
     @Parameter
     private List<ArtifactIdentifier> excludes = ImmutableList.of();
@@ -152,7 +152,7 @@ public final class InlineMojo extends AbstractMojo {
     }
 
     /**
-     * Additional processors.
+     * Adds external jar processors. These must be on the dependency path for the plugin. See the "Additional Processors" documentation.
      */
     @Parameter
     private List<String> additionalProcessors = ImmutableList.of();
@@ -187,18 +187,18 @@ public final class InlineMojo extends AbstractMojo {
     public String prefix = null;
 
     /**
-     * If true, requires the dependencies to inline to be defined in scope <pre>provided</pre>. This is good practice as it allows the unchanged pom to be used
+     * If true, requires the dependencies to inline to be defined in scope <tt>provided</tt>. This is good practice as it allows the unchanged pom to be used
      * with the inlined artifact.
      */
     @Parameter(defaultValue = "true", property = "inline.requireProvided")
-    public boolean requireProvided = true;
+    public boolean requireProvided = false;
 
     /**
-     * If true, require the dependencies to inline to be defined as <pre>optional</pre>. This is good practice as it allows the unchanged pom to be used with
+     * If true, require the dependencies to inline to be defined as <tt>optional</tt>. This is good practice as it allows the unchanged pom to be used with
      * the inlined artifact.
      */
     @Parameter(defaultValue = "true", property = "inline.requireOptional")
-    public boolean requireOptional = true;
+    public boolean requireOptional = false;
 
     /**
      * Fail if an inline dependency is defined but the corresponding dependency is not actually found.
@@ -235,7 +235,7 @@ public final class InlineMojo extends AbstractMojo {
 
     /**
      * If true, replace the POM file with a new version that has all inlined dependencies removed. It is possible to write a POM file that works to build the
-     * jar with inlined dependencies and then use the same POM file for the resulting artifact (by having all dependencies marked as <pre>provided</pre> and
+     * jar with inlined dependencies and then use the same POM file for the resulting artifact (by having all dependencies marked as <tt>provided</tt> and
      * ensure that those dependencies do not have additional, transitive dependencies. This tends to be error prone and it is recommended to have the plugin
      * rewrite the POM file.
      */
