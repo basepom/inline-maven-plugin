@@ -30,7 +30,7 @@
         <basepom.site.skip>false</basepom.site.skip>
         <maven.site.deploy.skip>true</maven.site.deploy.skip>
         <scm-publish.url>scm:git:https://github.com/basepom/basepom.github.io.git</scm-publish.url>
-        <site-path>inline-maven-plugin</site-path>
+        <site-path>${project.artifactId}/development</site-path>
 
         <dep.maven-api.version>3.8.4</dep.maven-api.version>
         <dep.maven-resolver.version>1.6.3</dep.maven-resolver.version>
@@ -403,4 +403,12 @@
             </plugin>
         </plugins>
     </reporting>
+    <profiles>
+        <profile>
+            <id>plugin-release</id>
+            <properties>
+                <site-path>${project.artifactId}/release-${project.version}</site-path>
+            </properties>
+        </profile>
+    </profiles>
 </project>

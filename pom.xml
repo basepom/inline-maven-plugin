@@ -71,6 +71,7 @@
         <!-- site requires full javadoc generation -->
         <basepom.javadoc.skip>false</basepom.javadoc.skip>
         <basepom.release.profiles>basepom.oss-release,plugin-release</basepom.release.profiles>
+        <!-- site is built in the plugin subdirectory -->
         <basepom.site.skip>true</basepom.site.skip>
 
         <dep.slf4j.version>1.7.32</dep.slf4j.version>
@@ -150,7 +151,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <dependencies>
-                    <!-- Fluido is listed here for version update checking only -->
                     <dependency>
                         <groupId>org.apache.maven.skins</groupId>
                         <artifactId>maven-fluido-skin</artifactId>
