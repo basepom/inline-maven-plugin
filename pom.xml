@@ -71,6 +71,7 @@
         <!-- site requires full javadoc generation -->
         <basepom.javadoc.skip>false</basepom.javadoc.skip>
         <basepom.release.profiles>basepom.oss-release,plugin-release</basepom.release.profiles>
+        <basepom.release.tag-name-format>inline-maven-plugin-@{project.version}</basepom.release.tag-name-format>
         <!-- site is built in the plugin subdirectory -->
         <basepom.site.skip>true</basepom.site.skip>
 
