@@ -85,6 +85,10 @@ public final class InlineMojo extends AbstractMojo {
 
     private static final PluginLog LOG = new PluginLog(InlineMojo.class);
 
+    private static final Predicate<Dependency> EXCLUDE_SYSTEM_SCOPE = dependency -> !JavaScopes.SYSTEM.equals(dependency.getScope());
+    private static final Predicate<Dependency> EXCLUDE_PROVIDED_SCOPE = dependency -> !JavaScopes.PROVIDED.equals(dependency.getScope());
+
+
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     public MavenProject project;
 
@@ -141,7 +145,8 @@ public final class InlineMojo extends AbstractMojo {
     }
 
     /**
-     * Exclude dependencies from inclusion. A dependency is given as <tt>groupId:artifactId</tt>. Any transitive dependency that has been pulled in can be excluded here. The wildcard character '*' is supported for group id and artifact id.
+     * Exclude dependencies from inclusion. A dependency is given as <tt>groupId:artifactId</tt>. Any transitive dependency that has been pulled in can be
+     * excluded here. The wildcard character '*' is supported for group id and artifact id.
      */
     @Parameter
     private List<ArtifactIdentifier> excludes = ImmutableList.of();
@@ -185,20 +190,6 @@ public final class InlineMojo extends AbstractMojo {
      */
     @Parameter(required = true, property = "inline.prefix")
     public String prefix = null;
-
-    /**
-     * If true, requires the dependencies to inline to be defined in scope <tt>provided</tt>. This is good practice as it allows the unchanged pom to be used
-     * with the inlined artifact.
-     */
-    @Parameter(defaultValue = "true", property = "inline.requireProvided")
-    public boolean requireProvided = false;
-
-    /**
-     * If true, require the dependencies to inline to be defined as <tt>optional</tt>. This is good practice as it allows the unchanged pom to be used with
-     * the inlined artifact.
-     */
-    @Parameter(defaultValue = "true", property = "inline.requireOptional")
-    public boolean requireOptional = false;
 
     /**
      * Fail if an inline dependency is defined but the corresponding dependency is not actually found.
@@ -302,9 +293,9 @@ public final class InlineMojo extends AbstractMojo {
         ImmutableList<Dependency> projectDependencies = dependencyBuilder.mapProject(project,
                 ScopeLimitingFilter.computeDependencyScope(ScopeLimitingFilter.COMPILE_PLUS_RUNTIME));
 
-        Map<String, Dependency> dependencyScopes = projectDependencies.stream()
+        Map<String, Dependency> idMap = projectDependencies.stream()
                 .filter(dependency -> dependency.getArtifact() != null)
-                .collect(ImmutableMap.toImmutableMap(this::getId, Functions.identity()));
+                .collect(ImmutableMap.toImmutableMap(InlineMojo::getId, Functions.identity()));
 
         BiConsumer<InlineDependency, Dependency> dependencyConsumer = (inlineDependency, dependency) -> {
             LOG.debug("%s matches %s for inlining.", inlineDependency, dependency);
@@ -317,17 +308,20 @@ public final class InlineMojo extends AbstractMojo {
 
         ImmutableSortedSet.Builder<String> directLogBuilder = ImmutableSortedSet.naturalOrder();
 
-        directLoop:
-        for (Dependency dependencyArtifact : directDependencies) {
-            for (InlineDependency inlineDependency : inlineDependencies) {
-                if (inlineDependency.matchDependency(dependencyArtifact)) {
-                    dependencyConsumer.accept(inlineDependency, dependencyArtifact);
-                    directLogBuilder.add(dependencyArtifact.toString());
-                    continue directLoop;
-                }
-            }
-            directExcludes.add(dependencyArtifact);
-        }
+        directDependencies.stream()
+                // remove anything that does not match the filter set.
+                // optionals also need to be matched by the inline dependency below
+                .filter(createFilterSet(true))
+                .forEach(dependency -> {
+                    for (InlineDependency inlineDependency : inlineDependencies) {
+                        if (inlineDependency.matchDependency(dependency)) {
+                            dependencyConsumer.accept(inlineDependency, dependency);
+                            directLogBuilder.add(dependency.toString());
+                            return;
+                        }
+                    }
+                    directExcludes.add(dependency);
+                });
 
         ImmutableSortedSet<String> directLog = directLogBuilder.build();
 
@@ -378,11 +372,11 @@ public final class InlineMojo extends AbstractMojo {
                         .stream()
                         // replace deps in the transitive set with deps in the root set if present (will
                         // override the scope here with the root scope)
-                        .map(dependency -> dependencyScopes.getOrDefault(getId(dependency), dependency))
-                        // remove everything that is excluded by the filter set
-                        .filter(createFilterSet())
+                        .map(dependency -> idMap.getOrDefault(getId(dependency), dependency))
+                        // remove system and provided dependencies, keep optionals if allowed
+                        .filter(createFilterSet(inlineDependency.isInlineOptionals()))
                         // make sure that the inline dependency actually pulls the dep in.
-                        .filter(dependency -> isIncluded(inlineDependency, dependency))
+                        .filter(this::isDependencyIncluded)
                         .forEach(consumer);
             }
         }
@@ -398,30 +392,40 @@ public final class InlineMojo extends AbstractMojo {
         }
     }
 
-    private String getId(Dependency dependency) {
+    private static String getId(Dependency dependency) {
         Artifact artifact = dependency.getArtifact();
         checkState(artifact != null, "Artifact for dependency %s is null!", dependency);
 
         return Joiner.on(':').join(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier());
     }
 
-    private Predicate<Dependency> createFilterSet() {
+    private Predicate<Dependency> createFilterSet(boolean includeOptional) {
 
         // filter system scope dependencies. Those are never inlined.
-        Predicate<Dependency> predicate = dependency -> !JavaScopes.SYSTEM.equals(dependency.getScope());
+        Predicate<Dependency> predicate = EXCLUDE_SYSTEM_SCOPE;
+        predicate = predicate.and(EXCLUDE_PROVIDED_SCOPE);
 
-        // filter all provided unless allowed by the flag
-        if (this.requireProvided) {
-            predicate = predicate.and(dependency -> JavaScopes.PROVIDED.equals(dependency.getScope()));
+        if (!includeOptional) {
+            predicate = predicate.and(Predicate.not(Dependency::isOptional));
         }
-
-        // filter all optional unless allowed by the flag
-        if (this.requireOptional) {
-            predicate = predicate.and(Dependency::isOptional);
-        }
-
         return predicate;
     }
+
+    public boolean isDependencyIncluded(Dependency dependency) {
+
+        boolean included = this.includes.stream()
+                .map(artifactIdentifier -> artifactIdentifier.matchDependency(dependency))
+                .findFirst()
+                .orElse(this.includes.isEmpty());
+
+        boolean excluded = this.excludes.stream()
+                .map(artifactIdentifier -> artifactIdentifier.matchDependency(dependency))
+                .findFirst()
+                .orElse(false);
+
+        return included && !excluded;
+    }
+
 
     private void rewriteJarFile(ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws TransformerException, IOException {
         File outputJar = (this.outputJarFile != null) ? outputJarFile : inlinedArtifactFileWithClassifier();
@@ -519,25 +523,5 @@ public final class InlineMojo extends AbstractMojo {
                 artifact.getArtifactHandler().getExtension());
 
         return new File(this.outputDirectory, inlineName);
-    }
-
-    public boolean isIncluded(InlineDependency inlineDependency, Dependency dependency) {
-
-        // exclude optional dependencies unless explicitly included.
-        if (dependency.isOptional() && !inlineDependency.isInlineOptionals()) {
-            return false;
-        }
-
-        boolean included = this.includes.stream()
-                .map(artifactIdentifier -> artifactIdentifier.matchDependency(dependency))
-                .findFirst()
-                .orElse(this.includes.isEmpty());
-
-        boolean excluded = this.excludes.stream()
-                .map(artifactIdentifier -> artifactIdentifier.matchDependency(dependency))
-                .findFirst()
-                .orElse(false);
-
-        return included && !excluded;
     }
 }

@@ -84,8 +84,6 @@ The `inline:inline` goal is the main goal and should be called in the `package` 
     <hideClasses>true (false)</hideClasses>
     <inlinedArtifactAttached>false (true)</inlinedArtifactAttached>
     <quiet>false (true)</quiet>
-    <requireOptional>false (true)</requireOptional>
-    <requireProvided>false (true)</requireProvided>
     <replacePomFile>true (false)</replacePomFile>
     <skip>false (true)</skip>
 
@@ -123,8 +121,6 @@ The `inline:inline` goal is the main goal and should be called in the `package` 
 | `outputPomFile` | string | - | Sets an explicit output file for the rewritten pom file. If unused, write the POM using the name of the original POM file, prefixed with `new-`. |
 | `pomFile` | string | `${project.file}` | The POM file for the project. This will be read to create the rewritten POM. |
 | `quiet` | boolean | `false` | If true, do not output any information besides errors or warnings. |
-| `requireOptional` | boolean | `false` | If true, dependencies to inline must be marked as `optional` in the POM. |
-| `requireProvided` | boolean | `false` | If true, dependencies to inline must be in `provided` scope. |
 | `replacePomFile` | boolean | `true` | Replace the POM file in the build cycle with the rewritten POM file. This does *NOT* rewrite the POM file on disk but uses it for all subsequent steps in the build cycle (including `install` and `deploy`). |
 | `skip` | boolean | `false` | If true, skips execution of the plugin. |
 | `inlineDependencies` | list of `inlineDependency` elements | - | see below. |

@@ -64,8 +64,6 @@
                         <failOnNoMatch>true</failOnNoMatch>
                         <rewritePomFile>true</rewritePomFile>
                         <inlineArtifactAttached>true</inlineArtifactAttached>
-                        <requireProvided>true</requireProvided>
-                        <requireOptional>true</requireOptional>
                     </configuration>
                 </plugin>
             </plugins>
