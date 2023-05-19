@@ -15,39 +15,40 @@ inlined.
 Inline a single dependency:
 
 ```xml
-
-<dependencies>
+<project>
+  <dependencies>
     <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr4-runtime</artifactId>
-        <version>4.9.2</version>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr4-runtime</artifactId>
+      <version>4.9.2</version>
     </dependency>
-</dependencies>
-<build>
-<plugins>
-    <plugin>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
         <groupId>org.basepom.maven</groupId>
         <artifactId>inline-maven-plugin</artifactId>
         <version>1.0</version>
         <configuration>
-            <prefix>relocated</prefix>
-            <inlineDependencies>
-                <inlineDependency>
-                    <artifact>org.antlr:antlr4-runtime</artifact>
-                </inlineDependency>
-            </inlineDependencies>
+          <prefix>relocated</prefix>
+          <inlineDependencies>
+            <inlineDependency>
+              <artifact>org.antlr:antlr4-runtime</artifact>
+            </inlineDependency>
+          </inlineDependencies>
         </configuration>
         <executions>
-            <execution>
-                <phase>package</phase>
-                <goals>
-                    <goal>inline</goal>
-                </goals>
-            </execution>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>inline</goal>
+            </goals>
+          </execution>
         </executions>
-    </plugin>
-</plugins>
-</build>
+      </plugin>
+    </plugins>
+  </build>
+</project>
 ```
 
 The plugin will put all content of the inlined dependency under the `relocated` prefix and rewrite the code to use these relocated classes and resources.
@@ -58,84 +59,83 @@ The `inline:inline` goal is the main goal and should be called in the `package` 
 
 ```xml
 <configuration>
-    <inlineDependencies>
-        <inlineDependency>
-            <artifact> ...groupId:artifactId... </artifact>
-            <inlineTransitive>true|false</inlineTransitive>
-            <inlineOptionals>true|false|</inlineOptionals>
-        </inlineDependency>
+  <inlineDependencies>
+    <inlineDependency>
+      <artifact> ...groupId:artifactId... </artifact>
+      <inlineTransitive>true|false</inlineTransitive>
+      <inlineOptionals>true|false|</inlineOptionals>
+    </inlineDependency>
         ....
-    </inlineDependencies>
+  </inlineDependencies>
 
-    <prefix> ...relocation prefix... </prefix>
+  <prefix> ...relocation prefix... </prefix>
 
-    <includes>
-        <include> ...groupId:artifactId... </include>
-        ....
-    </includes>
+  <includes>
+    <include> ...groupId:artifactId... </include>
+      ....
+  </includes>
 
-    <excludes>
-        <exclude> ...groupId:artifactId... </exclude>
-        ....
-    </excludes>
+  <excludes>
+    <exclude> ...groupId:artifactId... </exclude>
+      ....
+  </excludes>
 
-    <failOnDuplicate>true (false)</failOnDuplicate>
-    <failOnNoMatch>true (false)</failOnNoMatch>
-    <hideClasses>true (false)</hideClasses>
-    <inlinedArtifactAttached>false (true)</inlinedArtifactAttached>
-    <quiet>false (true)</quiet>
-    <replacePomFile>true (false)</replacePomFile>
-    <skip>false (true)</skip>
+  <failOnDuplicate>true (false)</failOnDuplicate>
+  <failOnNoMatch>true (false)</failOnNoMatch>
+  <hideClasses>true (false)</hideClasses>
+  <inlinedArtifactAttached>false (true)</inlinedArtifactAttached>
+  <quiet>false (true)</quiet>
+  <replacePomFile>true (false)</replacePomFile>
+  <skip>false (true)</skip>
 
-    <inlinedClassifierName>inlined</inlinedClassifierName>
-    <outputJarFile> ...file name... </outputJarFile>
-    <outputPomFile> ...file name... </outputPomFile>
+  <inlinedClassifierName>inlined</inlinedClassifierName>
+  <outputJarFile> ...file name... </outputJarFile>
+  <outputPomFile> ...file name... </outputPomFile>
 
-    <additionalProcessors>
-        <additionalProcessor> ... class name of processor... </additionalProcessor>
-        ....
-    <additionalProcessors>
+  <additionalProcessors>
+    <additionalProcessor> ... class name of processor... </additionalProcessor>
+      ....
+  </additionalProcessors>
 
-    <outputDirectory>${project.build.directory}</outputDirectory>
-    <pomFile>${project.file}</pomFile>
+  <outputDirectory>${project.build.directory}</outputDirectory>
+  <pomFile>${project.file}</pomFile>
 </configuration>
 ```
 
-#### Required configuration paramters
+#### Required configuration parameters
 
-| Option | Type | Default | Function |
-| ------ |-------------------------------------|---------|--------------------|
-| `prefix` | string | - | Defined the root package for all relocated classes. |
+| Option   | Type   | Default | Function                                            |
+|----------|--------|---------|-----------------------------------------------------|
+| `prefix` | string | -       | Defined the root package for all relocated classes. |
 
 #### Optional configuration parameters
 
-| Option | Type | Default | Function |
-| ------ |-------------------------------------|---------|-------------------------------------------------------------------|
-| `failOnDuplicate` | boolean | `true` | Any duplicate entry in the rewritten jar file will fail the build. If `false`, duplicates will be discarded. |
-| `failOnNoMatch` | boolean | `true` | Each `inlineDependency` item must match a project dependency. Fail the build otherwise. |
-| `hideClasses` | boolean | `true` | If true, rewrites all classes in a jar to be not visible for IDE auto-completion. |
-| `inlinedArtifactAttached` | boolean | `false` | If true, attach the rewritten jar using the `inlinedClassifierName`, otherwise replace the main artifact. |
-| `inlinedClassifierName` | string | `inlined` | If the rewritten jar gets attached, use this value as the classifier. |
-| `outputDirectory` | string | `${project.build.directory}` | The plugin writes the rewritten jar file in this directory. |
-| `outputJarFile` | string | - | Sets an explicit output file for the rewritten jar file. If unused, write the jar in the project build directory using the `inlinedClassifierName` classifier. |
-| `outputPomFile` | string | - | Sets an explicit output file for the rewritten pom file. If unused, write the POM using the name of the original POM file, prefixed with `new-`. |
-| `pomFile` | string | `${project.file}` | The POM file for the project. This will be read to create the rewritten POM. |
-| `quiet` | boolean | `false` | If true, do not output any information besides errors or warnings. |
-| `replacePomFile` | boolean | `true` | Replace the POM file in the build cycle with the rewritten POM file. This does *NOT* rewrite the POM file on disk but uses it for all subsequent steps in the build cycle (including `install` and `deploy`). |
-| `skip` | boolean | `false` | If true, skips execution of the plugin. |
-| `inlineDependencies` | list of `inlineDependency` elements | - | see below. |
-| `includes` | explicit list of dependencies to include | - | see below. |
-| `excludes` | explicit list of dependencies to exclude | - | see below. |
-| `additionalProcessors` | list of class names | - | Additional jar processors to rewrite the jar. See [Additional Processors] for more information.
-
+| Option                    | Type                                     | Default                      | Function                                                                                                                                                                                                      |
+|---------------------------|------------------------------------------|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `failOnDuplicate`         | boolean                                  | `true`                       | Any duplicate entry in the rewritten jar file will fail the build. If `false`, duplicates will be discarded.                                                                                                  |
+| `failOnNoMatch`           | boolean                                  | `true`                       | Each `inlineDependency` item must match a project dependency. Fail the build otherwise.                                                                                                                       |
+| `hideClasses`             | boolean                                  | `true`                       | If true, rewrites all classes in a jar to be not visible for IDE auto-completion.                                                                                                                             |
+| `inlinedArtifactAttached` | boolean                                  | `false`                      | If true, attach the rewritten jar using the `inlinedClassifierName`, otherwise replace the main artifact.                                                                                                     |
+| `inlinedClassifierName`   | string                                   | `inlined`                    | If the rewritten jar gets attached, use this value as the classifier.                                                                                                                                         |
+| `outputDirectory`         | string                                   | `${project.build.directory}` | The plugin writes the rewritten jar file in this directory.                                                                                                                                                   |
+| `outputJarFile`           | string                                   | -                            | Sets an explicit output file for the rewritten jar file. If unused, write the jar in the project build directory using the `inlinedClassifierName` classifier.                                                |
+| `outputPomFile`           | string                                   | -                            | Sets an explicit output file for the rewritten pom file. If unused, write the POM using the name of the original POM file, prefixed with `new-`.                                                              |
+| `pomFile`                 | string                                   | `${project.file}`            | The POM file for the project. This will be read to create the rewritten POM.                                                                                                                                  |
+| `quiet`                   | boolean                                  | `false`                      | If true, do not output any information besides errors or warnings.                                                                                                                                            |
+| `replacePomFile`          | boolean                                  | `true`                       | Replace the POM file in the build cycle with the rewritten POM file. This does *NOT* rewrite the POM file on disk but uses it for all subsequent steps in the build cycle (including `install` and `deploy`). |
+| `skip`                    | boolean                                  | `false`                      | If true, skips execution of the plugin.                                                                                                                                                                       |
+| `inlineDependencies`      | list of `inlineDependency` elements      | -                            | see below.                                                                                                                                                                                                    |
+| `includes`                | explicit list of dependencies to include | -                            | see below.                                                                                                                                                                                                    |
+| `excludes`                | explicit list of dependencies to exclude | -                            | see below.                                                                                                                                                                                                    |
+| `additionalProcessors`    | list of class names                      | -                            | Additional jar processors to rewrite the jar. See [Additional Processors] for more information.                                                                                                               |
 
 #### Defining dependencies to inline with `inlineDependencies`:
 
-| Option | Type | Default | Function |
-| ------ | ---- | ------- | -------- |
-| `artifact` | string | - | Defines the artifact to inline. Must be given as `groupId:artifactId`. |
+| Option             | Type    | Default | Function                                                                                                                                        |
+|--------------------|---------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `artifact`         | string  | -       | Defines the artifact to inline. Must be given as `groupId:artifactId`.                                                                          |
 | `inlineTransitive` | boolean | `false` | If true, also inline all transitive dependencies. If false, transitive dependencies are added to the rewritten POM file as direct dependencies. |
-| `inlineOptionals` | boolean `false` | If true, add all optional, transitive dependencies as well. If false, ignore optional dependencies. |
+| `inlineOptionals`  | boolean | `false` | If true, add all optional, transitive dependencies as well. If false, ignore optional dependencies.                                             |
 
 
 #### Including and excluding dependencies
