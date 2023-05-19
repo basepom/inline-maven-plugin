@@ -280,21 +280,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration combine.children="append">
-                    <author>false</author>
-                    <detectJavaApiLink>true</detectJavaApiLink>
-                    <linksource>true</linksource>
-                    <nodeprecated>false</nodeprecated>
-                    <nohelp>true</nohelp>
-                </configuration>
-            </plugin>
-        </plugins>
-    </reporting>
     <profiles>
         <profile>
             <id>plugin-release</id>

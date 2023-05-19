@@ -290,7 +290,19 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-plugin-plugin</artifactId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration combine.children="append">
+                    <author>false</author>
+                    <detectJavaApiLink>true</detectJavaApiLink>
+                    <linksource>true</linksource>
+                    <nodeprecated>false</nodeprecated>
+                    <nohelp>true</nohelp>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-report-plugin</artifactId>
+                <version>${dep.plugin.plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -299,7 +311,6 @@
                 <reportSets>
                     <reportSet>
                         <reports>
-                            <report>report-only</report>
                             <report>failsafe-report-only</report>
                         </reports>
                     </reportSet>
