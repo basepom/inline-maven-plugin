@@ -73,6 +73,7 @@
         <project.build.targetJdk>11</project.build.targetJdk>
         <!-- site requires full javadoc generation -->
         <basepom.javadoc.skip>false</basepom.javadoc.skip>
+        <basepom.nexus-staging.staging-url>https://oss.sonatype.org/</basepom.nexus-staging.staging-url>
         <basepom.release.profiles>basepom.oss-release,plugin-release</basepom.release.profiles>
         <basepom.release.tag-name-format>inline-maven-plugin-@{project.version}</basepom.release.tag-name-format>
         <!-- site is built in the plugin subdirectory -->
