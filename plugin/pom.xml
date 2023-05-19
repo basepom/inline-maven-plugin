@@ -36,9 +36,9 @@
         <dep.maven-resolver.version>1.6.3</dep.maven-resolver.version>
         <dep.plexus.version>2.1.1</dep.plexus.version>
         <dep.maven-shared-utils.version>3.3.4</dep.maven-shared-utils.version>
-        <dep.plugin.plugin.version>3.6.2</dep.plugin.plugin.version>
-        <dep.plugin.gmavenplus.plugin>1.13.1</dep.plugin.gmavenplus.plugin>
-        <dep.groovy.version>3.0.9</dep.groovy.version>
+        <dep.plugin.plugin.version>3.9.0</dep.plugin.plugin.version>
+        <dep.plugin.gmavenplus.plugin>2.1.0</dep.plugin.gmavenplus.plugin>
+        <dep.groovy.version>4.0.10</dep.groovy.version>
     </properties>
 
     <dependencies>
@@ -269,12 +269,12 @@
                         <version>${dep.guava.version}</version>
                     </dependency>
                     <dependency>
-                        <groupId>org.codehaus.groovy</groupId>
+                        <groupId>org.apache.groovy</groupId>
                         <artifactId>groovy</artifactId>
                         <version>${dep.groovy.version}</version>
                     </dependency>
                     <dependency>
-                        <groupId>org.codehaus.groovy</groupId>
+                        <groupId>org.apache.groovy</groupId>
                         <artifactId>groovy-xml</artifactId>
                         <version>${dep.groovy.version}</version>
                     </dependency>
@@ -332,25 +332,6 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.1.1</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>index</report>
-                            <report>summary</report>
-                            <report>team</report>
-                            <report>scm</report>
-                            <report>issue-management</report>
-                            <report>ci-management</report>
-                            <report>dependency-info</report>
-                            <report>dependencies</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
             </plugin>
             <plugin>
@@ -362,41 +343,6 @@
                         <reports>
                             <report>report-only</report>
                             <report>failsafe-report-only</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jxr-plugin</artifactId>
-                <version>${dep.plugin.jxr.version}</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-pmd-plugin</artifactId>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>pmd</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            <plugin>
-                <groupId>com.github.spotbugs</groupId>
-                <artifactId>spotbugs-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>report</report>
                         </reports>
                     </reportSet>
                 </reportSets>
