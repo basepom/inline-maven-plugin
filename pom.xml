@@ -67,6 +67,9 @@
     </issueManagement>
 
     <properties>
+        <!-- maven 3.9.x insanity -->
+        <maven.plugin.validation>BRIEF</maven.plugin.validation>
+
         <project.build.targetJdk>11</project.build.targetJdk>
         <!-- site requires full javadoc generation -->
         <basepom.javadoc.skip>false</basepom.javadoc.skip>
