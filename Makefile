@@ -12,6 +12,9 @@ clean:
 install:
 	${MAVEN} clean install
 
+install-fast:
+	${MAVEN} -Pfast clean install
+
 test:
 	${MAVEN} surefire:test
 

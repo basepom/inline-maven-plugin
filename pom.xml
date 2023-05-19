@@ -78,6 +78,9 @@
         <basepom.release.tag-name-format>inline-maven-plugin-@{project.version}</basepom.release.tag-name-format>
         <!-- site is built in the plugin subdirectory -->
         <basepom.site.skip>true</basepom.site.skip>
+        <basepom.site.scm.skip-deploy>true</basepom.site.scm.skip-deploy>
+        <basepom.site.scm.id>github</basepom.site.scm.id>
+        <basepom.site.scm.url>scm:git:https://github.com/basepom/basepom.github.io.git</basepom.site.scm.url>
 
         <dep.slf4j.version>1.7.32</dep.slf4j.version>
         <dep.guava.version>31.0.1-jre</dep.guava.version>
@@ -191,6 +194,15 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <!-- Profile to skip time-consuming steps. -->
+            <id>fast</id>
+            <properties>
+                <basepom.check.skip-all>true</basepom.check.skip-all>
+                <skipITs>true</skipITs>
+                <skipTests>true</skipTests>
+            </properties>
         </profile>
     </profiles>
 </project>
