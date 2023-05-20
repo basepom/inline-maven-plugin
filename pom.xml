@@ -88,8 +88,6 @@
         <dep.guava.version>31.1-jre</dep.guava.version>
         <dep.asm.version>9.5</dep.asm.version>
         <dep.junit5.version>5.9.3</dep.junit5.version>
-        <dep.plexus.version>2.1.1</dep.plexus.version>
-        <dep.maven-shared-utils.version>3.4.2</dep.maven-shared-utils.version>
         <dep.maven-loader.version>2.1.0</dep.maven-loader.version>
         <dep.groovy.version>4.0.12</dep.groovy.version>
         <dep.jdom2.version>2.0.6.1</dep.jdom2.version>
@@ -100,6 +98,10 @@
         <dep.maven-api.version>3.8.7</dep.maven-api.version>
         <!-- keep on 1.6 for maven 3.8 compatibility - see https://maven.apache.org/resolver/maven-3.8.x.html -->
         <dep.maven-resolver.version>1.6.3</dep.maven-resolver.version>
+
+        <!-- other maven stuff -->
+        <dep.plexus.version>2.1.1</dep.plexus.version>
+        <dep.maven-shared-utils.version>3.4.2</dep.maven-shared-utils.version>
 
         <!-- plugin tooling -->
         <dep.plugin.plugin.version>3.9.0</dep.plugin.plugin.version>
