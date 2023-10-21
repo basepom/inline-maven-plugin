@@ -63,7 +63,7 @@ public class MultiReleaseJarProcessor implements JarProcessor {
             int version = -1;
             try {
                 version = Integer.parseInt(elements.get(2));
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignored) {
                 // ignored
             }
             if (version > 8 && elements.size() > 3) { // MR version minimum is 9, see spec

@@ -32,6 +32,7 @@ import com.google.common.collect.Iterators;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
+@SuppressWarnings("PMD.ClassWithOnlyPrivateConstructorsShouldBeFinal")
 public abstract class ClassPathElement implements Iterable<ClassPathResource> {
 
     private final File archiveFile;
@@ -95,6 +96,7 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
         return artifactId;
     }
 
+    @Override
     public abstract Iterator<ClassPathResource> iterator();
 
     private class ZipIterator implements Iterator<ClassPathResource>, Closeable {
@@ -130,7 +132,7 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
         public void close() {
             try {
                 zipFile.close();
-            } catch (IOException e) {
+            } catch (IOException ignored) {
                 // ignore
             }
         }

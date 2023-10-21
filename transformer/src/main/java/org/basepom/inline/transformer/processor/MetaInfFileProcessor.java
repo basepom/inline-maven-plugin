@@ -21,7 +21,6 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableSet;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.JarProcessor;

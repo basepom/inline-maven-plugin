@@ -16,8 +16,8 @@ package org.basepom.inline.mojo;
 import static java.lang.String.format;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.Writer;
 import java.util.List;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -44,19 +44,16 @@ import org.jdom2.xpath.XPathFactory;
 
 final class PomUtil {
 
-    private final String pomText;
     private final Document pomDocument;
 
     PomUtil(String pomText) throws XMLStreamException, JDOMException {
-        this.pomText = pomText;
-
         final XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
         final XMLStreamReader reader = xmlInputFactory.createXMLStreamReader(new StringReader(pomText));
         final StAXStreamBuilder builder = new StAXStreamBuilder();
         this.pomDocument = builder.build(reader);
     }
 
-    void writePom(OutputStreamWriter writer) throws IOException {
+    void writePom(Writer writer) throws IOException {
         // this is a hack because jdom2 has the annoying habit of removing a newline between
         // a leading comment and the root element.
         if (pomDocument.getContentSize() > 1
@@ -69,6 +66,7 @@ final class PomUtil {
         xml.setFormat(Format.getPrettyFormat()
                 .setLineSeparator(LineSeparator.SYSTEM));
         xml.output(pomDocument, writer);
+        writer.flush();
     }
 
     void removeDependency(Dependency dependency) {

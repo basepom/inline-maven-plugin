@@ -15,9 +15,6 @@ package org.basepom.inline.mojo;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import java.util.List;
-
-import com.google.common.collect.ImmutableList;
 import org.apache.maven.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
 
@@ -27,10 +24,6 @@ public final class InlineDependency {
 
     private boolean transitive = true;
     private boolean optionals = false;
-
-
-    public InlineDependency() {
-    }
 
     public void setArtifact(String artifact) {
         this.artifactIdentifier = new ArtifactIdentifier(artifact);

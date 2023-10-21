@@ -18,8 +18,8 @@ import static org.basepom.inline.transformer.util.ExceptionUtil.wrapIOException;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -158,6 +158,7 @@ public final class ClassPathResource {
 
     @Nonnull
     @SuppressFBWarnings("EI_EXPOSE_REP")
+    @SuppressWarnings("PMD.MethodReturnsInternalArray")
     public byte[] getContent() {
 
         if (content == null) {
@@ -192,6 +193,6 @@ public final class ClassPathResource {
     }
 
     private static Supplier<InputStream> supplierForFile(File file) {
-        return () -> wrapIOException(() -> new BufferedInputStream(new FileInputStream(file)));
+        return () -> wrapIOException(() -> new BufferedInputStream(Files.newInputStream(file.toPath())));
     }
 }

@@ -18,18 +18,16 @@ import static java.lang.String.format;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -90,37 +88,37 @@ public final class InlineMojo extends AbstractMojo {
 
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
-    public MavenProject project;
+    private MavenProject project;
 
     @Parameter(defaultValue = "${session}", readonly = true, required = true)
-    public MavenSession mavenSession;
+    private MavenSession mavenSession;
 
     @Parameter(defaultValue = "${reactorProjects}", readonly = true, required = true)
-    public List<MavenProject> reactorProjects;
+    private List<MavenProject> reactorProjects;
 
     @Component
-    public ProjectBuilder mavenProjectBuilder;
+    private ProjectBuilder mavenProjectBuilder;
 
     @Component
-    public ProjectDependenciesResolver projectDependenciesResolver;
+    private ProjectDependenciesResolver projectDependenciesResolver;
 
     @Component
-    public RepositorySystem repositorySystem;
+    private RepositorySystem repositorySystem;
 
     @Component
-    public MavenProjectHelper projectHelper;
+    private MavenProjectHelper projectHelper;
 
     /**
      * The destination directory for the inlined artifact.
      */
     @Parameter(defaultValue = "${project.build.directory}")
-    public File outputDirectory = null;
+    private File outputDirectory;
 
     /**
      * The POM file to use.
      */
     @Parameter(property = "inline.pomFile", defaultValue = "${project.file}")
-    public File pomFile = null;
+    private File pomFile;
 
     /**
      * Direct dependencies to inline. Each dependency here must be listed in the project POM.
@@ -171,37 +169,37 @@ public final class InlineMojo extends AbstractMojo {
      * Hide inlined classes from IDE autocompletion.
      */
     @Parameter(defaultValue = "true", property = "inline.hide-classes")
-    public boolean hideClasses = true;
+    private boolean hideClasses;
 
     /**
      * Skip the execution.
      */
     @Parameter(defaultValue = "false", property = "inline.skip")
-    public boolean skip = false;
+    private boolean skip;
 
     /**
      * Silence all non-output and non-error messages.
      */
     @Parameter(defaultValue = "false", property = "inline.quiet")
-    public boolean quiet = false;
+    private boolean quiet;
 
     /**
      * Defines the package prefix for all relocated classes. This prefix must be a valid package name. All relocated classes are put under this prefix.
      */
     @Parameter(required = true, property = "inline.prefix")
-    public String prefix = null;
+    private String prefix;
 
     /**
      * Fail if an inline dependency is defined but the corresponding dependency is not actually found.
      */
     @Parameter(defaultValue = "true", property = "inline.failOnNoMatch")
-    public boolean failOnNoMatch = true;
+    private boolean failOnNoMatch;
 
     /**
      * Fail if any duplicate exists after processing the contents.
      */
     @Parameter(defaultValue = "true", property = "inline.failOnDuplicate")
-    public boolean failOnDuplicate = true;
+    private boolean failOnDuplicate;
 
     /**
      * The path to the output file for the inlined artifact. When this parameter is set, the created archive will neither replace the project's main artifact
@@ -209,20 +207,20 @@ public final class InlineMojo extends AbstractMojo {
      * used.
      */
     @Parameter
-    public File outputJarFile = null;
+    private File outputJarFile;
 
     /**
      * The path to the output file for the new POM file. When this parameter is set, the created pom file will not replace the project's pom file.
      */
     @Parameter
-    public File outputPomFile = null;
+    private File outputPomFile;
 
 
     /**
      * If true, attach the inlined artifact, if false replace the original artifact.
      */
     @Parameter(defaultValue = "false", property = "inline.attachArtifact")
-    public boolean inlinedArtifactAttached = false;
+    private boolean inlinedArtifactAttached;
 
     /**
      * If true, replace the POM file with a new version that has all inlined dependencies removed. It is possible to write a POM file that works to build the
@@ -231,13 +229,13 @@ public final class InlineMojo extends AbstractMojo {
      * rewrite the POM file.
      */
     @Parameter(defaultValue = "true", property = "inline.replacePomFile")
-    public boolean replacePomFile = true;
+    private boolean replacePomFile;
 
     /**
      * The name of the classifier used in case the inlined artifact is attached.
      */
     @Parameter(defaultValue = "inlined")
-    public String inlinedClassifierName = "inlined";
+    private String inlinedClassifierName;
 
 
     @Override
@@ -313,14 +311,13 @@ public final class InlineMojo extends AbstractMojo {
                 // optionals also need to be matched by the inline dependency below
                 .filter(createFilterSet(true))
                 .forEach(dependency -> {
-                    for (InlineDependency inlineDependency : inlineDependencies) {
-                        if (inlineDependency.matchDependency(dependency)) {
-                            dependencyConsumer.accept(inlineDependency, dependency);
-                            directLogBuilder.add(dependency.toString());
-                            return;
-                        }
+                    Optional<InlineDependency> inlineDependency = findInlineDependencyMatch(dependency);
+                    if (inlineDependency.isPresent()) {
+                        dependencyConsumer.accept(inlineDependency.get(), dependency);
+                        directLogBuilder.add(dependency.toString());
+                    } else {
+                        directExcludes.add(dependency);
                     }
-                    directExcludes.add(dependency);
                 });
 
         ImmutableSortedSet<String> directLog = directLogBuilder.build();
@@ -355,12 +352,16 @@ public final class InlineMojo extends AbstractMojo {
                 if (inlineDependency.isInlineTransitive()) {
                     // transitive deps are added to the jar
                     consumer = dependency -> {
-                        // runtime dependencies end up being dependencies of the jar with inlines.
-                        if (JavaScopes.RUNTIME.equals(dependency.getScope())) {
-                            pomBuilder.add(dependency);
-                        } else {
+                        Optional<InlineDependency> explicitMatch = findInlineDependencyMatch(dependency);
+
+                        // If a dependency was explicitly listed as being included, it is added to the jar
+                        // otherwise, any dependency that is in runtime scope becomes a runtime dependency of
+                        // the resulting inline jar.
+                        if (explicitMatch.isPresent() || !JavaScopes.RUNTIME.equals(dependency.getScope())) {
                             dependencyConsumer.accept(inlineDependency, dependency);
                             transitiveLogBuilder.add(dependency.toString());
+                        } else {
+                            pomBuilder.add(dependency);
                         }
                     };
                 } else {
@@ -390,6 +391,15 @@ public final class InlineMojo extends AbstractMojo {
             }
             LOG.info("");
         }
+    }
+
+    private Optional<InlineDependency> findInlineDependencyMatch(Dependency dependency) {
+        for (InlineDependency inlineDependency : inlineDependencies) {
+            if (inlineDependency.matchDependency(dependency)) {
+                return Optional.of(inlineDependency);
+            }
+        }
+        return Optional.empty();
     }
 
     private static String getId(Dependency dependency) {
@@ -452,7 +462,7 @@ public final class InlineMojo extends AbstractMojo {
     private void rewritePomFile(Set<Dependency> dependenciesToAdd, Set<Dependency> dependenciesToRemove) throws IOException, XMLStreamException, JDOMException {
         String pomContents;
 
-        try (InputStreamReader reader = new FileReader(project.getFile(), StandardCharsets.UTF_8)) {
+        try (BufferedReader reader = Files.newBufferedReader(project.getFile().toPath(), StandardCharsets.UTF_8)) {
             pomContents = CharStreams.toString(reader);
         }
 
@@ -465,7 +475,7 @@ public final class InlineMojo extends AbstractMojo {
         pomName = "new-" + (pomName.startsWith(".") ? pomName.substring(1) : pomName);
 
         File newPomFile = this.outputPomFile != null ? outputPomFile : new File(this.outputDirectory, pomName);
-        try (OutputStreamWriter writer = new FileWriter(newPomFile, StandardCharsets.UTF_8)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(newPomFile.toPath(), StandardCharsets.UTF_8)) {
             pomUtil.writePom(writer);
         }
 
@@ -476,7 +486,7 @@ public final class InlineMojo extends AbstractMojo {
 
     private void doJarTransformation(File outputJar, ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws TransformerException, IOException {
 
-        try (JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(outputJar))) {
+        try (JarOutputStream jarOutputStream = new JarOutputStream(Files.newOutputStream(outputJar.toPath()))) {
             Consumer<ClassPathResource> jarConsumer = getJarWriter(jarOutputStream);
             JarTransformer transformer = new JarTransformer(jarConsumer, true, ImmutableSet.copyOf(additionalProcessors));
 

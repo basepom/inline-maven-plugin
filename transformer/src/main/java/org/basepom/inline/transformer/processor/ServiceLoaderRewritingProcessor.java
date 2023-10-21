@@ -13,8 +13,6 @@
  */
 package org.basepom.inline.transformer.processor;
 
-import org.basepom.inline.transformer.asm.InlineRemapper;
-
 /**
  * Deals with service loaders being inlined.
  */
