@@ -11,12 +11,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.basepom.inline.transformer.processor;
 
-import javax.annotation.Nonnull;
+package org.basepom.inline.transformer.processor;
 
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
+
+import javax.annotation.Nonnull;
 
 /**
  * Strips out the existing directories from the classpath. Directories are then re-added when the new jar is written. This ensures that no remnants of the old

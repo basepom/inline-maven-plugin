@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.util;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ public final class ExceptionUtil {
 
     @FunctionalInterface
     public interface ThrowingSupplier<U> {
+
         U get() throws IOException;
     }
 

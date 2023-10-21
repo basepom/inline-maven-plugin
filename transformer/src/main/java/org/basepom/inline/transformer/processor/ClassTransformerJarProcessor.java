@@ -11,9 +11,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
 
 import static java.lang.String.format;
+
+import org.basepom.inline.transformer.ClassNameUtils;
+import org.basepom.inline.transformer.ClassPathResource;
+import org.basepom.inline.transformer.ClassPathTag;
+import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
+import org.basepom.inline.transformer.asm.ClassTransformer;
+import org.basepom.inline.transformer.asm.GetNameClassWriter;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -23,13 +32,6 @@ import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-import org.basepom.inline.transformer.ClassNameUtils;
-import org.basepom.inline.transformer.ClassPathResource;
-import org.basepom.inline.transformer.ClassPathTag;
-import org.basepom.inline.transformer.JarProcessor;
-import org.basepom.inline.transformer.TransformerException;
-import org.basepom.inline.transformer.asm.ClassTransformer;
-import org.basepom.inline.transformer.asm.GetNameClassWriter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;

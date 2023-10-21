@@ -11,9 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.asm;
 
 import static java.lang.String.format;
+
+import org.basepom.inline.transformer.ClassNameUtils;
+import org.basepom.inline.transformer.ClassPathTag;
+import org.basepom.inline.transformer.Rename;
+import org.basepom.inline.transformer.processor.RemapperProcessor;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,10 +28,6 @@ import java.util.Map;
 import com.google.common.collect.ImmutableSortedSet;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.basepom.inline.transformer.ClassNameUtils;
-import org.basepom.inline.transformer.ClassPathTag;
-import org.basepom.inline.transformer.Rename;
-import org.basepom.inline.transformer.processor.RemapperProcessor;
 import org.objectweb.asm.commons.Remapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

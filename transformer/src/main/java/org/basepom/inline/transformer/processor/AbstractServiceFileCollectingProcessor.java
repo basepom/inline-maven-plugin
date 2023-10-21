@@ -11,9 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import org.basepom.inline.transformer.ClassPathResource;
+import org.basepom.inline.transformer.ClassPathTag;
+import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,10 +35,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
-import org.basepom.inline.transformer.ClassPathResource;
-import org.basepom.inline.transformer.ClassPathTag;
-import org.basepom.inline.transformer.JarProcessor;
-import org.basepom.inline.transformer.TransformerException;
 
 public abstract class AbstractServiceFileCollectingProcessor implements JarProcessor {
 

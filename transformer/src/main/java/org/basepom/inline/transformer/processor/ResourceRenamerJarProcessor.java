@@ -11,9 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
 
 import static java.lang.String.format;
+
+import org.basepom.inline.transformer.ClassPathResource;
+import org.basepom.inline.transformer.ClassPathTag;
+import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.Rename;
+import org.basepom.inline.transformer.TransformerException;
 
 import java.io.IOException;
 import java.util.Set;
@@ -21,11 +28,6 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.basepom.inline.transformer.ClassPathResource;
-import org.basepom.inline.transformer.ClassPathTag;
-import org.basepom.inline.transformer.JarProcessor;
-import org.basepom.inline.transformer.Rename;
-import org.basepom.inline.transformer.TransformerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

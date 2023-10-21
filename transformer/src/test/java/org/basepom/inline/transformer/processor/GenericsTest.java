@@ -11,16 +11,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.io.File;
 
 import org.basepom.inline.transformer.ClassPathElement;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.asm.InlineRemapper;
+
+import java.io.File;
+
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.commons.Remapper;
 

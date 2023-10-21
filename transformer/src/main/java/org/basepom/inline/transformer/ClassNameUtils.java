@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer;
 
 import java.util.List;
@@ -67,7 +68,6 @@ public final class ClassNameUtils {
 
         return validChars / count > 0.7;  // io.foo.Bar = 8 / 11 ~ 0.72
     }
-
 
 
     @Nonnull

@@ -11,12 +11,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.mojo;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
+import org.basepom.inline.transformer.ClassPath;
+import org.basepom.inline.transformer.ClassPathResource;
+import org.basepom.inline.transformer.ClassPathTag;
+import org.basepom.inline.transformer.JarTransformer;
+import org.basepom.inline.transformer.TransformerException;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -61,11 +68,6 @@ import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectDependenciesResolver;
-import org.basepom.inline.transformer.ClassPath;
-import org.basepom.inline.transformer.ClassPathResource;
-import org.basepom.inline.transformer.ClassPathTag;
-import org.basepom.inline.transformer.JarTransformer;
-import org.basepom.inline.transformer.TransformerException;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;

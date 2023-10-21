@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer;
 
 import static java.lang.String.format;
@@ -19,14 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import de.softwareforge.testing.maven.MavenArtifactLoader;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.google.common.collect.ImmutableSet;
-import de.softwareforge.testing.maven.MavenArtifactLoader;
 import org.junit.jupiter.api.Test;
 
 public class JdbiRelocationTest {

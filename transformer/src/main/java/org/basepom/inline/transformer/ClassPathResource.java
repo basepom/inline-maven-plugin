@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -73,7 +74,7 @@ public final class ClassPathResource {
                 ImmutableSet.of(ClassPathTag.DIRECTORY, ClassPathTag.RESOURCE));
     }
 
-    public static ClassPathResource forContent(String name, byte [] content) {
+    public static ClassPathResource forContent(String name, byte[] content) {
         return new ClassPathResource(null, name, 0, null, InputStream::nullInputStream, content,
                 ImmutableSet.of(ClassPathTag.FILE, ClassPathTag.RESOURCE));
     }
@@ -146,7 +147,7 @@ public final class ClassPathResource {
         return tags;
     }
 
-    public boolean containsTags(ClassPathTag ... tags) {
+    public boolean containsTags(ClassPathTag... tags) {
         for (ClassPathTag tag : tags) {
             if (!this.tags.contains(tag)) {
                 return false;

@@ -11,17 +11,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.basepom.inline.transformer.processor;
 
-import java.io.IOException;
-import java.util.List;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+package org.basepom.inline.transformer.processor;
 
 import org.basepom.inline.transformer.ClassNameUtils;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
 import org.basepom.inline.transformer.TransformerException;
+
+import java.io.IOException;
+import java.util.List;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 public class ModuleInfoFilterProcessor extends AbstractFilterJarProcessor {
 

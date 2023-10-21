@@ -11,9 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
 
 import static org.basepom.inline.transformer.ClassNameUtils.pathToElements;
+
+import org.basepom.inline.transformer.ClassPathResource;
+import org.basepom.inline.transformer.ClassPathTag;
+import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,10 +27,6 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import com.google.common.base.Joiner;
-import org.basepom.inline.transformer.ClassPathResource;
-import org.basepom.inline.transformer.ClassPathTag;
-import org.basepom.inline.transformer.JarProcessor;
-import org.basepom.inline.transformer.TransformerException;
 
 /**
  * Deal with all files in META-INF that have no special treatment (like services etc.)

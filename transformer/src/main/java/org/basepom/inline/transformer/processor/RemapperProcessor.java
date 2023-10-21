@@ -11,9 +11,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
 
 import static java.lang.String.format;
+
+import org.basepom.inline.transformer.ClassNameUtils;
+import org.basepom.inline.transformer.ClassPathElement;
+import org.basepom.inline.transformer.ClassPathResource;
+import org.basepom.inline.transformer.ClassPathTag;
+import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.Rename;
+import org.basepom.inline.transformer.TransformerException;
+import org.basepom.inline.transformer.util.SetMultiTrie;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -29,14 +39,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.SetMultimap;
-import org.basepom.inline.transformer.ClassNameUtils;
-import org.basepom.inline.transformer.ClassPathElement;
-import org.basepom.inline.transformer.ClassPathResource;
-import org.basepom.inline.transformer.ClassPathTag;
-import org.basepom.inline.transformer.JarProcessor;
-import org.basepom.inline.transformer.Rename;
-import org.basepom.inline.transformer.TransformerException;
-import org.basepom.inline.transformer.util.SetMultiTrie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

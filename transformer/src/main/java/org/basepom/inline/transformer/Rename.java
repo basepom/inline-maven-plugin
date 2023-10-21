@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -69,7 +70,8 @@ public final class Rename implements Comparable<Rename> {
 
         boolean needPathConversion = className.indexOf('/') < 0;
 
-        List<String> pathElements = needPathConversion ? ClassNameUtils.pathToElements(ClassNameUtils.toPath(className)) : ClassNameUtils.pathToElements(className);
+        List<String> pathElements =
+                needPathConversion ? ClassNameUtils.pathToElements(ClassNameUtils.toPath(className)) : ClassNameUtils.pathToElements(className);
 
         // source path is longer than the path itself. bail out.
         if (sourceElements.size() >= pathElements.size()) {

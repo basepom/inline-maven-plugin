@@ -11,15 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
 
 import static org.basepom.inline.transformer.ClassNameUtils.pathToElements;
 
-import java.util.List;
-import javax.annotation.Nonnull;
-
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
+
+import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * Filter out all signature files as the code modifies the jar.
@@ -45,7 +46,7 @@ public class SignatureFilterProcessor extends AbstractFilterJarProcessor {
             return false;
         }
 
-        String filename = elements.get(elements.size() -1);
+        String filename = elements.get(elements.size() - 1);
         return filename.endsWith(".SF") || filename.endsWith(".DSA") || filename.endsWith(".RSA");
     }
 }

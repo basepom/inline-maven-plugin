@@ -11,22 +11,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Set;
-import java.util.function.Consumer;
-import javax.annotation.Nonnull;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSortedSet;
 import org.basepom.inline.transformer.asm.InlineRemapper;
 import org.basepom.inline.transformer.asm.RemappingClassTransformer;
 import org.basepom.inline.transformer.processor.ClassTransformerJarProcessor;
@@ -43,6 +33,18 @@ import org.basepom.inline.transformer.processor.ResourceRenamerJarProcessor;
 import org.basepom.inline.transformer.processor.ServiceLoaderCollectingProcessor;
 import org.basepom.inline.transformer.processor.ServiceLoaderRewritingProcessor;
 import org.basepom.inline.transformer.processor.SignatureFilterProcessor;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Set;
+import java.util.function.Consumer;
+import javax.annotation.Nonnull;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,7 +112,7 @@ public final class JarTransformer {
 
     private void createAdditionalProcessors(ImmutableSortedSet.Builder<JarProcessor> builder, ProcessorContext processorContext,
             Set<String> additionalProcessors) {
-        for (String additionalProcessor: additionalProcessors) {
+        for (String additionalProcessor : additionalProcessors) {
             try {
                 Class<?> processorClass = Class.forName(additionalProcessor);
 
@@ -121,9 +123,9 @@ public final class JarTransformer {
                     builder.add(processor);
                     LOG.debug(format("Added '%s' processor with empty constructor", additionalProcessor));
                 } catch (NoSuchMethodException e) {
-                        ctor = (Constructor<JarProcessor>) processorClass.getDeclaredConstructor(ProcessorContext.class);
-                        JarProcessor processor = ctor.newInstance(processorContext);
-                        builder.add(processor);
+                    ctor = (Constructor<JarProcessor>) processorClass.getDeclaredConstructor(ProcessorContext.class);
+                    JarProcessor processor = ctor.newInstance(processorContext);
+                    builder.add(processor);
                     LOG.debug(format("Added '%s' processor with ProcessorContext constructor", additionalProcessor));
                 }
             } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {

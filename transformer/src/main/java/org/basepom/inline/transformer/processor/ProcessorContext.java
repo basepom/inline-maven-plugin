@@ -11,14 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.function.Consumer;
-
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.asm.InlineRemapper;
+
+import java.util.function.Consumer;
 
 public final class ProcessorContext {
 

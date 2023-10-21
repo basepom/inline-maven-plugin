@@ -11,18 +11,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import de.softwareforge.testing.maven.MavenArtifactLoader;
+import org.basepom.inline.transformer.JdbiRelocationTest.CapturingConsumer;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import de.softwareforge.testing.maven.MavenArtifactLoader;
-import org.basepom.inline.transformer.JdbiRelocationTest.CapturingConsumer;
 import org.junit.jupiter.api.Test;
 
 public class GeneralRelocationTest {

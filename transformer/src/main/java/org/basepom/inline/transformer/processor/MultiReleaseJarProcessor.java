@@ -11,19 +11,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
 
 import static org.basepom.inline.transformer.ClassNameUtils.elementsToPath;
 import static org.basepom.inline.transformer.ClassNameUtils.pathToElements;
 
+import org.basepom.inline.transformer.ClassPathResource;
+import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
+
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-
-import org.basepom.inline.transformer.ClassPathResource;
-import org.basepom.inline.transformer.JarProcessor;
-import org.basepom.inline.transformer.TransformerException;
 
 /**
  * Deals with multi-release entries.
@@ -57,7 +58,8 @@ public class MultiReleaseJarProcessor implements JarProcessor {
     }
 
     @CheckForNull
-    ClassPathResource convertMultiReleaseJarEntry(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
+    ClassPathResource convertMultiReleaseJarEntry(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain)
+            throws TransformerException, IOException {
         if (classPathResource.getName().startsWith("META-INF/versions/")) {
             List<String> elements = pathToElements(classPathResource.getName());
             int version = -1;

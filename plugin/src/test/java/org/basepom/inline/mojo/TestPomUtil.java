@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.mojo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,7 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import com.google.common.io.CharStreams;
-import org.apache.maven.Maven;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -47,7 +47,7 @@ public class TestPomUtil {
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(pomContents.length() + 20);
                 OutputStreamWriter streamWriter = new OutputStreamWriter(byteArrayOutputStream)) {
             pomUtil.writePom(streamWriter);
-            String result = new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
+            String result = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
 
             // do a roundtrip through the standard maven readers and writers.
             MavenXpp3Reader reader = new MavenXpp3Reader();

@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.mojo;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -219,9 +220,9 @@ final class DependencyBuilder {
                 return false;
             }
             ProjectKey that = (ProjectKey) o;
-            return groupId.equals(that.groupId) &&
-                    artifactId.equals(that.artifactId) &&
-                    version.equals(that.version);
+            return groupId.equals(that.groupId)
+                    && artifactId.equals(that.artifactId)
+                    && version.equals(that.version);
         }
 
         @Override

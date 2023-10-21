@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.mojo;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -92,16 +93,16 @@ public final class ScopeLimitingFilter
         switch (scope) {
             //  runtime dependencies pull in just runtime deps
             case JavaScopes.RUNTIME:
-            // compile and runtime pull in compile and runtime
+                // compile and runtime pull in compile and runtime
             case COMPILE_PLUS_RUNTIME:
-            // runtime and system pull in runtime and system
+                // runtime and system pull in runtime and system
             case RUNTIME_PLUS_SYSTEM:
                 return scope;
             // test dependencies pull in compile and runtime.
             case JavaScopes.TEST:
-            // compile dependencies pull in compile and runtime
+                // compile dependencies pull in compile and runtime
             case JavaScopes.COMPILE:
-            // provided dependencies pull in just compile and runtime (remove test and provided)
+                // provided dependencies pull in just compile and runtime (remove test and provided)
             case JavaScopes.PROVIDED:
                 return COMPILE_PLUS_RUNTIME;
             default:

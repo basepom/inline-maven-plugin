@@ -11,16 +11,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
+
+import org.basepom.inline.transformer.ClassPathResource;
+import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
 
 import java.io.IOException;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
-import org.basepom.inline.transformer.ClassPathResource;
-import org.basepom.inline.transformer.JarProcessor;
-import org.basepom.inline.transformer.TransformerException;
 
 public final class JarWriterProcessor implements JarProcessor {
 

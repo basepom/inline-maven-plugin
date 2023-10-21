@@ -11,12 +11,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.basepom.inline.transformer.processor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.basepom.inline.transformer.ClassNameUtils.pathToElements;
 import static org.basepom.inline.transformer.ClassNameUtils.pathToJavaName;
 import static org.basepom.inline.transformer.ClassNameUtils.toPath;
+
+import org.basepom.inline.transformer.ClassPathResource;
+import org.basepom.inline.transformer.ClassPathTag;
+import org.basepom.inline.transformer.JarProcessor;
+import org.basepom.inline.transformer.TransformerException;
+import org.basepom.inline.transformer.asm.InlineRemapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -31,11 +38,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.io.CharStreams;
 import com.google.common.io.LineProcessor;
-import org.basepom.inline.transformer.ClassPathResource;
-import org.basepom.inline.transformer.ClassPathTag;
-import org.basepom.inline.transformer.JarProcessor;
-import org.basepom.inline.transformer.TransformerException;
-import org.basepom.inline.transformer.asm.InlineRemapper;
 
 /**
  * Deals with annotation processors being inlined. Rewrites the annotation files to allow locating rewritten annotation processors.
@@ -69,7 +71,8 @@ public abstract class AbstractServiceFileRewritingProcessor implements JarProces
     }
 
     @CheckForNull
-    ClassPathResource rewriteServiceLoaderJarEntry(ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
+    ClassPathResource rewriteServiceLoaderJarEntry(ClassPathResource classPathResource, Chain<ClassPathResource> chain)
+            throws TransformerException, IOException {
         if (classPathResource.containsTags(ClassPathTag.RESOURCE)
                 && classPathResource.getName().startsWith(prefix)) {
 
