@@ -27,6 +27,8 @@
     <url>https://basepom.github.io/inline-maven-plugin/</url>
 
     <properties>
+        <project.moduleName>org.basepom.maven.inline.plugin</project.moduleName>
+
         <basepom.site.skip>false</basepom.site.skip>
         <basepom.site.scm.skip-deploy>false</basepom.site.scm.skip-deploy>
         <basepom.site.scm.site-path>${project.artifactId}/development</basepom.site.scm.site-path>

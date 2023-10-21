@@ -2,8 +2,6 @@
 
 This plugin inlines dependencies to a library or other application into the main artifact.
 
-See also the [Maven site for the plugin](https://basepom.github.io/inline-maven-plugin).
-
 ## When to use this plugin
 
 Easily create components that have external dependencies but should not "bleed" these dependencies into other code that wants to use
@@ -28,7 +26,7 @@ Inline a single dependency:
       <plugin>
         <groupId>org.basepom.maven</groupId>
         <artifactId>inline-maven-plugin</artifactId>
-        <version>1.0</version>
+        <version>1.1.0</version>
         <configuration>
           <prefix>relocated</prefix>
           <inlineDependencies>

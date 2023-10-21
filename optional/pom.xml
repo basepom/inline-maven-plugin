@@ -24,6 +24,10 @@
     <artifactId>transformer-optional</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <project.moduleName>org.basepom.inline.transformer.optional</project.moduleName>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.basepom.inline</groupId>

@@ -16,9 +16,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.basepom</groupId>
-        <artifactId>basepom-oss</artifactId>
-        <version>53</version>
+        <groupId>org.kitei</groupId>
+        <artifactId>kitei-root</artifactId>
+        <version>15-SNAPSHOT</version>
     </parent>
 
     <groupId>org.basepom.inline</groupId>
@@ -67,9 +67,6 @@
     </issueManagement>
 
     <properties>
-        <!-- maven 3.9.x insanity -->
-        <maven.plugin.validation>BRIEF</maven.plugin.validation>
-
         <project.build.targetJdk>11</project.build.targetJdk>
 
         <basepom.nexus-staging.staging-url>https://oss.sonatype.org/</basepom.nexus-staging.staging-url>
@@ -78,6 +75,7 @@
 
         <!-- site requires full javadoc generation -->
         <basepom.javadoc.skip>false</basepom.javadoc.skip>
+
         <!-- site is built in the plugin subdirectory -->
         <basepom.site.skip>true</basepom.site.skip>
         <basepom.site.scm.skip-deploy>true</basepom.site.scm.skip-deploy>
@@ -92,7 +90,6 @@
         <dep.groovy.version>4.0.12</dep.groovy.version>
         <dep.jdom2.version>2.0.6.1</dep.jdom2.version>
         <dep.jaxen.version>1.2.0</dep.jaxen.version>
-
 
         <!-- Maven API version. Keep on 3.8.x for now -->
         <dep.maven-api.version>3.8.7</dep.maven-api.version>
