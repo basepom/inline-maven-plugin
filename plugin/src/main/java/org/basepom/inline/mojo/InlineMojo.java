@@ -123,7 +123,12 @@ public final class InlineMojo extends AbstractMojo {
     private File pomFile;
 
     /**
-     * Direct dependencies to inline. Each dependency here must be listed in the project POM.
+     * Direct dependencies to inline. Each dependency here must be
+     * listed in the project POM. Any transitive dependency is added
+     * to the final jar, unless it is in {@code RUNTIME} scope.
+     * {@code RUNTIME} dependencies become a runtime dependency of the
+     * resulting final jar <b>unless</b> they are listed here. In that
+     * case, they are inlined in the final jar as well.
      */
     @Parameter
     private List<InlineDependency> inlineDependencies = ImmutableList.of();
@@ -356,10 +361,10 @@ public final class InlineMojo extends AbstractMojo {
                     consumer = dependency -> {
                         Optional<InlineDependency> explicitMatch = findInlineDependencyMatch(dependency);
 
-                        // If a dependency was explicitly listed as being included, it is added to the jar
-                        // otherwise, any dependency that is in runtime scope becomes a runtime dependency of
-                        // the resulting inline jar.
-                        if (explicitMatch.isPresent() || !JavaScopes.RUNTIME.equals(dependency.getScope())) {
+                        // If the dependency is not a runtime dependency, it is included in the inline jar
+                        // Runtime dependencies are only included if they are explicitly listed as an
+                        // included dependency. Otherwise, they are added as a runtime dep to the inline jar.
+                        if (!JavaScopes.RUNTIME.equals(dependency.getScope()) || explicitMatch.isPresent()) {
                             dependencyConsumer.accept(inlineDependency, dependency);
                             transitiveLogBuilder.add(dependency.toString());
                         } else {

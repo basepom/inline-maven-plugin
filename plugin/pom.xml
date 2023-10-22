@@ -37,6 +37,11 @@
         <basepom.it.fork-count>1</basepom.it.fork-count>
     </properties>
 
+    <!-- do not delete, otherwise the site scm link is wrong -->
+    <scm>
+        <url>https://github.com/basepom/inline-maven-plugin/</url>
+    </scm>
+
     <dependencies>
         <dependency>
             <groupId>org.basepom.inline</groupId>

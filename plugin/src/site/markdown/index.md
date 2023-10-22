@@ -26,7 +26,7 @@ Inline a single dependency:
       <plugin>
         <groupId>org.basepom.maven</groupId>
         <artifactId>inline-maven-plugin</artifactId>
-        <version>1.1.0</version>
+        <version>1.2.0</version>
         <configuration>
           <prefix>relocated</prefix>
           <inlineDependencies>
@@ -135,6 +135,9 @@ The `inline:inline` goal is the main goal and should be called in the `package` 
 | `inlineTransitive` | boolean | `false` | If true, also inline all transitive dependencies. If false, transitive dependencies are added to the rewritten POM file as direct dependencies. |
 | `inlineOptionals`  | boolean | `false` | If true, add all optional, transitive dependencies as well. If false, ignore optional dependencies.                                             |
 
+#### Dealing with `runtime` dependencies
+
+Sometimes, an inlined dependency has itself dependencies in `runtime` scope. Those will *not* be inlined by default but become a `runtime` dependency of the final jar. If this is not desired, such runtime dependencies can also be added as an `inlineDependency` element.
 
 #### Including and excluding dependencies
 
@@ -147,6 +150,7 @@ The `<includes>` and `<excludes>` options can be used in special cases. If the `
 
 There is a wealth of other plugins that do similar things. This plugin is *NOT* intended to create executable jars, all-in-one deployable services or support a large number of customizations. For any of those, better choices exist, e.g.
 
+* [Maven Repack Plugin](https://basepom.github.io/repack-maven-plugin/development/) - this is a companion project to the inline plugin
 * [Maven Shade Plugin](https://maven.apache.org/plugins/maven-shade-plugin/)
 * [Maven Assembly Plugin](https://maven.apache.org/plugins/maven-assembly-plugin/)
 * [Spring Boot Maven Plugin](https://docs.spring.io/spring-boot/docs/current/maven-plugin/reference/htmlsingle/)

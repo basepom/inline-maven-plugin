@@ -15,39 +15,40 @@ inlined.
 Inline a single dependency:
 
 ```xml
-
-<dependencies>
+<project>
+  <dependencies>
     <dependency>
-        <groupId>org.antlr</groupId>
-        <artifactId>antlr4-runtime</artifactId>
-        <version>4.9.2</version>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr4-runtime</artifactId>
+      <version>4.9.2</version>
     </dependency>
-</dependencies>
-<build>
-<plugins>
-    <plugin>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
         <groupId>org.basepom.maven</groupId>
         <artifactId>inline-maven-plugin</artifactId>
-        <version>1.0</version>
+        <version>1.2.0</version>
         <configuration>
-            <prefix>relocated</prefix>
-            <inlineDependencies>
-                <inlineDependency>
-                    <artifact>org.antlr:antlr4-runtime</artifact>
-                </inlineDependency>
-            </inlineDependencies>
+          <prefix>relocated</prefix>
+          <inlineDependencies>
+            <inlineDependency>
+              <artifact>org.antlr:antlr4-runtime</artifact>
+            </inlineDependency>
+          </inlineDependencies>
         </configuration>
         <executions>
-            <execution>
-                <phase>package</phase>
-                <goals>
-                    <goal>inline</goal>
-                </goals>
-            </execution>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>inline</goal>
+            </goals>
+          </execution>
         </executions>
-    </plugin>
-</plugins>
-</build>
+      </plugin>
+    </plugins>
+  </build>
+</project>
 ```
 
 The plugin will put all content of the inlined dependency under the `relocated` prefix and rewrite the code to use these relocated classes and resources.
@@ -94,14 +95,14 @@ The `inline:inline` goal is the main goal and should be called in the `package` 
     <additionalProcessors>
         <additionalProcessor> ... class name of processor... </additionalProcessor>
         ....
-    <additionalProcessors>
+    </additionalProcessors>
 
     <outputDirectory>${project.build.directory}</outputDirectory>
     <pomFile>${project.file}</pomFile>
 </configuration>
 ```
 
-#### Required configuration paramters
+#### Required configuration parameters
 
 | Option | Type | Default | Function |
 | ------ |-------------------------------------|---------|--------------------|
@@ -135,8 +136,11 @@ The `inline:inline` goal is the main goal and should be called in the `package` 
 | ------ | ---- | ------- | -------- |
 | `artifact` | string | - | Defines the artifact to inline. Must be given as `groupId:artifactId`. |
 | `inlineTransitive` | boolean | `false` | If true, also inline all transitive dependencies. If false, transitive dependencies are added to the rewritten POM file as direct dependencies. |
-| `inlineOptionals` | boolean `false` | If true, add all optional, transitive dependencies as well. If false, ignore optional dependencies. |
+| `inlineOptionals` | boolean | `false` | If true, add all optional, transitive dependencies as well. If false, ignore optional dependencies. |
 
+#### Dealing with `runtime` dependencies
+
+Sometimes, an inlined dependency has itself dependencies in `runtime` scope. Those will *not* be inlined by default but become a `runtime` dependency of the final jar. If this is not desired, such runtime dependencies can also be added as an `inlineDependency` element.
 
 #### Including and excluding dependencies
 
@@ -149,6 +153,7 @@ The `<includes>` and `<excludes>` options can be used in special cases. If the `
 
 There is a wealth of other plugins that do similar things. This plugin is *NOT* intended to create executable jars, all-in-one deployable services or support a large number of customizations. For any of those, better choices exist, e.g.
 
+* [Maven Repack Plugin](https://basepom.github.io/repack-maven-plugin/development/) - this is a companion project to the inline plugin
 * [Maven Shade Plugin](https://maven.apache.org/plugins/maven-shade-plugin/)
 * [Maven Assembly Plugin](https://maven.apache.org/plugins/maven-assembly-plugin/)
 * [Spring Boot Maven Plugin](https://docs.spring.io/spring-boot/docs/current/maven-plugin/reference/htmlsingle/)
