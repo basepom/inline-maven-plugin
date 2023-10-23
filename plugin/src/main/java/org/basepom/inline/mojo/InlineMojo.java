@@ -140,25 +140,31 @@ public final class InlineMojo extends AbstractMojo {
 
     /**
      * Include dependencies. A dependency is given as <tt>groupId:artifactId</tt>. The wildcard character '*' is supported for group id and artifact id.
+     * <p>
+     * Includes and excludes operate on the list of potential dependencies to inline. They can not be used to add additional dependencies that are not
+     * listed in the &lt;inlineDependency&gt; elements.
      */
     @Parameter
     private List<ArtifactIdentifier> includes = ImmutableList.of();
 
     // called by maven
-    public void setIncludes(List<ArtifactIdentifier> includes) {
-        this.includes = ImmutableList.copyOf(includes);
+    public void setIncludes(List<String> includes) {
+        this.includes = includes.stream().map(ArtifactIdentifier::new).collect(Collectors.toList());
     }
 
     /**
      * Exclude dependencies from inclusion. A dependency is given as <tt>groupId:artifactId</tt>. Any transitive dependency that has been pulled in can be
      * excluded here. The wildcard character '*' is supported for group id and artifact id.
+     * <p>
+     * Includes and excludes operate on the list of potential dependencies to inline. They can not be used to add additional dependencies that are not
+     * listed in the &lt;inlineDependency&gt; elements.
      */
     @Parameter
     private List<ArtifactIdentifier> excludes = ImmutableList.of();
 
     // called by maven
-    public void setExcludes(List<ArtifactIdentifier> excludes) {
-        this.excludes = ImmutableList.copyOf(excludes);
+    public void setExcludes(List<String> excludes) {
+        this.excludes = excludes.stream().map(ArtifactIdentifier::new).collect(Collectors.toList());
     }
 
     /**
