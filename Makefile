@@ -28,17 +28,19 @@ clean::
 install::
 	${MAVEN} clean install
 
+tests: install-fast run-tests
+
 install-fast:: MAVEN_CONFIG += -Pfast
 install-fast:: install
 
-test::
+run-tests::
 	${MAVEN} surefire:test
 
 deploy::
 	${MAVEN} clean deploy
 
-deploy-site:: install
-	${MAVEN} site-deploy
+deploy-site::
+	${MAVEN} clean site-deploy
 
 release::
 	${MAVEN} clean release:clean release:prepare release:perform
@@ -46,12 +48,13 @@ release::
 release-site:: MAVEN_CONFIG += -Pplugin-release
 release-site:: deploy-site
 
-help:
-	@echo " * clean          - clean local build tree"
-	@echo " * install        - installs build result in the local maven repository"
-	@echo " * install-fast   - same as 'install', but skip unit tests and static analysis"
-	@echo " * test           - run unit tests"
-	@echo " * deploy         - installs build result in the snapshot OSS repository"
-	@echo " * deploy-site    - builds and deploys the documentation site"
-	@echo " * release        - release a new version to maven central"
-	@echo " * release-site   - builds and deploys the documentation site for a release"
+help::
+	@echo " * clean               - clean local build tree"
+	@echo " * install             - build, run static analysis and unit tests, then install in the local repository"
+	@echo " * install-fast        - same as 'install', but skip unit tests and static analysis"
+	@echo " * tests               - build code and run unit tests"
+	@echo " * run-tests           - run all unit tests"
+	@echo " * deploy              - builds and deploys the current version to the Sonatype OSS repository"
+	@echo " * deploy-site         - builds and deploys the documentation site"
+	@echo " * release             - release a new version to maven central"
+	@echo " * release-site        - builds and deploys the documentation site for a release"
