@@ -117,6 +117,14 @@ public final class InlineMojo extends AbstractMojo {
     private File outputDirectory;
 
     /**
+     * Timestamp for reproducible output archive entries, either formatted as ISO 8601
+     * <code>yyyy-MM-dd'T'HH:mm:ssXXX</code> or as an int representing seconds since the epoch (like
+     * <a href="https://reproducible-builds.org/docs/source-date-epoch/">SOURCE_DATE_EPOCH</a>).
+     */
+    @Parameter(defaultValue = "${project.build.outputTimestamp}")
+    private String outputTimestamp;
+
+    /**
      * The POM file to use.
      */
     @Parameter(property = "inline.pomFile", defaultValue = "${project.file}")
