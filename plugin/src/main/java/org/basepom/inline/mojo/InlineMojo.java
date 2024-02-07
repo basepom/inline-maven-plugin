@@ -19,6 +19,16 @@ import static java.lang.String.format;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+import com.google.common.io.ByteStreams;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.time.Instant;
+import java.util.Date;
+import javax.annotation.Nonnull;
+import org.apache.maven.archiver.MavenArchiveConfiguration;
+import org.apache.maven.archiver.MavenArchiver;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.basepom.inline.transformer.ClassPath;
 import org.basepom.inline.transformer.ClassPathResource;
 import org.basepom.inline.transformer.ClassPathTag;
@@ -68,6 +78,11 @@ import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectDependenciesResolver;
+import org.codehaus.plexus.archiver.Archiver;
+import org.codehaus.plexus.archiver.ArchiverException;
+import org.codehaus.plexus.archiver.jar.JarArchiver;
+import org.codehaus.plexus.archiver.jar.ManifestException;
+import org.codehaus.plexus.components.io.resources.PlexusIoResource;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
@@ -258,6 +273,11 @@ public final class InlineMojo extends AbstractMojo {
     @Parameter(defaultValue = "inlined")
     private String inlinedClassifierName;
 
+    /**
+     * The Jar archiver.
+     */
+    @Component(role = Archiver.class, hint = "jar")
+    private JarArchiver jarArchiver;
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -507,25 +527,103 @@ public final class InlineMojo extends AbstractMojo {
 
     private void doJarTransformation(File outputJar, ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws TransformerException, IOException {
 
-        try (JarOutputStream jarOutputStream = new JarOutputStream(Files.newOutputStream(outputJar.toPath()))) {
-            Consumer<ClassPathResource> jarConsumer = getJarWriter(jarOutputStream);
-            JarTransformer transformer = new JarTransformer(jarConsumer, true, ImmutableSet.copyOf(additionalProcessors));
+        if (outputJar.exists()) {
+            checkState(outputJar.delete(), "Could not delete output jar '%s'", outputJar.getAbsolutePath());
+        }
 
-            // Build the class path
-            ClassPath classPath = new ClassPath(project.getBasedir());
-            // maintain the manifest file for the main artifact
-            var artifact = project.getArtifact();
-            classPath.addFile(artifact.getFile(), artifact.getGroupId(), artifact.getArtifactId(), ClassPathTag.ROOT_JAR);
+        MavenArchiver archiver = new MavenArchiver();
+        archiver.setCreatedBy("Basepom Inline Plugin", "org.basepom.maven", "inline-maven-plugin");
+        archiver.setArchiver(jarArchiver);
+        archiver.setOutputFile(outputJar);
 
-            dependencies.forEach(
-                    (inlineDependency, dependency) -> {
-                        var dependencyArtifact = dependency.getArtifact();
-                        checkState(dependencyArtifact.getFile() != null, "Could not locate artifact file for %s", dependencyArtifact);
-                        classPath.addFile(dependencyArtifact.getFile(), prefix, dependencyArtifact.getGroupId(), dependencyArtifact.getArtifactId(),
-                                hideClasses);
-                    });
+        // configure for Reproducible Builds
+        archiver.configureReproducibleBuild(outputTimestamp);
 
-            transformer.transform(classPath);
+        Consumer<ClassPathResource> consumer = classPathResource -> {
+                String name = classPathResource.getName();
+                byte [] content = classPathResource.getContent();
+                LOG.debug(format("Writing '%s' to jar", name));
+                archiver.getArchiver().addResource(
+                    new PlexusIoResource() {
+                        @Override
+                        public long getLastModified() {
+                            return 0;
+                        }
+
+                        @Override
+                        public boolean isExisting() {
+                            return true;
+                        }
+
+                        @Override
+                        public long getSize() {
+                            return content.length;
+                        }
+
+                        @Override
+                        public boolean isFile() {
+                            return classPathResource.containsTags(ClassPathTag.FILE);
+                        }
+
+                        @Override
+                        public boolean isDirectory() {
+                            return classPathResource.containsTags(ClassPathTag.DIRECTORY);
+                        }
+
+                        @Nonnull
+                        @Override
+                        public InputStream getContents() {
+                            return new ByteArrayInputStream(content);
+                        }
+
+                        @Override
+                        public URL getURL() {
+                            return null;
+                        }
+
+                        @Override
+                        public String getName() {
+                            return name;
+                        }
+
+                        @Override
+                        public boolean isSymbolicLink() {
+                            return false;
+                        }
+                    }, name, 0644);
+        };
+
+        JarTransformer transformer = new JarTransformer(consumer, true,
+            ImmutableSet.copyOf(additionalProcessors));
+
+        // Build the class path
+        ClassPath classPath = new ClassPath(project.getBasedir());
+        // maintain the manifest file for the main artifact
+        var artifact = project.getArtifact();
+        classPath.addFile(artifact.getFile(), artifact.getGroupId(), artifact.getArtifactId(),
+            ClassPathTag.ROOT_JAR);
+
+        dependencies.forEach(
+            (inlineDependency, dependency) -> {
+                var dependencyArtifact = dependency.getArtifact();
+                checkState(dependencyArtifact.getFile() != null,
+                    "Could not locate artifact file for %s", dependencyArtifact);
+                classPath.addFile(dependencyArtifact.getFile(), prefix,
+                    dependencyArtifact.getGroupId(), dependencyArtifact.getArtifactId(),
+                    hideClasses);
+            });
+
+        transformer.transform(classPath);
+
+        MavenArchiveConfiguration archiveConfiguration = new MavenArchiveConfiguration();
+        archiveConfiguration.setAddMavenDescriptor(false);
+
+        try {
+            archiver.createArchive(mavenSession, project, archiveConfiguration);
+        } catch (ManifestException e) {
+            throw new ArchiverException("ManifestException: " + e.getMessage(), e);
+        } catch (DependencyResolutionRequiredException e) {
+            throw new ArchiverException("DependencyResolutionRequiredException: " + e.getMessage(), e);
         }
     }
 
