@@ -40,6 +40,7 @@ public abstract class AbstractServiceFileCollectingProcessor implements JarProce
 
     private final Consumer<ClassPathResource> outputSink;
     private final String prefix;
+    private final long timestamp;
 
     private final Map<String, ImmutableList.Builder<String>> resourceMap = new HashMap<>();
     private boolean wroteFiles = false;
@@ -47,6 +48,7 @@ public abstract class AbstractServiceFileCollectingProcessor implements JarProce
     protected AbstractServiceFileCollectingProcessor(ProcessorContext processorContext, String prefix) {
         this.outputSink = checkNotNull(processorContext, "processorContext is null").getOutputSink();
         this.prefix = prefix;
+        this.timestamp = processorContext.getTimestamp();
     }
 
     @Override
@@ -83,7 +85,7 @@ public abstract class AbstractServiceFileCollectingProcessor implements JarProce
             for (var entry : resourceMap.entrySet()) {
                 var builder = entry.getValue();
                 var content = (Joiner.on('\n').join(builder.build()) + "\n").getBytes(StandardCharsets.UTF_8);
-                ClassPathResource fileClassPathResource = ClassPathResource.forContent(entry.getKey(), content);
+                ClassPathResource fileClassPathResource = ClassPathResource.forContent(entry.getKey(), timestamp, content);
                 outputSink.accept(fileClassPathResource);
 
             }

@@ -60,22 +60,22 @@ public final class ClassPathResource {
         return new ClassPathResource(null, entry.getName(), entry.getTime(), classPathElement, supplierForZipEntry(zipFile, entry), null, builder.build());
     }
 
-    public static ClassPathResource fromFile(ClassPathElement classPathElement, File file, ImmutableSet<ClassPathTag> tags) {
+    public static ClassPathResource fromFile(ClassPathElement classPathElement, File file, long timestamp, ImmutableSet<ClassPathTag> tags) {
         ImmutableSet.Builder<ClassPathTag> builder = ImmutableSet.builder();
         builder.addAll(tags);
         builder.add(file.isDirectory() ? ClassPathTag.DIRECTORY : ClassPathTag.FILE);
         builder.add(file.getName().endsWith(CLASS_SUFFIX) ? ClassPathTag.CLASS : ClassPathTag.RESOURCE);
 
-        return new ClassPathResource(null, file.getName(), file.lastModified(), classPathElement, supplierForFile(file), null, builder.build());
+        return new ClassPathResource(null, file.getName(), timestamp, classPathElement, supplierForFile(file), null, builder.build());
     }
 
-    public static ClassPathResource forDirectory(String directory) {
-        return new ClassPathResource(null, directory, 0, null, InputStream::nullInputStream, null,
+    public static ClassPathResource forDirectory(String directory, long timestamp) {
+        return new ClassPathResource(null, directory, timestamp, null, InputStream::nullInputStream, null,
                 ImmutableSet.of(ClassPathTag.DIRECTORY, ClassPathTag.RESOURCE));
     }
 
-    public static ClassPathResource forContent(String name, byte[] content) {
-        return new ClassPathResource(null, name, 0, null, InputStream::nullInputStream, content,
+    public static ClassPathResource forContent(String name, long timestamp, byte[] content) {
+        return new ClassPathResource(null, name, timestamp, null, InputStream::nullInputStream, content,
                 ImmutableSet.of(ClassPathTag.FILE, ClassPathTag.RESOURCE));
     }
 

@@ -25,10 +25,12 @@ public final class ProcessorContext {
 
     private final InlineRemapper inlineRemapper;
     private final Consumer<ClassPathResource> outputSink;
+    private final long timestamp;
 
-    public ProcessorContext(InlineRemapper inlineRemapper, Consumer<ClassPathResource> outputSink) {
+    public ProcessorContext(InlineRemapper inlineRemapper, Consumer<ClassPathResource> outputSink, long timestamp) {
         this.inlineRemapper = checkNotNull(inlineRemapper, "inlineRemapper is null");
         this.outputSink = checkNotNull(outputSink, "outputSink is null");
+        this.timestamp = timestamp;
     }
 
     public InlineRemapper getInlineRemapper() {
@@ -37,5 +39,9 @@ public final class ProcessorContext {
 
     public Consumer<ClassPathResource> getOutputSink() {
         return outputSink;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
     }
 }

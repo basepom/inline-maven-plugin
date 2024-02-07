@@ -40,11 +40,14 @@ public class DirectoryScanProcessor implements JarProcessor {
     public static final Logger LOG = LoggerFactory.getLogger(DirectoryScanProcessor.class);
 
     private final Consumer<ClassPathResource> outputSink;
+    private final long timestamp;
+
     private final ImmutableSortedSet.Builder<String> directories = ImmutableSortedSet.naturalOrder();
     private boolean wroteDirectories = false;
 
-    public DirectoryScanProcessor(Consumer<ClassPathResource> outputSink) {
+    public DirectoryScanProcessor(Consumer<ClassPathResource> outputSink, long timestamp) {
         this.outputSink = outputSink;
+        this.timestamp = timestamp;
     }
 
 
@@ -76,7 +79,7 @@ public class DirectoryScanProcessor implements JarProcessor {
             wroteDirectories = true;
             for (String directory : directories.build()) {
                 LOG.debug(format("Adding directory '%s' to jar", directory));
-                ClassPathResource directoryResource = ClassPathResource.forDirectory(directory);
+                ClassPathResource directoryResource = ClassPathResource.forDirectory(directory, timestamp);
                 outputSink.accept(directoryResource);
             }
         }

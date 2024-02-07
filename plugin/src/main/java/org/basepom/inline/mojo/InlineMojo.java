@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,6 +55,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
+import org.apache.maven.archiver.MavenArchiver;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -117,17 +119,22 @@ public final class InlineMojo extends AbstractMojo {
     private File outputDirectory;
 
     /**
+     * Timestamp for reproducible output archive entries, either formatted as ISO 8601
+     * <code>yyyy-MM-dd'T'HH:mm:ssXXX</code> or as an int representing seconds since the epoch (like
+     * <a href="https://reproducible-builds.org/docs/source-date-epoch/">SOURCE_DATE_EPOCH</a>).
+     */
+    @Parameter(defaultValue = "${project.build.outputTimestamp}")
+    private String outputTimestamp;
+
+    /**
      * The POM file to use.
      */
     @Parameter(property = "inline.pomFile", defaultValue = "${project.file}")
     private File pomFile;
 
     /**
-     * Direct dependencies to inline. Each dependency here must be
-     * listed in the project POM. Any transitive dependency is added
-     * to the final jar, unless it is in {@code RUNTIME} scope.
-     * {@code RUNTIME} dependencies become a runtime dependency of the
-     * resulting final jar <b>unless</b> they are listed here. In that
+     * Direct dependencies to inline. Each dependency here must be listed in the project POM. Any transitive dependency is added to the final jar, unless it is
+     * in {@code RUNTIME} scope. {@code RUNTIME} dependencies become a runtime dependency of the resulting final jar <b>unless</b> they are listed here. In that
      * case, they are inlined in the final jar as well.
      */
     @Parameter
@@ -141,8 +148,8 @@ public final class InlineMojo extends AbstractMojo {
     /**
      * Include dependencies. A dependency is given as <tt>groupId:artifactId</tt>. The wildcard character '*' is supported for group id and artifact id.
      * <p>
-     * Includes and excludes operate on the list of potential dependencies to inline. They can not be used to add additional dependencies that are not
-     * listed in the &lt;inlineDependency&gt; elements.
+     * Includes and excludes operate on the list of potential dependencies to inline. They can not be used to add additional dependencies that are not listed in
+     * the &lt;inlineDependency&gt; elements.
      */
     @Parameter
     private List<ArtifactIdentifier> includes = ImmutableList.of();
@@ -156,8 +163,8 @@ public final class InlineMojo extends AbstractMojo {
      * Exclude dependencies from inclusion. A dependency is given as <tt>groupId:artifactId</tt>. Any transitive dependency that has been pulled in can be
      * excluded here. The wildcard character '*' is supported for group id and artifact id.
      * <p>
-     * Includes and excludes operate on the list of potential dependencies to inline. They can not be used to add additional dependencies that are not
-     * listed in the &lt;inlineDependency&gt; elements.
+     * Includes and excludes operate on the list of potential dependencies to inline. They can not be used to add additional dependencies that are not listed in
+     * the &lt;inlineDependency&gt; elements.
      */
     @Parameter
     private List<ArtifactIdentifier> excludes = ImmutableList.of();
@@ -268,6 +275,8 @@ public final class InlineMojo extends AbstractMojo {
             throw new MojoExecutionException("No project artifact found!");
         }
 
+        Instant timestamp = MavenArchiver.parseBuildOutputTimestamp(outputTimestamp).orElseGet(Instant::now);
+
         try {
             ImmutableSetMultimap.Builder<InlineDependency, Dependency> dependencyBuilder = ImmutableSetMultimap.builder();
             ImmutableSet.Builder<Dependency> pomDependenciesToAdd = ImmutableSet.builder();
@@ -276,7 +285,7 @@ public final class InlineMojo extends AbstractMojo {
 
             ImmutableSetMultimap<InlineDependency, Dependency> dependencyMap = dependencyBuilder.build();
 
-            rewriteJarFile(dependencyMap);
+            rewriteJarFile(timestamp.toEpochMilli(), dependencyMap);
             rewritePomFile(pomDependenciesToAdd.build(), ImmutableSet.copyOf(dependencyMap.values()));
 
         } catch (UncheckedIOException e) {
@@ -450,10 +459,10 @@ public final class InlineMojo extends AbstractMojo {
     }
 
 
-    private void rewriteJarFile(ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws TransformerException, IOException {
+    private void rewriteJarFile(long timestamp, ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws TransformerException, IOException {
         File outputJar = (this.outputJarFile != null) ? outputJarFile : inlinedArtifactFileWithClassifier();
 
-        doJarTransformation(outputJar, dependencies);
+        doJarTransformation(outputJar, timestamp, dependencies);
 
         if (this.outputJarFile == null) {
             if (this.inlinedArtifactAttached) {
@@ -497,14 +506,15 @@ public final class InlineMojo extends AbstractMojo {
         }
     }
 
-    private void doJarTransformation(File outputJar, ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws TransformerException, IOException {
+    private void doJarTransformation(File outputJar, long timestamp, ImmutableSetMultimap<InlineDependency, Dependency> dependencies)
+            throws TransformerException, IOException {
 
         try (JarOutputStream jarOutputStream = new JarOutputStream(Files.newOutputStream(outputJar.toPath()))) {
             Consumer<ClassPathResource> jarConsumer = getJarWriter(jarOutputStream);
-            JarTransformer transformer = new JarTransformer(jarConsumer, true, ImmutableSet.copyOf(additionalProcessors));
+            JarTransformer transformer = new JarTransformer(jarConsumer, timestamp, true, ImmutableSet.copyOf(additionalProcessors));
 
             // Build the class path
-            ClassPath classPath = new ClassPath(project.getBasedir());
+            ClassPath classPath = new ClassPath(project.getBasedir(), timestamp);
             // maintain the manifest file for the main artifact
             var artifact = project.getArtifact();
             classPath.addFile(artifact.getFile(), artifact.getGroupId(), artifact.getArtifactId(), ClassPathTag.ROOT_JAR);

@@ -22,15 +22,26 @@
         <version>1.0.under-test</version>
     </parent>
 
-    <artifactId>test-jdbi</artifactId>
+    <artifactId>test-antlr</artifactId>
+
+    <properties>
+        <dep.antlr.version>4.13.1</dep.antlr.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>${dep.antlr.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
-            <groupId>org.jdbi</groupId>
-            <artifactId>jdbi3-core</artifactId>
-            <version>3.27.1</version>
-            <scope>provided</scope>
-            <optional>true</optional>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
         </dependency>
     </dependencies>
 
@@ -40,14 +51,22 @@
                 <groupId>@project.groupId@</groupId>
                 <artifactId>@project.artifactId@</artifactId>
                 <version>@project.version@</version>
-                <configuration>
-                    <inlineDependencies>
-                        <inlineDependency>
-                            <artifact>org.jdbi:jdbi3-core</artifact>
-                            <transitive>false</transitive>
-                        </inlineDependency>
-                    </inlineDependencies>
-                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>inline</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <prefix>org.jdbi.v3.core.inlined</prefix>
+                            <inlineDependencies>
+                                <inlineDependency>
+                                    <artifact>org.antlr:antlr4-runtime</artifact>
+                                </inlineDependency>
+                            </inlineDependencies>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

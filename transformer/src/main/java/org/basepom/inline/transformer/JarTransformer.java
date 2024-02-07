@@ -56,16 +56,17 @@ public final class JarTransformer {
 
     @VisibleForTesting
     JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink) {
-        this(outputSink, false, ImmutableSet.of());
+        this(outputSink, 0L, false, ImmutableSet.of());
     }
 
-    public JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink, boolean failOnDuplicates, ImmutableSet<String> additionalProcessors) {
+    public JarTransformer(@Nonnull Consumer<ClassPathResource> outputSink, long timestamp,
+            boolean failOnDuplicates, ImmutableSet<String> additionalProcessors) {
         checkNotNull(outputSink, "outputFile is null");
 
         RemapperProcessor packageRemapperProcessor = new RemapperProcessor();
         InlineRemapper remapper = new InlineRemapper(packageRemapperProcessor);
 
-        ProcessorContext processorContext = new ProcessorContext(remapper, outputSink);
+        ProcessorContext processorContext = new ProcessorContext(remapper, outputSink, timestamp);
 
         ImmutableSortedSet.Builder<JarProcessor> builder = ImmutableSortedSet.naturalOrder();
 
@@ -100,7 +101,7 @@ public final class JarTransformer {
         builder.add(new ResourceRenamerJarProcessor(packageRemapperProcessor));
 
         // create new directory structure for the jar
-        builder.add(new DirectoryScanProcessor(outputSink));
+        builder.add(new DirectoryScanProcessor(outputSink, timestamp));
 
         builder.add(new ServiceLoaderCollectingProcessor(processorContext));
 

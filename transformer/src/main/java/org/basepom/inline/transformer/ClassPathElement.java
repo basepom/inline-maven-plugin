@@ -43,13 +43,14 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
     private final String groupId;
     private final String artifactId;
 
-    public static ClassPathElement forFile(File file, @Nullable String prefix, String groupId, String artifactId, boolean hideClasses, ClassPathTag... tags) {
+    public static ClassPathElement forFile(File file, @Nullable String prefix, String groupId,
+        String artifactId, boolean hideClasses, long timestamp, ClassPathTag... tags) {
 
         if (file.isDirectory()) {
             return new ClassPathElement(file, prefix, groupId, artifactId, hideClasses, tags) {
                 @Override
                 public Iterator<ClassPathResource> iterator() {
-                    return new DirectoryIterator(file);
+                    return new DirectoryIterator(file, timestamp);
                 }
             };
         } else {
@@ -139,14 +140,14 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
         }
     }
 
-    private void findClassFiles(@Nonnull ImmutableList.Builder<ClassPathResource> out, @Nonnull File dir) {
+    private void findClassFiles(@Nonnull ImmutableList.Builder<ClassPathResource> out, long timestamp, @Nonnull File dir) {
         final File[] files = dir.listFiles();
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory()) {
-                    findClassFiles(out, file);
+                    findClassFiles(out, timestamp, file);
                 } else if (file.isFile()) {
-                    out.add(ClassPathResource.fromFile(this, file, tags));
+                    out.add(ClassPathResource.fromFile(this, file, timestamp, tags));
                 }
             }
         }
@@ -156,9 +157,9 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
 
         private final Iterator<ClassPathResource> entries;
 
-        DirectoryIterator(@Nonnull File directory) {
+        DirectoryIterator(@Nonnull File directory, long timestamp) {
             ImmutableList.Builder<ClassPathResource> builder = ImmutableList.builder();
-            findClassFiles(builder, directory);
+            findClassFiles(builder, timestamp, directory);
             this.entries = builder.build().iterator();
         }
 

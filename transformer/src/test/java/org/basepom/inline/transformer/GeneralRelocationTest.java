@@ -42,7 +42,7 @@ public class GeneralRelocationTest {
         File databind = loader.getArtifactFile("com.fasterxml.jackson.core", "jackson-databind", "2.10.5");
         File velocity = loader.getArtifactFile("org.apache.velocity", "velocity", "1.7");
 
-        ClassPath classPath = new ClassPath(new File("/"));
+        ClassPath classPath = new ClassPath(new File("/"), 0L);
         classPath.addFile(jdbi, "org.jdbi", "jdbi3-core", ClassPathTag.ROOT_JAR);
         classPath.addFile(velocity, JDBI_PREFIX, "org.apache.velocity", "velocity", true);
         classPath.addFile(h2, JDBI_PREFIX, "com.h2database", "h2", true);
