@@ -53,6 +53,10 @@ The plugin will put all content of the inlined dependency under the `relocated` 
 
 The `inline:inline` goal is the main goal and should be called in the `package` phase of the lifecycle.
 
+The plugin supports the creation of reproducible builds. When the `{$project.build.outputTimestamp}` is set (either through the command line or as a
+project property), all generated entries in the resulting jar will use this timestamp.
+
+
 ### Supported configuration options
 
 ```xml
