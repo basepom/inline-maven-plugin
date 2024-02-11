@@ -44,8 +44,8 @@ deploy:: MAVEN_CONFIG += -Dbasepom.it.skip=false
 deploy::
 	${MAVEN} clean deploy
 
-deploy-site::
-	${MAVEN} clean site-deploy
+deploy-site:: install
+	${MAVEN} site-deploy
 
 release::
 	${MAVEN} clean release:clean release:prepare release:perform
