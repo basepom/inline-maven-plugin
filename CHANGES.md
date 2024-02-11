@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+2024-02-11 1.4.0
 
 * make inline output reproducible (support `${roject.build.outputTimestamp}`)
 
