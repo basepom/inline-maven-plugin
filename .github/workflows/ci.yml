@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java-version: [ 11, 17, 21, 22-ea ]
+        java-version: [ 11, 17, 21, 22 ]
 
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
       - name: build distribution
         env:
           JAVA_HOME: ${{ steps.build_jdk.outputs.path }}
-          MAVEN_CONFIG: "-Dbasepom.check.skip-enforcer=false -B -fae"
+          MAVEN_ARGS: "-Dbasepom.check.skip-enforcer=false -B -fae"
         run: |
           make install-fast
 
@@ -55,6 +55,6 @@ jobs:
       - name: run tests
         env:
           JAVA_HOME: ${{ steps.test_jdk.outputs.path }}
-          MAVEN_CONFIG: "-B -fae"
+          MAVEN_ARGS: "-B -fae"
         run: |
           make run-tests

@@ -28,6 +28,6 @@ jobs:
 
       - name: run code checkers
         env:
-          MAVEN_CONFIG: "-B -fae"
+          MAVEN_ARGS: "-B -fae"
         run: |
           make install-notests

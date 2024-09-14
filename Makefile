@@ -15,9 +15,8 @@ SHELL = /bin/sh
 
 MAVEN = ./mvnw
 
-export MAVEN_OPTS MAVEN_CONFIG
+export MAVEN_OPTS MAVEN_ARGS
 
-# must be the first target
 default:: help
 
 Makefile:: ;
@@ -30,17 +29,16 @@ install::
 
 tests: install-fast run-tests
 
-install-notests:: MAVEN_CONFIG += -Dbasepom.test.skip=true
-install-notests:: install
-
-install-fast:: MAVEN_CONFIG += -Pfast
+install-fast:: MAVEN_ARGS += -Pfast
 install-fast:: install
 
-run-tests:: MAVEN_CONFIG += -Dbasepom.it.skip=false
+install-notests:: MAVEN_ARGS += -DskipTests
+install-notests:: install
+
+run-tests:: MAVEN_ARGS += -Dbasepom.it.skip=false
 run-tests::
 	${MAVEN} surefire:test invoker:install invoker:integration-test invoker:verify
 
-deploy:: MAVEN_CONFIG += -Dbasepom.it.skip=false
 deploy::
 	${MAVEN} clean deploy
 
@@ -50,17 +48,17 @@ deploy-site:: install
 release::
 	${MAVEN} clean release:clean release:prepare release:perform
 
-release-site:: MAVEN_CONFIG += -Pplugin-release
+release-site:: MAVEN_ARGS += -Pplugin-release
 release-site:: deploy-site
 
 help::
-	@echo " * clean               - clean local build tree"
-	@echo " * install             - build, run static analysis and unit tests, then install in the local repository"
-	@echo " * install-notests     - same as 'install', but skip unit tests"
-	@echo " * install-fast        - same as 'install', but skip unit tests and static analysis"
-	@echo " * tests               - build code and run unit tests"
-	@echo " * run-tests           - run all unit and integration tests"
-	@echo " * deploy              - builds and deploys the current version to the Sonatype OSS repository"
-	@echo " * deploy-site         - builds and deploys the documentation site"
-	@echo " * release             - release a new version to maven central"
-	@echo " * release-site        - builds and deploys the documentation site for a release"
+	@echo " * clean           - clean local build tree"
+	@echo " * install         - build, run static analysis and unit tests, then install in the local repository"
+	@echo " * install-fast    - same as 'install', but skip unit tests and static analysis"
+	@echo " * install-notests - same as 'install', but skip unit tests"
+	@echo " * tests           - build code and run unit and integration tests"
+	@echo " * run-tests       - run all unit and integration tests except really slow tests"
+	@echo " * deploy          - builds and deploys the current version to the Sonatype OSS repository"
+	@echo " * deploy-site     - builds and deploys the documentation site"
+	@echo " * release         - release a new version to maven central"
+	@echo " * release-site    - run from release directory to deploy the documentation site for a release"
