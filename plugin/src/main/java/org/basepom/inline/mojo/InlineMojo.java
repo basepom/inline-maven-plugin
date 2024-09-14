@@ -549,7 +549,7 @@ public final class InlineMojo extends AbstractMojo {
 
     private File inlinedArtifactFileWithClassifier() {
         final var artifact = project.getArtifact();
-        String inlineName = String.format("%s-%s-%s.%s",
+        String inlineName = format("%s-%s-%s.%s",
                 project.getArtifactId(),
                 artifact.getVersion(),
                 this.inlinedClassifierName,
