@@ -18,13 +18,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import de.softwareforge.testing.maven.MavenArtifactLoader;
 import org.basepom.inline.transformer.JdbiRelocationTest.CapturingConsumer;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import com.google.common.io.Closer;
+import de.softwareforge.testing.maven.MavenArtifactLoader;
 import org.junit.jupiter.api.Test;
 
 public class GeneralRelocationTest {
@@ -42,40 +43,42 @@ public class GeneralRelocationTest {
         File databind = loader.getArtifactFile("com.fasterxml.jackson.core", "jackson-databind", "2.10.5");
         File velocity = loader.getArtifactFile("org.apache.velocity", "velocity", "1.7");
 
-        ClassPath classPath = new ClassPath(new File("/"), 0L);
-        classPath.addFile(jdbi, "org.jdbi", "jdbi3-core", ClassPathTag.ROOT_JAR);
-        classPath.addFile(velocity, JDBI_PREFIX, "org.apache.velocity", "velocity", true);
-        classPath.addFile(h2, JDBI_PREFIX, "com.h2database", "h2", true);
-        classPath.addFile(jackson, JDBI_PREFIX, "com.fasterxml.jackson.core", "jackson-core", true);
-        classPath.addFile(databind, JDBI_PREFIX, "com.fasterxml.jackson.core", "jackson-databind", true);
-        classPath.addFile(guava, JDBI_PREFIX, "com.google.guava", "guava", true);
+        try (Closer closer = Closer.create()) {
+            ClassPath classPath = new ClassPath(new File("/"), 0L, closer);
+            classPath.addFile(jdbi, "org.jdbi", "jdbi3-core", ClassPathTag.ROOT_JAR);
+            classPath.addFile(velocity, JDBI_PREFIX, "org.apache.velocity", "velocity", true);
+            classPath.addFile(h2, JDBI_PREFIX, "com.h2database", "h2", true);
+            classPath.addFile(jackson, JDBI_PREFIX, "com.fasterxml.jackson.core", "jackson-core", true);
+            classPath.addFile(databind, JDBI_PREFIX, "com.fasterxml.jackson.core", "jackson-databind", true);
+            classPath.addFile(guava, JDBI_PREFIX, "com.google.guava", "guava", true);
 
-        CapturingConsumer consumer = new CapturingConsumer();
-        JarTransformer jarTransformer = new JarTransformer(consumer);
+            CapturingConsumer consumer = new CapturingConsumer();
+            JarTransformer jarTransformer = new JarTransformer(consumer);
 
-        jarTransformer.transform(classPath);
+            jarTransformer.transform(classPath);
 
-        Map<String, ClassPathResource> resources = consumer.getContent();
+            Map<String, ClassPathResource> resources = consumer.getContent();
 
-        assertFalse(resources.isEmpty());
+            assertFalse(resources.isEmpty());
 
-        // manifest exists
-        ClassPathResource manifest = resources.get("META-INF/MANIFEST.MF");
-        assertNotNull(manifest);
-        String manifestText = new String(manifest.getContent(), StandardCharsets.UTF_8);
-        assertTrue(manifestText.contains("jdbi"));
+            // manifest exists
+            ClassPathResource manifest = resources.get("META-INF/MANIFEST.MF");
+            assertNotNull(manifest);
+            String manifestText = new String(manifest.getContent(), StandardCharsets.UTF_8);
+            assertTrue(manifestText.contains("jdbi"));
 
-        // guava relocation
-        assertTrue(resources.containsKey("org/jdbi/relocated/com/google/"));
+            // guava relocation
+            assertTrue(resources.containsKey("org/jdbi/relocated/com/google/"));
 
-        // jackson relocation
-        assertTrue(resources.containsKey("org/jdbi/relocated/com/fasterxml/"));
+            // jackson relocation
+            assertTrue(resources.containsKey("org/jdbi/relocated/com/fasterxml/"));
 
-        // velocity file relocation
-        assertTrue(resources.containsKey("org/jdbi/relocated/org/apache/velocity/texen/defaults/texen.properties"));
+            // velocity file relocation
+            assertTrue(resources.containsKey("org/jdbi/relocated/org/apache/velocity/texen/defaults/texen.properties"));
 
-        // multi-release jar relocation
-        assertTrue(resources.containsKey("META-INF/versions/10/org/jdbi/relocated/org/h2/util/$Utils10.class"));
-        assertTrue(resources.containsKey("org/jdbi/relocated/org/h2/util/$Utils10.class"));
+            // multi-release jar relocation
+            assertTrue(resources.containsKey("META-INF/versions/10/org/jdbi/relocated/org/h2/util/$Utils10.class"));
+            assertTrue(resources.containsKey("org/jdbi/relocated/org/h2/util/$Utils10.class"));
+        }
     }
 }

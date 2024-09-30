@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
+import com.google.common.io.Closer;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
     private final String groupId;
     private final String artifactId;
 
-    public static ClassPathElement forFile(File file, @Nullable String prefix, String groupId,
+    public static ClassPathElement forFile(File file, Closer closer, @Nullable String prefix, String groupId,
             String artifactId, boolean hideClasses, long timestamp, ClassPathTag... tags) {
 
         if (file.isDirectory()) {
@@ -57,7 +58,7 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
             return new ClassPathElement(file, prefix, groupId, artifactId, hideClasses, tags) {
                 @Override
                 public Iterator<ClassPathResource> iterator() {
-                    return wrapIOException(() -> new ZipIterator(file));
+                    return wrapIOException(() -> new ZipIterator(file, closer));
                 }
             };
         }
@@ -106,8 +107,10 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
         private final ZipFile zipFile;
         private final Iterator<? extends ZipEntry> zipEntries;
 
-        ZipIterator(@Nonnull File archiveFile) throws IOException {
+        ZipIterator(@Nonnull File archiveFile, Closer closer) throws IOException {
             this.zipFile = new ZipFile(archiveFile);
+            closer.register(zipFile);
+
             this.zipEntries = Iterators.forEnumeration(zipFile.entries());
         }
 
@@ -134,9 +137,7 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
         public void close() {
             // do nothing, especially not close the zip file. With the required reording for the jar contents,
             // reading of the data happens outside the iteration of the zip file and if the zip file is closed,
-            // it can no longer be read. So we keep those open, fully aware that this does require a few file descriptors
-            // and other resources, that will only be released when the jvm terminates. If this becomes a problem, we can
-            // collect the set of open zip files and close them at the end of the mojo execution but that is a lot of work.
+            // it can no longer be read.
         }
     }
 

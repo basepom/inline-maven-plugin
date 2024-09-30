@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Closer;
 
 /**
  * Defines a class path.
@@ -30,17 +31,19 @@ public class ClassPath implements Iterable<ClassPathElement> {
     private final ImmutableSet.Builder<ClassPathElement> entries = ImmutableSet.builder();
     private final File root;
     private final long timestamp;
+    private final Closer closer;
 
-    public ClassPath(File root, long timestamp) {
+    public ClassPath(File root, long timestamp, Closer closer) {
         this.root = checkNotNull(root, "root is null");
         this.timestamp = timestamp;
+        this.closer = closer;
     }
 
     public void addFile(File file, String groupId, String artifactId, ClassPathTag... tags) {
         if (!file.isAbsolute()) {
             file = new File(root, file.getPath());
         }
-        entries.add(ClassPathElement.forFile(file, null, groupId, artifactId, false, timestamp, tags));
+        entries.add(ClassPathElement.forFile(file, closer, null, groupId, artifactId, false, timestamp, tags));
     }
 
     public void addFile(File file, String prefix, String groupId, String artifactId, boolean hideClasses, ClassPathTag... tags) {
@@ -48,7 +51,7 @@ public class ClassPath implements Iterable<ClassPathElement> {
         if (!file.isAbsolute()) {
             file = new File(root, file.getPath());
         }
-        entries.add(ClassPathElement.forFile(file, prefix, groupId, artifactId, hideClasses, timestamp, tags));
+        entries.add(ClassPathElement.forFile(file, closer, prefix, groupId, artifactId, hideClasses, timestamp, tags));
     }
 
     @Override

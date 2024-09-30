@@ -23,19 +23,23 @@ import org.basepom.inline.transformer.asm.InlineRemapper;
 
 import java.io.File;
 
+import com.google.common.io.Closer;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.commons.Remapper;
 
 public class GenericsTest {
 
     @Test
-    public void testTransform() {
+    public void testTransform() throws Exception {
         RemapperProcessor processor = new RemapperProcessor();
-        final ClassPathElement classPathElement = ClassPathElement.forFile(new File("testing.jar"), "org.basepom", "test-jar", "test-jar", false, 0L);
-        processor.addRule(classPathElement, "java.lang");
-        processor.addResource(ClassPathResource.forTesting("java/lang/String.class", classPathElement, ClassPathTag.CLASS, ClassPathTag.FILE));
+        try (Closer closer = Closer.create()) {
+            final ClassPathElement classPathElement = ClassPathElement.forFile(
+                    new File("testing.jar"), closer, "org.basepom", "test-jar", "test-jar", false, 0L);
+            processor.addRule(classPathElement, "java.lang");
+            processor.addResource(ClassPathResource.forTesting("java/lang/String.class", classPathElement, ClassPathTag.CLASS, ClassPathTag.FILE));
 
-        Remapper remapper = new InlineRemapper(processor);
-        assertEquals("org/basepom/java/lang/String", remapper.map("java/lang/String"));
+            Remapper remapper = new InlineRemapper(processor);
+            assertEquals("org/basepom/java/lang/String", remapper.map("java/lang/String"));
+        }
     }
 }

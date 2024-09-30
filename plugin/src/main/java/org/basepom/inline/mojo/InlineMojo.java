@@ -56,6 +56,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
+import com.google.common.io.Closer;
 import org.apache.maven.archiver.MavenArchiver;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -258,6 +259,8 @@ public final class InlineMojo extends AbstractMojo {
     @Parameter(defaultValue = "inlined")
     private String inlinedClassifierName;
 
+    private final Closer closer = Closer.create();
+
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -282,12 +285,16 @@ public final class InlineMojo extends AbstractMojo {
             ImmutableSetMultimap.Builder<InlineDependency, Dependency> dependencyBuilder = ImmutableSetMultimap.builder();
             ImmutableSet.Builder<Dependency> pomDependenciesToAdd = ImmutableSet.builder();
 
-            computeDependencyMap(dependencyBuilder, pomDependenciesToAdd);
+            try {
+                computeDependencyMap(dependencyBuilder, pomDependenciesToAdd);
 
-            ImmutableSetMultimap<InlineDependency, Dependency> dependencyMap = dependencyBuilder.build();
+                ImmutableSetMultimap<InlineDependency, Dependency> dependencyMap = dependencyBuilder.build();
 
-            rewriteJarFile(timestamp.toEpochMilli(), dependencyMap);
-            rewritePomFile(pomDependenciesToAdd.build(), ImmutableSet.copyOf(dependencyMap.values()));
+                rewriteJarFile(timestamp.toEpochMilli(), dependencyMap);
+                rewritePomFile(pomDependenciesToAdd.build(), ImmutableSet.copyOf(dependencyMap.values()));
+            } finally {
+                closer.close();
+            }
 
         } catch (UncheckedIOException e) {
             throw new MojoExecutionException(e.getCause());
@@ -526,7 +533,7 @@ public final class InlineMojo extends AbstractMojo {
         JarTransformer transformer = new JarTransformer(jarConsumer, timestamp, true, ImmutableSet.copyOf(additionalProcessors));
 
         // Build the class path
-        ClassPath classPath = new ClassPath(project.getBasedir(), timestamp);
+        ClassPath classPath = new ClassPath(project.getBasedir(), timestamp, closer);
         // maintain the manifest file for the main artifact
         var artifact = project.getArtifact();
         classPath.addFile(artifact.getFile(), artifact.getGroupId(), artifact.getArtifactId(), ClassPathTag.ROOT_JAR);

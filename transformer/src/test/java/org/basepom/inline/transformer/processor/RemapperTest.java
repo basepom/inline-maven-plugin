@@ -24,6 +24,8 @@ import org.basepom.inline.transformer.asm.InlineRemapper;
 
 import java.io.File;
 
+import com.google.common.io.Closer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.commons.Remapper;
@@ -32,10 +34,12 @@ public class RemapperTest {
 
     protected Remapper remapper;
 
+    protected Closer closer = Closer.create();
+
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
         RemapperProcessor processor = new RemapperProcessor();
-        ClassPathElement classPathElement = ClassPathElement.forFile(new File("test.jar"), "foo", "test", "test", false, 0L);
+        ClassPathElement classPathElement = ClassPathElement.forFile(new File("test.jar"), closer, "foo", "test", "test", false, 0L);
         processor.addRule(classPathElement, "org");
 
         processor.addResource(ClassPathResource.forTesting("org/example/Object.class", classPathElement, ClassPathTag.CLASS, ClassPathTag.FILE));
@@ -46,6 +50,11 @@ public class RemapperTest {
         processor.addResource(ClassPathResource.forTesting("org.example.package-info", classPathElement, ClassPathTag.RESOURCE, ClassPathTag.FILE));
         processor.addResource(ClassPathResource.forTesting("org/example.package-info", classPathElement, ClassPathTag.RESOURCE, ClassPathTag.FILE));
         remapper = new InlineRemapper(processor);
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        closer.close();
     }
 
     @Test
