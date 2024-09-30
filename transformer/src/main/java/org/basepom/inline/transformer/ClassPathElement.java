@@ -44,7 +44,7 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
     private final String artifactId;
 
     public static ClassPathElement forFile(File file, @Nullable String prefix, String groupId,
-        String artifactId, boolean hideClasses, long timestamp, ClassPathTag... tags) {
+            String artifactId, boolean hideClasses, long timestamp, ClassPathTag... tags) {
 
         if (file.isDirectory()) {
             return new ClassPathElement(file, prefix, groupId, artifactId, hideClasses, tags) {
@@ -132,11 +132,11 @@ public abstract class ClassPathElement implements Iterable<ClassPathResource> {
 
         @Override
         public void close() {
-            try {
-                zipFile.close();
-            } catch (IOException ignored) {
-                // ignore
-            }
+            // do nothing, especially not close the zip file. With the required reording for the jar contents,
+            // reading of the data happens outside the iteration of the zip file and if the zip file is closed,
+            // it can no longer be read. So we keep those open, fully aware that this does require a few file descriptors
+            // and other resources, that will only be released when the jvm terminates. If this becomes a problem, we can
+            // collect the set of open zip files and close them at the end of the mojo execution but that is a lot of work.
         }
     }
 

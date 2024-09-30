@@ -47,6 +47,7 @@ import javax.xml.stream.XMLStreamException;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -462,7 +463,18 @@ public final class InlineMojo extends AbstractMojo {
     private void rewriteJarFile(long timestamp, ImmutableSetMultimap<InlineDependency, Dependency> dependencies) throws TransformerException, IOException {
         File outputJar = (this.outputJarFile != null) ? outputJarFile : inlinedArtifactFileWithClassifier();
 
-        doJarTransformation(outputJar, timestamp, dependencies);
+        TreeNode treeRoot = createJarContents(timestamp, dependencies);
+
+        try (JarOutputStream jarOutputStream = new JarOutputStream(Files.newOutputStream(outputJar.toPath()))) {
+            var jarConsumer = getJarWriter(jarOutputStream);
+
+            // ensure that the MANIFEST file always comes first
+            writeSubtree("META-INF/MANIFEST.MF", treeRoot, jarConsumer);
+            // then write all the META-INF contents
+            writeSubtree("META-INF", treeRoot, jarConsumer);
+            // then all the rest
+            writeSubtree("", treeRoot, jarConsumer);
+        }
 
         if (this.outputJarFile == null) {
             if (this.inlinedArtifactAttached) {
@@ -506,28 +518,63 @@ public final class InlineMojo extends AbstractMojo {
         }
     }
 
-    private void doJarTransformation(File outputJar, long timestamp, ImmutableSetMultimap<InlineDependency, Dependency> dependencies)
+    private TreeNode createJarContents(long timestamp, ImmutableSetMultimap<InlineDependency, Dependency> dependencies)
             throws TransformerException, IOException {
+        var treeRoot = TreeNode.getRootNode();
 
-        try (JarOutputStream jarOutputStream = new JarOutputStream(Files.newOutputStream(outputJar.toPath()))) {
-            Consumer<ClassPathResource> jarConsumer = getJarWriter(jarOutputStream);
-            JarTransformer transformer = new JarTransformer(jarConsumer, timestamp, true, ImmutableSet.copyOf(additionalProcessors));
+        Consumer<ClassPathResource> jarConsumer = getJarBuilder(treeRoot);
+        JarTransformer transformer = new JarTransformer(jarConsumer, timestamp, true, ImmutableSet.copyOf(additionalProcessors));
 
-            // Build the class path
-            ClassPath classPath = new ClassPath(project.getBasedir(), timestamp);
-            // maintain the manifest file for the main artifact
-            var artifact = project.getArtifact();
-            classPath.addFile(artifact.getFile(), artifact.getGroupId(), artifact.getArtifactId(), ClassPathTag.ROOT_JAR);
+        // Build the class path
+        ClassPath classPath = new ClassPath(project.getBasedir(), timestamp);
+        // maintain the manifest file for the main artifact
+        var artifact = project.getArtifact();
+        classPath.addFile(artifact.getFile(), artifact.getGroupId(), artifact.getArtifactId(), ClassPathTag.ROOT_JAR);
 
-            dependencies.forEach(
-                    (inlineDependency, dependency) -> {
-                        var dependencyArtifact = dependency.getArtifact();
-                        checkState(dependencyArtifact.getFile() != null, "Could not locate artifact file for %s", dependencyArtifact);
-                        classPath.addFile(dependencyArtifact.getFile(), prefix, dependencyArtifact.getGroupId(), dependencyArtifact.getArtifactId(),
-                                hideClasses);
-                    });
+        dependencies.forEach(
+                (inlineDependency, dependency) -> {
+                    var dependencyArtifact = dependency.getArtifact();
+                    checkState(dependencyArtifact.getFile() != null, "Could not locate artifact file for %s", dependencyArtifact);
+                    classPath.addFile(dependencyArtifact.getFile(), prefix, dependencyArtifact.getGroupId(), dependencyArtifact.getArtifactId(),
+                            hideClasses);
+                });
 
-            transformer.transform(classPath);
+        transformer.transform(classPath);
+
+        return treeRoot;
+    }
+
+    private void writeSubtree(String name, TreeNode root, Consumer<ClassPathResource> jarWriter) {
+        List<String> elements = Splitter.on('/').omitEmptyStrings().splitToList(name);
+
+        // navigate to the parent node, writing elements on the way.
+        TreeNode parent = root;
+        for (String element : elements) {
+            TreeNode child = parent.getChild(element);
+            checkState(child != null, "Could not find child '%s' for parent '%s' (%s)", element, parent.getName(), name);
+            if (child.needsWriting()) {
+                jarWriter.accept(child.getClassPathResource());
+                child.write();
+            }
+            parent = child;
+        }
+
+        writeChildrenDepthFirst(parent, jarWriter);
+    }
+
+    private void writeChildrenDepthFirst(TreeNode writeNode, Consumer<ClassPathResource> jarWriter) {
+        if (writeNode.needsWriting()) {
+            jarWriter.accept(writeNode.getClassPathResource());
+            writeNode.write();
+        }
+
+        var children = writeNode.getChildren();
+        if (children.isEmpty()) {
+            return;
+        }
+
+        for (var childNode : children.values()) {
+            writeChildrenDepthFirst(childNode, jarWriter);
         }
     }
 
@@ -544,6 +591,23 @@ public final class InlineMojo extends AbstractMojo {
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
+        };
+    }
+
+    private Consumer<ClassPathResource> getJarBuilder(TreeNode root) {
+        return classPathResource -> {
+            String name = classPathResource.getName();
+            LOG.debug(format("Adding '%s' to jar", name));
+
+            List<String> elements = Splitter.on('/').omitEmptyStrings().splitToList(name);
+
+            TreeNode parent = root;
+            for (int i = 0; i < elements.size() - 1; i++) {
+                var child = parent.getChild(elements.get(i));
+                checkState(child != null, "Could not locate child '%s' in parent element '%s', this is a transformer problem!", elements.get(i), parent);
+                parent = child;
+            }
+            parent.addChild(elements.get(elements.size() - 1), classPathResource);
         };
     }
 
