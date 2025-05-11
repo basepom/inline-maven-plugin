@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import javax.annotation.Nonnull;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
@@ -27,7 +26,6 @@ public class RemappingClassTransformer implements ClassTransformer {
 
     private final Remapper remapper;
 
-    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public RemappingClassTransformer(Remapper remapper) {
         this.remapper = checkNotNull(remapper, "remapper is null");
     }

@@ -124,9 +124,10 @@ public final class ClassPathResource {
 
     @Nonnull
     public String getName() {
-        return containsTags(ClassPathTag.DIRECTORY)
-                ? name + "/"
-                : name;
+        if (containsTags(ClassPathTag.DIRECTORY)) {
+            return name.endsWith("/") ? name : name + "/";
+        }
+        return name;
     }
 
     @Nonnull

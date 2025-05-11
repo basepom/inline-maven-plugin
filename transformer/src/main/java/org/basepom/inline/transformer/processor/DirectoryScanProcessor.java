@@ -59,7 +59,7 @@ public class DirectoryScanProcessor implements JarProcessor {
     @CheckForNull
     @Override
     public ClassPathResource scan(@Nonnull ClassPathResource classPathResource, Chain<ClassPathResource> chain) throws TransformerException, IOException {
-        String name = classPathResource.getName();
+        String name = classPathResource.getNameWithPrefix();
         List<String> elements = Splitter.on('/').splitToList(name);
         if (elements.size() > 1) {
             // any intermediate level directories have been removed by the Directory Filter Processor.

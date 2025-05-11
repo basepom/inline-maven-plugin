@@ -18,7 +18,7 @@
     <parent>
         <groupId>org.kitei</groupId>
         <artifactId>kitei-root</artifactId>
-        <version>17</version>
+        <version>19</version>
     </parent>
 
     <groupId>org.basepom.inline</groupId>
@@ -69,7 +69,6 @@
     <properties>
         <project.build.targetJdk>11</project.build.targetJdk>
 
-        <basepom.nexus-staging.staging-url>https://oss.sonatype.org/</basepom.nexus-staging.staging-url>
         <basepom.release.profiles>basepom.deploy-release,plugin-release</basepom.release.profiles>
         <basepom.release.tag-name-format>inline-maven-plugin-@{project.version}</basepom.release.tag-name-format>
 
@@ -85,29 +84,29 @@
         <basepom.it.skip>true</basepom.it.skip>
 
         <dep.slf4j.version>1.7.36</dep.slf4j.version>
-        <dep.guava.version>33.3.0-jre</dep.guava.version>
-        <dep.asm.version>9.7</dep.asm.version>
-        <dep.junit5.version>5.11.0</dep.junit5.version>
+        <dep.guava.version>33.4.8-jre</dep.guava.version>
+        <dep.asm.version>9.8</dep.asm.version>
+        <dep.junit5.version>5.13.0-M3</dep.junit5.version>
         <dep.maven-loader.version>2.4.0</dep.maven-loader.version>
-        <dep.groovy.version>4.0.23</dep.groovy.version>
+        <dep.groovy.version>4.0.26</dep.groovy.version>
         <dep.jdom2.version>2.0.6.1</dep.jdom2.version>
         <dep.jaxen.version>2.0.0</dep.jaxen.version>
         <dep.sisu-inject.version>0.9.0.M3</dep.sisu-inject.version>
 
         <!-- Maven API version. Keep on 3.9.x for now -->
         <dep.maven-api.version>3.9.9</dep.maven-api.version>
-        <dep.maven-resolver.version>1.9.22</dep.maven-resolver.version>
+        <dep.maven-resolver.version>1.9.23</dep.maven-resolver.version>
 
         <!-- other maven stuff -->
         <dep.plexus.version>2.2.0</dep.plexus.version>
-        <dep.plexus-utils.version>4.0.1</dep.plexus-utils.version>
-        <dep.plexus-classworlds.version>2.8.0</dep.plexus-classworlds.version>
+        <dep.plexus-utils.version>4.0.2</dep.plexus-utils.version>
+        <dep.plexus-classworlds.version>2.9.0</dep.plexus-classworlds.version>
         <dep.maven-shared-utils.version>3.4.2</dep.maven-shared-utils.version>
-        <dep.maven-archiver.version>3.6.2</dep.maven-archiver.version>
+        <dep.maven-archiver.version>3.6.3</dep.maven-archiver.version>
 
         <!-- plugin tooling -->
-        <dep.plugin.plugin.version>3.15.0</dep.plugin.plugin.version>
-        <dep.plugin.gmavenplus.plugin>3.0.2</dep.plugin.gmavenplus.plugin>
+        <dep.plugin.plugin.version>4.0.0-beta-1</dep.plugin.plugin.version>
+        <dep.plugin.gmavenplus.plugin>4.2.0</dep.plugin.gmavenplus.plugin>
     </properties>
 
     <modules>
