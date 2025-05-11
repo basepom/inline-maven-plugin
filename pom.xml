@@ -79,8 +79,7 @@
         <!-- site is built in the plugin subdirectory -->
         <basepom.site.skip>true</basepom.site.skip>
         <basepom.site.scm.skip-deploy>true</basepom.site.scm.skip-deploy>
-        <basepom.site.scm.id>github</basepom.site.scm.id>
-        <basepom.site.scm.url>scm:git:https://github.com/basepom/basepom.github.io.git</basepom.site.scm.url>
+        <basepom.site.scm.url>scm:git:git@github.com:basepom/basepom.github.io.git</basepom.site.scm.url>
 
         <!-- disable ITs by default -->
         <basepom.it.skip>true</basepom.it.skip>
