@@ -18,7 +18,7 @@
     <parent>
         <groupId>org.basepom.inline</groupId>
         <artifactId>inline-root</artifactId>
-        <version>1.5.1-SNAPSHOT</version>
+        <version>1.5.1</version>
     </parent>
 
     <groupId>org.basepom.maven</groupId>
@@ -40,7 +40,7 @@
     <!-- do not delete, otherwise the site scm link is wrong -->
     <scm>
         <url>https://github.com/basepom/inline-maven-plugin/</url>
-      <tag>HEAD</tag>
+      <tag>inline-maven-plugin-1.5.1</tag>
   </scm>
 
     <dependencies>
